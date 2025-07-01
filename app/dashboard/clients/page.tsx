@@ -100,7 +100,7 @@ export default function ClientsPage() {
     },
     {
       accessorKey: "poblado.nombre",
-      header: "Poblado",
+      header: "Municipio",
       cell: ({ row }) => {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
@@ -110,7 +110,14 @@ export default function ClientsPage() {
       accessorKey: "fechaRenovacion",
       header: "Renovación",
       cell: ({ row }) => {
-        return new Date(row.getValue("fechaRenovacion")).toLocaleDateString();
+        const fecha = row.getValue("fechaRenovacion");
+        if (typeof fecha === "string") {
+          const [anio, mes, dia] = fecha.split("-");
+          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
+          return fechaLocal.toLocaleDateString();
+        } else {
+          return "N/A";
+        }
       },
     },
     {

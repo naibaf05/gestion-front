@@ -174,20 +174,19 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fechaRenovacion">Fecha de Renovación *</Label>
+                <Label htmlFor="fechaRenovacion">Fecha de Renovación</Label>
                 <Input
                   id="fechaRenovacion"
                   type="date"
                   value={formData.fechaRenovacion}
                   onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
-                  required
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="poblado">Poblado *</Label>
+                <Label htmlFor="poblado">Municipio *</Label>
                 <Select
                   value={formData.pobladoId ? String(formData.pobladoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}

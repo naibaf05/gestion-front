@@ -143,7 +143,8 @@ export function SedeDialog({
               <div className="space-y-2">
                 <Label htmlFor="cliente">Cliente *</Label>
                 <Select
-                  value={formData.clienteId}
+                  required
+                  value={formData.clienteId ? String(formData.clienteId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, clienteId: value })}
                 >
                   <SelectTrigger>
@@ -151,7 +152,7 @@ export function SedeDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {clientes.map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.id}>
+                      <SelectItem key={cliente.id} value={String(cliente.id)}>
                         {cliente.nombre}
                       </SelectItem>
                     ))}
@@ -185,7 +186,7 @@ export function SedeDialog({
               <div className="space-y-2">
                 <Label htmlFor="poblado">Poblado *</Label>
                 <Select
-                  value={formData.pobladoId}
+                  value={formData.pobladoId ? String(formData.pobladoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
                 >
                   <SelectTrigger>
@@ -193,7 +194,7 @@ export function SedeDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {poblados.map((poblado) => (
-                      <SelectItem key={poblado.id} value={poblado.id}>
+                      <SelectItem key={poblado.id} value={String(poblado.id)}>
                         {poblado.nombre}
                       </SelectItem>
                     ))}
@@ -230,7 +231,7 @@ export function SedeDialog({
               <div className="space-y-2">
                 <Label htmlFor="oficina">Oficina *</Label>
                 <Select
-                  value={formData.oficinaId}
+                  value={formData.oficinaId ? String(formData.oficinaId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, oficinaId: value })}
                 >
                   <SelectTrigger>
@@ -238,7 +239,7 @@ export function SedeDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {oficinas.map((oficina) => (
-                      <SelectItem key={oficina.id} value={oficina.id}>
+                      <SelectItem key={oficina.id} value={String(oficina.id)}>
                         {oficina.nombre}
                       </SelectItem>
                     ))}
@@ -248,7 +249,7 @@ export function SedeDialog({
               <div className="space-y-2">
                 <Label htmlFor="generador">Generador *</Label>
                 <Select
-                  value={formData.generadorId}
+                  value={formData.generadorId ? String(formData.generadorId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, generadorId: value })}
                 >
                   <SelectTrigger>
@@ -256,7 +257,7 @@ export function SedeDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {generadores.map((generador) => (
-                      <SelectItem key={generador.id} value={generador.id}>
+                      <SelectItem key={generador.id} value={String(generador.id)}>
                         {generador.nombre}
                       </SelectItem>
                     ))}
@@ -269,7 +270,7 @@ export function SedeDialog({
               <div className="space-y-2">
                 <Label htmlFor="periodo">Periodo *</Label>
                 <Select
-                  value={formData.periodoId}
+                  value={formData.periodoId ? String(formData.periodoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, periodoId: value })}
                 >
                   <SelectTrigger>
@@ -277,7 +278,7 @@ export function SedeDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {periodos.map((periodo) => (
-                      <SelectItem key={periodo.id} value={periodo.id}>
+                      <SelectItem key={periodo.id} value={String(periodo.id)}>
                         {periodo.nombre}
                       </SelectItem>
                     ))}
