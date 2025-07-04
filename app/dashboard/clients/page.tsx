@@ -4,25 +4,22 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardContent
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Eye, PowerSquare } from "lucide-react";
+import { Plus, Edit, PowerSquare } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
-import type { Cliente, Poblado, Comercial } from "@/types";
+import type { Cliente, Parametrizacion } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ClientDialog } from "@/components/dialogs/ClientDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Cliente[]>([]);
-  const [poblados, setPoblados] = useState<Poblado[]>([]);
-  const [comerciales, setComerciales] = useState<Comercial[]>([]);
+  const [poblados, setPoblados] = useState<Parametrizacion[]>([]);
+  const [comerciales, setComerciales] = useState<Parametrizacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
@@ -65,19 +62,21 @@ export default function ClientsPage() {
   };
 
   const handleToggleStatus = async (id: string) => {
-    try {
-      await clientService.toggleClienteStatus(id);
-      toast({
-        title: "Estado actualizado",
-        description: "El estado del cliente ha sido actualizado",
-      });
-      loadData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado",
-        variant: "destructive",
-      });
+    if (confirm("¿Estás seguro de que deseas cambiar el estado a este cliente?")) {
+      try {
+        await clientService.toggleClienteStatus(id);
+        toast({
+          title: "Estado actualizado",
+          description: "El estado del cliente ha sido actualizado",
+        });
+        loadData();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar el estado",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -149,7 +148,7 @@ export default function ClientsPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(client.id)}
-              className={client.activo ? "text-red-600" : "text-green-600"}
+              className={client.activo ? "text-green-600" : "text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>

@@ -47,6 +47,19 @@ export class ClientService {
     })
 
     const response = await apiService.get<ApiResponse<PaginatedResponse<Sede>>>(`/sedes?${params}`)
+
+    response.data.data.forEach((sede: Sede) => {
+      if (sede.frecuencias) {
+        sede.frecuencias.forEach((frecuencia: any) => {
+          frecuencia.week = parseInt(frecuencia.semana);
+          frecuencia.day = frecuencia.dia;
+          frecuencia.item = {
+            id: frecuencia.rutaId,
+            nombre: frecuencia.rutaNombre,
+          }
+        });
+      }
+    });
     return response.data
   }
 

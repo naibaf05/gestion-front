@@ -5,22 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare } from "lucide-react";
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays } from "lucide-react";
 import { clientService } from "@/services/clientService";
+import { pathService } from "@/services/pathService";
 import { parametrizationService } from "@/services/parametrizationService";
 import type {
   Sede,
   Cliente,
-  Poblado,
-  Oficina,
-  Generador,
-  Periodo,
   Parametrizacion,
 } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { SedeDialog } from "@/components/dialogs/SedeDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog";
+import { WeeklyScheduleDialog } from "@/components/dialogs/WeeklyScheduleDialog";
 
 export default function SedesPage() {
   const [sedes, setSedes] = useState<Sede[]>([]);
@@ -32,8 +30,11 @@ export default function SedesPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
   const { toast } = useToast();
+  const [scheduleData, setScheduleData] = useState<any[]>([]);
+  const [mockScheduleItems, setMockScheduleItems] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -49,6 +50,7 @@ export default function SedesPage() {
         oficinasData,
         generadoresData,
         periodosData,
+        pathData,
       ] = await Promise.all([
         clientService.getSedes(undefined, 1, 100),
         clientService.getClientes(1, 100),
@@ -56,6 +58,7 @@ export default function SedesPage() {
         parametrizationService.getListaActivos("oficina"),
         parametrizationService.getListaActivos("generador"),
         parametrizationService.getListaActivos("periodo"),
+        pathService.getAll()
       ]);
       setSedes(sedesData.data);
       setClientes(clientesData.data);
@@ -63,6 +66,7 @@ export default function SedesPage() {
       setOficinas(oficinasData);
       setGeneradores(generadoresData);
       setPeriodos(periodosData);
+      setMockScheduleItems(pathData);
     } catch (error) {
       toast({
         title: "Error",
@@ -85,19 +89,21 @@ export default function SedesPage() {
   };
 
   const handleToggleStatus = async (id: string) => {
-    try {
-      await clientService.toggleSedeStatus(id);
-      toast({
-        title: "Estado actualizado",
-        description: "El estado de la sede ha sido actualizado",
-      });
-      loadData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado",
-        variant: "destructive",
-      });
+    if (confirm("¿Estás seguro de que deseas cambiar el estado a esta sede?")) {
+      try {
+        await clientService.toggleSedeStatus(id);
+        toast({
+          title: "Estado actualizado",
+          description: "El estado de la sede ha sido actualizado",
+        });
+        loadData();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar el estado",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -123,6 +129,31 @@ export default function SedesPage() {
     setSelectedSede(sede);
     setLocationDialogOpen(true);
   };
+
+  const openScheduleDialog = (sede: Sede) => {
+    setSelectedSede(sede);
+    setScheduleData(sede.frecuencias || []);
+    setScheduleDialogOpen(true)
+  }
+
+  const handleScheduleSave = async (schedule: any[]) => {
+    try {
+      if (selectedSede) {
+        await pathService.createFrecuencias(schedule, selectedSede.id);
+        toast({
+          title: "Frecuencia guardada",
+          description: `Se configuraron ${schedule.length} asignaciones en el horario`,
+        })
+        loadData();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      });
+    }
+  }
 
   const columns: ColumnDef<Sede>[] = [
     {
@@ -181,6 +212,13 @@ export default function SedesPage() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => openScheduleDialog(sede)}
+            >
+              <CalendarDays className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => openLocationPicker(sede)}
               className={sede.lat ? "text-green-600" : "text-red-600"}
             >
@@ -194,7 +232,7 @@ export default function SedesPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(sede.id)}
-              className={sede.activo ? "text-red-600" : "text-green-600"}
+              className={sede.activo ? "text-green-600" : "text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>
@@ -262,6 +300,17 @@ export default function SedesPage() {
         initialLat={selectedSede?.lat}
         initialLng={selectedSede?.lon}
         onLocationConfirm={handleLocationConfirm}
+      />
+
+      {/* Diálogo de horario semanal */}
+      <WeeklyScheduleDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        title="Frecuencia de Recolección Semanal"
+        description="Configura los frecuencia de recolección para cada día de la semana"
+        availableItems={mockScheduleItems}
+        initialSchedule={scheduleData}
+        onSave={handleScheduleSave}
       />
     </div>
   );

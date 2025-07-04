@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, BarChart3, Search, Users } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -16,11 +15,12 @@ import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales"
+type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos"
 
 interface ParametrizationConfig {
   key: ParametrizationType
   title: string
+  singular_title: string
   description: string
   icon: React.ComponentType<{ className?: string }>
   color: string
@@ -30,16 +30,18 @@ interface ParametrizationConfig {
 const parametrizationConfigs: ParametrizationConfig[] = [
   {
     key: "poblados",
-    title: "Poblados",
-    description: "Gestiona los poblados y municipios disponibles",
-    icon: MapPin,
+    title: "Municipios",
+    singular_title: "Municipio",
+    description: "Administra los municipios disponibles",
+    icon: LocateFixed,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
   },
   {
     key: "oficinas",
-    title: "Oficinas",
-    description: "Administra las oficinas y sucursales",
+    title: "Plantas",
+    singular_title: "Planta",
+    description: "Administra las plantas disponibles",
     icon: Building,
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -47,7 +49,8 @@ const parametrizationConfigs: ParametrizationConfig[] = [
   {
     key: "generadores",
     title: "Generadores",
-    description: "Define los tipos de generadores de residuos",
+    singular_title: "Generador",
+    description: "Administra los tipos de generadores de residuos disponibles",
     icon: Zap,
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
@@ -55,7 +58,8 @@ const parametrizationConfigs: ParametrizationConfig[] = [
   {
     key: "periodos",
     title: "Periodos",
-    description: "Configura los periodos de recolección",
+    singular_title: "Periodo",
+    description: "Administra los periodos de recolección disponibles",
     icon: Clock,
     color: "text-purple-600",
     bgColor: "bg-purple-50",
@@ -63,10 +67,20 @@ const parametrizationConfigs: ParametrizationConfig[] = [
   {
     key: "comerciales",
     title: "Comerciales",
-    description: "Asigna empleados como representantes comerciales",
+    singular_title: "Comercial",
+    description: "Administra los representantes comerciales disponibles",
     icon: UserCheck,
     color: "text-indigo-600",
     bgColor: "bg-indigo-50",
+  },
+  {
+    key: "t_residuos",
+    title: "Tipos de Residuos",
+    singular_title: "Tipo de Residuo",
+    description: "Administra los tipos de residuos disponibles",
+    icon: Biohazard,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
   },
 ]
 
@@ -78,6 +92,7 @@ export default function ParametrizationsPage() {
   const [generadores, setGeneradores] = useState<Parametrizacion[]>([])
   const [periodos, setPeriodos] = useState<Parametrizacion[]>([])
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
+  const [t_residuos, setTResiduos] = useState<Parametrizacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
@@ -96,19 +111,21 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData] =
+      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData] =
         await Promise.all([
           parametrizationService.getLista("poblado"),
           parametrizationService.getLista("oficina"),
           parametrizationService.getLista("generador"),
           parametrizationService.getLista("periodo"),
           parametrizationService.getLista("comercial"),
+          parametrizationService.getLista("t_residuo"),
         ])
       setPoblados(pobladosData)
       setOficinas(oficinasData)
       setGeneradores(generadoresData)
       setPeriodos(periodosData)
       setComerciales(comercialesData)
+      setTResiduos(tResiduoData)
     } catch (error) {
       toast({
         title: "Error",
@@ -132,8 +149,29 @@ export default function ParametrizationsPage() {
         return periodos
       case "comerciales":
         return comerciales
+      case "t_residuos":
+        return t_residuos
       default:
         return []
+    }
+  }
+
+  const getLengthData = (config: ParametrizationConfig) => {
+    switch (config.key) {
+      case "poblados":
+        return poblados.length
+      case "oficinas":
+        return oficinas.length
+      case "generadores":
+        return generadores.length
+      case "periodos":
+        return periodos.length
+      case "comerciales":
+        return comerciales.length
+      case "t_residuos":
+        return t_residuos.length
+      default:
+        return 0
     }
   }
 
@@ -222,6 +260,10 @@ export default function ParametrizationsPage() {
         accessorKey: "nombre",
         header: "Nombre",
       },
+      {
+        accessorKey: "descripcion",
+        header: "Descripción",
+      },
     ]
 
     // Columna de estado
@@ -268,7 +310,7 @@ export default function ParametrizationsPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(item.id)}
-              className={item.activo ? "text-red-600" : "text-green-600"}
+              className={item.activo ? "text-green-600" : "text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>
@@ -324,22 +366,7 @@ export default function ParametrizationsPage() {
                         <config.icon className={`h-4 w-4 ${config.color}`} />
                         <span>{config.title}</span>
                         <Badge variant="outline" className="ml-auto">
-                          {(() => {
-                            switch (config.key) {
-                              case "poblados":
-                                return poblados.length
-                              case "oficinas":
-                                return oficinas.length
-                              case "generadores":
-                                return generadores.length
-                              case "periodos":
-                                return periodos.length
-                              case "comerciales":
-                                return comerciales.length
-                              default:
-                                return 0
-                            }
-                          })()}
+                          {getLengthData(config)}
                         </Badge>
                       </div>
                     </SelectItem>
@@ -367,7 +394,7 @@ export default function ParametrizationsPage() {
               <label className="text-sm font-medium text-gray-700 opacity-0">Acción</label>
               <Button onClick={() => handleCreate(selectedType)} className="bg-primary hover:bg-primary-hover">
                 <Plus className="mr-2 h-4 w-4" />
-                Nuevo {currentConfig.title.slice(0, -1)}
+                Nuevo {currentConfig.singular_title}
               </Button>
             </div>
           </div>

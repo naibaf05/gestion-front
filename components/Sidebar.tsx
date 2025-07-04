@@ -18,6 +18,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  Route,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -50,6 +51,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: "Clientes", href: "/dashboard/clients", icon: Building2 },
       { title: "Sedes", href: "/dashboard/sedes", icon: MapPin },
+      { title: "Rutas", href: "/dashboard/paths", icon: Route },
     ],
   },
   {

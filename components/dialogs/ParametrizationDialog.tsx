@@ -18,7 +18,7 @@ import { parametrizationService } from "@/services/parametrizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales";
+type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos";
 
 interface ParametrizationDialogProps {
   open: boolean;
@@ -118,6 +118,8 @@ export function ParametrizationDialog({
         return "periodo"
       case "comerciales":
         return "comercial"
+      case "t_residuos":
+        return "t_residuo"
       default:
         return "";
     }
@@ -130,6 +132,7 @@ export function ParametrizationDialog({
       generadores: "Generador",
       periodos: "Periodo",
       comerciales: "Comercial",
+      t_residuos: "Tipo de Residuo"
     };
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
   };
@@ -141,6 +144,7 @@ export function ParametrizationDialog({
       generadores: "generador",
       periodos: "periodo",
       comerciales: "comercial",
+      t_residuos: "tipo de residuo"
     };
     return item
       ? `Modifica los datos del ${descriptions[type]}`
@@ -172,6 +176,11 @@ export function ParametrizationDialog({
       comerciales: {
         nombre: "Nombre del comercial",
         codigo: "Código del comercial",
+        descripcion: "Descripción",
+      },
+      t_residuos: {
+        nombre: "Nombre del tipo de residuo",
+        codigo: "Código del tipo de residuo",
         descripcion: "Descripción",
       },
     };

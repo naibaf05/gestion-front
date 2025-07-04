@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { clientService } from "@/services/clientService"
-import type { Cliente, Poblado, Comercial } from "@/types"
+import type { Cliente, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
@@ -24,8 +24,8 @@ interface ClientDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   client?: Cliente | null
-  poblados: Poblado[]
-  comerciales: Comercial[]
+  poblados: Parametrizacion[]
+  comerciales: Parametrizacion[]
   onSuccess: () => void
 }
 

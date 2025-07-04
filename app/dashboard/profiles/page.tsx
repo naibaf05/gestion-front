@@ -52,19 +52,21 @@ export default function UsersPage() {
   }
 
   const handleToggleStatus = async (id: string) => {
-    try {
-      await userService.togglRolesStatus(id)
-      toast({
-        title: "Estado actualizado",
-        description: "El estado del estado ha sido actualizado",
-      })
-      loadData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado",
-        variant: "destructive",
-      })
+    if (confirm("¿Estás seguro de que deseas cambiar el estado a este perfil?")) {
+      try {
+        await userService.togglRolesStatus(id)
+        toast({
+          title: "Estado actualizado",
+          description: "El estado del estado ha sido actualizado",
+        })
+        loadData()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar el estado",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -102,7 +104,7 @@ export default function UsersPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(prof.id)}
-              className={prof.activo ? "text-red-600" : "text-green-600"}
+              className={prof.activo ? "text-green-600" : "text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>

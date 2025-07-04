@@ -35,49 +35,13 @@ export interface Profile {
 }
 
 // Tipos de parametrizaciones
-export interface Poblado {
-  id: string
-  nombre: string
-  codigo?: string
-  isActive: boolean
-}
-
 export interface Parametrizacion {
   id: string
   nombre: string
   codigo?: string
   descripcion?: string
   datosJson?: any
-  isActive: boolean
-}
-
-export interface Comercial {
-  id: string
-  nombre: string
-  codigo?: string
-  isActive: boolean
-}
-
-export interface Oficina {
-  id: string
-  nombre: string
-  direccion: string
-  telefono?: string
-  isActive: boolean
-}
-
-export interface Generador {
-  id: string
-  nombre: string
-  descripcion?: string
-  isActive: boolean
-}
-
-export interface Periodo {
-  id: string
-  nombre: string
-  descripcion?: string
-  isActive: boolean
+  activo: boolean
 }
 
 // Tipos de clientes y sedes
@@ -92,8 +56,8 @@ export interface Cliente {
   contacto: string
   pobladoId: string
   comercialId: string
-  poblado?: Poblado
-  comercial?: Comercial
+  poblado?: Parametrizacion
+  comercial?: Parametrizacion
   sedes?: Sede[]
   activo: boolean
   createdAt: string
@@ -114,15 +78,16 @@ export interface Sede {
   periodoId: string
   atencion: number
   cliente?: Cliente
-  poblado?: Poblado
-  oficina?: Oficina
-  generador?: Generador
-  periodo?: Periodo
+  poblado?: Parametrizacion
+  oficina?: Parametrizacion
+  generador?: Parametrizacion
+  periodo?: Parametrizacion
   activo: boolean
   createdAt: string
   updatedAt: string
   lat?: number
   lon?: number
+  frecuencias: any[]
 }
 
 // Tipos de configuración
@@ -147,4 +112,14 @@ export interface PaginatedResponse<T> {
   page: number
   limit: number
   totalPages: number
+}
+
+export interface Path {
+  id: string
+  codigo?: string
+  nombre: string
+  dia?: "l" | "m" | "x" | "j" | "v" | "s" | "d" | ""
+  oficinaId?: string
+  tResiduoId?: string
+  activo?: boolean
 }
