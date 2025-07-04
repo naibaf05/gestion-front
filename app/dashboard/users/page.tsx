@@ -159,7 +159,6 @@ export default function UsersPage() {
       </div>
 
       <Card>
-        <br></br>
         <CardContent>
           <DataTable columns={columns} data={users} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
         </CardContent>

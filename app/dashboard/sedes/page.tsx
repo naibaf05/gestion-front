@@ -232,7 +232,6 @@ export default function SedesPage() {
       </div>
 
       <Card>
-        <br></br>
         <CardContent>
           <DataTable
             columns={columns}

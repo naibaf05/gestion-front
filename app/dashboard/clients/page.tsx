@@ -187,7 +187,6 @@ export default function ClientsPage() {
       </div>
 
       <Card>
-        <br></br>
         <CardContent>
           <DataTable
             columns={columns}

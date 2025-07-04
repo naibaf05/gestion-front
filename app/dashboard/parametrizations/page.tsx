@@ -6,17 +6,73 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, BarChart3, Search, Users } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ParametrizationDialog } from "@/components/dialogs/ParametrizationDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales"
 
+interface ParametrizationConfig {
+  key: ParametrizationType
+  title: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+  bgColor: string
+}
+
+const parametrizationConfigs: ParametrizationConfig[] = [
+  {
+    key: "poblados",
+    title: "Poblados",
+    description: "Gestiona los poblados y municipios disponibles",
+    icon: MapPin,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+  },
+  {
+    key: "oficinas",
+    title: "Oficinas",
+    description: "Administra las oficinas y sucursales",
+    icon: Building,
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+  },
+  {
+    key: "generadores",
+    title: "Generadores",
+    description: "Define los tipos de generadores de residuos",
+    icon: Zap,
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50",
+  },
+  {
+    key: "periodos",
+    title: "Periodos",
+    description: "Configura los periodos de recolección",
+    icon: Clock,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+  },
+  {
+    key: "comerciales",
+    title: "Comerciales",
+    description: "Asigna empleados como representantes comerciales",
+    icon: UserCheck,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50",
+  },
+]
+
 export default function ParametrizationsPage() {
+  const [selectedType, setSelectedType] = useState<ParametrizationType>("poblados")
+  const [searchTerm, setSearchTerm] = useState("")
   const [poblados, setPoblados] = useState<Parametrizacion[]>([])
   const [oficinas, setOficinas] = useState<Parametrizacion[]>([])
   const [generadores, setGeneradores] = useState<Parametrizacion[]>([])
@@ -32,6 +88,10 @@ export default function ParametrizationsPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    setSearchTerm("")
+  }, [selectedType])
 
   const loadData = async () => {
     try {
@@ -58,6 +118,40 @@ export default function ParametrizationsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const getCurrentData = () => {
+    switch (selectedType) {
+      case "poblados":
+        return poblados
+      case "oficinas":
+        return oficinas
+      case "generadores":
+        return generadores
+      case "periodos":
+        return periodos
+      case "comerciales":
+        return comerciales
+      default:
+        return []
+    }
+  }
+
+  const getFilteredData = () => {
+    const data = getCurrentData()
+    if (!searchTerm) return data
+
+    return data.filter((item: any) => {
+      return (
+        item.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    })
+  }
+
+  const getCurrentConfig = () => {
+    return parametrizationConfigs.find((config) => config.key === selectedType)!
   }
 
   const handleCreate = (type: ParametrizationType) => {
@@ -197,143 +291,108 @@ export default function ParametrizationsPage() {
     )
   }
 
+  const currentConfig = getCurrentConfig()
+  const filteredData = getFilteredData()
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Parametrizaciones</h1>
-        <p className="text-gray-600">Gestiona las listas parametrizables del sistema</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Settings className="h-8 w-8" />
+            Parametrizaciones
+          </h1>
+          <p className="text-gray-600">Gestiona las configuraciones del sistema</p>
+        </div>
       </div>
 
-      <Tabs defaultValue="poblados" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="poblados">Municipios</TabsTrigger>
-          <TabsTrigger value="oficinas">Plantas</TabsTrigger>
-          <TabsTrigger value="generadores">Generadores</TabsTrigger>
-          <TabsTrigger value="periodos">Periodos</TabsTrigger>
-          <TabsTrigger value="comerciales">Comerciales</TabsTrigger>
-        </TabsList>
+      {/* Selector y Controles */}
+      <Card>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+            {/* Selector Principal */}
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium text-gray-700">Tipo de Parametrización</label>
+              <Select value={selectedType} onValueChange={(value: ParametrizationType) => setSelectedType(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecciona una parametrización" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parametrizationConfigs.map((config) => (
+                    <SelectItem key={config.key} value={config.key}>
+                      <div className="flex items-center gap-2">
+                        <config.icon className={`h-4 w-4 ${config.color}`} />
+                        <span>{config.title}</span>
+                        <Badge variant="outline" className="ml-auto">
+                          {(() => {
+                            switch (config.key) {
+                              case "poblados":
+                                return poblados.length
+                              case "oficinas":
+                                return oficinas.length
+                              case "generadores":
+                                return generadores.length
+                              case "periodos":
+                                return periodos.length
+                              case "comerciales":
+                                return comerciales.length
+                              default:
+                                return 0
+                            }
+                          })()}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <TabsContent value="poblados">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Municipios</CardTitle>
-                <CardDescription>Gestiona los municipios disponibles</CardDescription>
+            {/* Búsqueda */}
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium text-gray-700">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={`Buscar ${currentConfig.title.toLowerCase()}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
               </div>
-              <Button onClick={() => handleCreate("poblados")} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Poblado
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={createColumns("poblados")}
-                data={poblados}
-                searchKey="nombre"
-                searchPlaceholder="Buscar municipio..."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="oficinas">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Plantas</CardTitle>
-                <CardDescription>Gestiona las plantas disponibles</CardDescription>
-              </div>
-              <Button onClick={() => handleCreate("oficinas")} className="bg-primary hover:bg-primary-hover">
+            {/* Botón Crear */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 opacity-0">Acción</label>
+              <Button onClick={() => handleCreate(selectedType)} className="bg-primary hover:bg-primary-hover">
                 <Plus className="mr-2 h-4 w-4" />
-                Nueva Planta
+                Nuevo {currentConfig.title.slice(0, -1)}
               </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={createColumns("oficinas")}
-                data={oficinas}
-                searchKey="nombre"
-                searchPlaceholder="Buscar planta..."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="generadores">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Generadores</CardTitle>
-                <CardDescription>Gestiona los tipos de generadores</CardDescription>
-              </div>
-              <Button onClick={() => handleCreate("generadores")} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Generador
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={createColumns("generadores")}
-                data={generadores}
-                searchKey="nombre"
-                searchPlaceholder="Buscar generador..."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="periodos">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Periodos</CardTitle>
-                <CardDescription>Gestiona los periodos de recolección</CardDescription>
-              </div>
-              <Button onClick={() => handleCreate("periodos")} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Periodo
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={createColumns("periodos")}
-                data={periodos}
-                searchKey="nombre"
-                searchPlaceholder="Buscar periodo..."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="comerciales">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Comerciales</CardTitle>
-                <CardDescription>Gestiona los empleados asignados como comerciales</CardDescription>
-              </div>
-              <Button onClick={() => handleCreate("comerciales")} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Comercial
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={createColumns("comerciales")}
-                data={comerciales}
-                searchKey="nombre"
-                searchPlaceholder="Buscar comercial..."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Tabla de Datos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <currentConfig.icon className={`h-5 w-5 ${currentConfig.color}`} />
+            {currentConfig.title}
+          </CardTitle>
+          <CardDescription>{currentConfig.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable columns={createColumns(selectedType)} data={filteredData} searchKey="" searchPlaceholder="" />
+        </CardContent>
+      </Card>
 
       <ParametrizationDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={selectedItem}
-        type={currentType as Exclude<ParametrizationType, "comerciales">}
+        type={currentType}
         onSuccess={loadData}
       />
 
