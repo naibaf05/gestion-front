@@ -116,10 +116,9 @@ export interface PaginatedResponse<T> {
 
 export interface Path {
   id: string
-  codigo?: string
+  codigo: string
   nombre: string
-  dia?: "l" | "m" | "x" | "j" | "v" | "s" | "d" | ""
-  oficinaId?: string
-  tResiduoId?: string
+  dia: "l" | "m" | "x" | "j" | "v" | "s" | "d" | ""
+  oficinaId: string
   activo?: boolean
 }

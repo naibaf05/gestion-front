@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye, Route, Calendar, PowerSquare } from "lucide-react"
+import { Plus, Edit, Route, PowerSquare } from "lucide-react"
 import { pathService } from "@/services/pathService"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Path, Parametrizacion } from "@/types"
@@ -36,7 +36,6 @@ const DIAS_COLORS = {
 export default function RutasPage() {
     const [rutas, setRutas] = useState<Path[]>([])
     const [oficinas, setOficinas] = useState<Parametrizacion[]>([])
-    const [tiposResiduo, setTiposResiduo] = useState<Parametrizacion[]>([])
     const [loading, setLoading] = useState(true)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedRuta, setSelectedRuta] = useState<Path | null>(null)
@@ -49,14 +48,13 @@ export default function RutasPage() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [rutasData, oficinasData, tiposResiduoData] = await Promise.all([
+            const [rutasData, oficinasData] = await Promise.all([
                 pathService.getData(1, 100),
                 parametrizationService.getListaActivos("oficina"),
                 parametrizationService.getListaActivos("t_residuo"),
             ])
             setRutas(rutasData.data)
             setOficinas(oficinasData)
-            setTiposResiduo(tiposResiduoData)
         } catch (error) {
             toast({
                 title: "Error",
@@ -138,24 +136,10 @@ export default function RutasPage() {
         },
         {
             accessorKey: "oficina",
-            header: "Oficina",
+            header: "Planta",
             cell: ({ row }) => {
                 const oficina = oficinas.find((o) => o.id === row.original.oficinaId)
                 return oficina?.nombre || "N/A"
-            },
-        },
-        {
-            accessorKey: "tipoResiduo",
-            header: "Tipo de Residuo",
-            cell: ({ row }) => {
-                const tipoResiduo = tiposResiduo.find((t) => t.id === row.original.tResiduoId)
-                return tipoResiduo ? (
-                    <div className="flex items-center gap-2">
-                        <span>{tipoResiduo.nombre}</span>
-                    </div>
-                ) : (
-                    "N/A"
-                )
             },
         },
         {
@@ -237,7 +221,6 @@ export default function RutasPage() {
                 onOpenChange={setDialogOpen}
                 ruta={selectedRuta}
                 oficinas={oficinas}
-                tiposResiduo={tiposResiduo}
                 onSuccess={loadData}
             />
         </div>

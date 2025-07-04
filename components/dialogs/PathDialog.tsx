@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,7 +23,6 @@ interface PathDialogProps {
   onOpenChange: (open: boolean) => void
   ruta?: Path | null
   oficinas: Parametrizacion[]
-  tiposResiduo: Parametrizacion[]
   onSuccess: () => void
 }
 
@@ -38,7 +36,7 @@ const DIAS_SEMANA = [
   { value: "d", label: "Domingo" },
 ]
 
-export function PathDialog({ open, onOpenChange, ruta, oficinas, tiposResiduo, onSuccess }: PathDialogProps) {
+export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: PathDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     id: "",
@@ -46,7 +44,6 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, tiposResiduo, o
     nombre: "",
     dia: "" as "" | "l" | "m" | "x" | "j" | "v" | "s" | "d",
     oficinaId: "",
-    tResiduoId: "",
   })
   const { toast } = useToast()
 
@@ -58,7 +55,6 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, tiposResiduo, o
         nombre: ruta.nombre,
         dia: ruta.dia,
         oficinaId: ruta.oficinaId,
-        tResiduoId: ruta.tResiduoId,
       })
     } else {
       setFormData({
@@ -67,7 +63,6 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, tiposResiduo, o
         nombre: "",
         dia: "",
         oficinaId: "",
-        tResiduoId: "",
       })
     }
   }, [ruta, open])
@@ -162,43 +157,19 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, tiposResiduo, o
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="oficina">Oficina *</Label>
+                <Label htmlFor="oficina">Planta *</Label>
                 <Select
                   value={formData.oficinaId ? String(formData.oficinaId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, oficinaId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una oficina" />
+                    <SelectValue placeholder="Selecciona una planta" />
                   </SelectTrigger>
                   <SelectContent>
                     {oficinas
                       .map((oficina) => (
                         <SelectItem key={oficina.id} value={String(oficina.id)}>
                           {oficina.nombre}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipoResiduo">Tipo de Residuo *</Label>
-                <Select
-                  value={formData.tResiduoId ? String(formData.tResiduoId) : ""}
-                  onValueChange={(value) => setFormData({ ...formData, tResiduoId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tipo de residuo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposResiduo
-                      .map((tipo) => (
-                        <SelectItem key={tipo.id} value={String(tipo.id)}>
-                          <div className="flex items-center gap-2">
-                            <span>{tipo.nombre}</span>
-                          </div>
                         </SelectItem>
                       ))}
                   </SelectContent>
