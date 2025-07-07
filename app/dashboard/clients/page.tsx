@@ -20,6 +20,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Cliente[]>([]);
   const [poblados, setPoblados] = useState<Parametrizacion[]>([]);
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([]);
+  const [tClientes, setTClientes] = useState<Parametrizacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
@@ -32,14 +33,16 @@ export default function ClientsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [clientsData, pobladosData, comercialesData] = await Promise.all([
+      const [clientsData, pobladosData, comercialesData, tClientesData] = await Promise.all([
         clientService.getClientes(1, 100),
         parametrizationService.getListaActivos("poblado"),
         parametrizationService.getListaActivos("comercial"),
+        parametrizationService.getListaActivos("t_cliente"), 
       ]);
       setClients(clientsData.data);
       setPoblados(pobladosData);
       setComerciales(comercialesData);
+      setTClientes(tClientesData);
     } catch (error) {
       toast({
         title: "Error",
@@ -202,6 +205,7 @@ export default function ClientsPage() {
         client={selectedClient}
         poblados={poblados}
         comerciales={comerciales}
+        tClientes={tClientes}
         onSuccess={loadData}
       />
     </div>

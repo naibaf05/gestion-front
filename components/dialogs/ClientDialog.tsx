@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -15,10 +14,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { clientService } from "@/services/clientService"
 import type { Cliente, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { Card, CardContent } from "../ui/card"
+import { SelectMultiple } from "@/components/ui/select-multiple"
 
 interface ClientDialogProps {
   open: boolean
@@ -26,10 +28,11 @@ interface ClientDialogProps {
   client?: Cliente | null
   poblados: Parametrizacion[]
   comerciales: Parametrizacion[]
+  tClientes: Parametrizacion[]
   onSuccess: () => void
 }
 
-export function ClientDialog({ open, onOpenChange, client, poblados, comerciales, onSuccess }: ClientDialogProps) {
+export function ClientDialog({ open, onOpenChange, client, poblados, comerciales, tClientes, onSuccess }: ClientDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     nombre: "",
@@ -41,6 +44,10 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
     contacto: "",
     pobladoId: "",
     comercialId: "",
+    fechaCierreFacturacion: "",
+    correo: "",
+    correoFacturacion: "",
+    tiposClienteIds: [] as string[],
   })
   const { toast } = useToast()
 
@@ -56,6 +63,10 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         contacto: client.contacto,
         pobladoId: client.pobladoId,
         comercialId: client.comercialId,
+        fechaCierreFacturacion: client.fechaCierreFacturacion || "",
+        correo: client.correo || "",
+        correoFacturacion: client.correoFacturacion || "",
+        tiposClienteIds: client.tiposClienteIds || [],
       })
     } else {
       setFormData({
@@ -68,6 +79,10 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         contacto: "",
         pobladoId: "",
         comercialId: "",
+        fechaCierreFacturacion: "",
+        correo: "",
+        correoFacturacion: "",
+        tiposClienteIds: [],
       })
     }
   }, [client, open])
@@ -82,12 +97,14 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         toast({
           title: "Cliente actualizado",
           description: "El cliente ha sido actualizado exitosamente",
+          variant: "success",
         })
       } else {
         await clientService.createCliente(formData)
         toast({
           title: "Cliente creado",
           description: "El cliente ha sido creado exitosamente",
+          variant: "success",
         })
       }
       onSuccess()
@@ -105,124 +122,224 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[750px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{client ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre *</Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nit">NIT *</Label>
-                <Input
-                  id="nit"
-                  value={formData.nit}
-                  onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
+          <Tabs defaultValue="basica">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="basica">Basica</TabsTrigger>
+              <TabsTrigger value="adicional">Adicional</TabsTrigger>
+            </TabsList>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="contacto">Contacto *</Label>
-                <Input
-                  id="contacto"
-                  value={formData.contacto}
-                  onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfono *</Label>
-                <Input
-                  id="telefono"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
+            <TabsContent value="basica">
+              <Card>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nombre">
+                          Nombre <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="nombre"
+                          value={formData.nombre}
+                          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nit">
+                          NIT <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="nit"
+                          value={formData.nit}
+                          onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={20}
+                        />
+                      </div>
+                    </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="direccion">Dirección *</Label>
-              <Input
-                id="direccion"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                required
-              />
-            </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="contacto">
+                          Contacto <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="contacto"
+                          value={formData.contacto}
+                          onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="telefono">
+                          Teléfono <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="telefono"
+                          value={formData.telefono}
+                          onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={20}
+                        />
+                      </div>
+                    </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="barrio">Barrio *</Label>
-                <Input
-                  id="barrio"
-                  value={formData.barrio}
-                  onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fechaRenovacion">Fecha de Renovación</Label>
-                <Input
-                  id="fechaRenovacion"
-                  type="date"
-                  value={formData.fechaRenovacion}
-                  onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
-                />
-              </div>
-            </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="direccion">
+                          Dirección <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="direccion"
+                          value={formData.direccion}
+                          onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={200}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="barrio">
+                          Barrio <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="barrio"
+                          value={formData.barrio}
+                          onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="poblado">Municipio *</Label>
-                <Select
-                  value={formData.pobladoId ? String(formData.pobladoId) : ""}
-                  onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un poblado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {poblados.map((poblado) => (
-                      <SelectItem key={poblado.id} value={String(poblado.id)}>
-                        {poblado.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="comercial">Comercial *</Label>
-                <Select
-                  value={formData.comercialId ? String(formData.comercialId) : ""}
-                  onValueChange={(value) => setFormData({ ...formData, comercialId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un comercial" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {comerciales.map((comercial) => (
-                      <SelectItem key={comercial.id} value={String(comercial.id)}>
-                        {comercial.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="poblado">
+                          Municipio <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={formData.pobladoId ? String(formData.pobladoId) : ""}
+                          onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un municipio" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {poblados.map((poblado) => (
+                              <SelectItem key={poblado.id} value={String(poblado.id)}>
+                                {poblado.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="comercial">
+                          Comercial <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={formData.comercialId ? String(formData.comercialId) : ""}
+                          onValueChange={(value) => setFormData({ ...formData, comercialId: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un comercial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {comerciales.map((comercial) => (
+                              <SelectItem key={comercial.id} value={String(comercial.id)}>
+                                {comercial.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="adicional">
+              <Card>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fechaRenovacion">Fecha de Renovación</Label>
+                        <Input
+                          id="fechaRenovacion"
+                          type="date"
+                          value={formData.fechaRenovacion}
+                          onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fechaCierreFacturacion">Fecha Cierre Facturación</Label>
+                        <Input
+                          id="fechaCierreFacturacion"
+                          type="date"
+                          value={formData.fechaCierreFacturacion}
+                          onChange={(e) => setFormData({ ...formData, fechaCierreFacturacion: e.target.value })}
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="correo">Correo</Label>
+                        <Input
+                          id="correo"
+                          type="email"
+                          value={formData.correo}
+                          onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="correoFacturacion">Correo Facturación</Label>
+                        <Input
+                          id="correoFacturacion"
+                          type="email"
+                          value={formData.correoFacturacion}
+                          onChange={(e) => setFormData({ ...formData, correoFacturacion: e.target.value })}
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tiposCliente">Tipo de Cliente</Label>
+                        <SelectMultiple
+                          options={tClientes.map(tc => ({ value: tc.id, label: tc.nombre }))}
+                          value={formData.tiposClienteIds}
+                          onChange={selected => setFormData({ ...formData, tiposClienteIds: selected })}
+                          placeholder="Selecciona tipos de cliente"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar

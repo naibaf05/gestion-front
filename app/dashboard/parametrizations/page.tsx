@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -15,7 +15,7 @@ import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos"
+type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes"
 
 interface ParametrizationConfig {
   key: ParametrizationType
@@ -82,6 +82,15 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     color: "text-blue-600",
     bgColor: "bg-blue-50",
   },
+  {
+    key: "t_clientes",
+    title: "Tipos de Clientes",
+    singular_title: "Tipo de Cliente",
+    description: "Administra los tipos de clientes disponibles",
+    icon: TableProperties,
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+  },
 ]
 
 export default function ParametrizationsPage() {
@@ -93,6 +102,7 @@ export default function ParametrizationsPage() {
   const [periodos, setPeriodos] = useState<Parametrizacion[]>([])
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
   const [t_residuos, setTResiduos] = useState<Parametrizacion[]>([])
+  const [t_clientes, setTClientes] = useState<Parametrizacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
@@ -111,7 +121,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData] =
+      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData] =
         await Promise.all([
           parametrizationService.getLista("poblado"),
           parametrizationService.getLista("oficina"),
@@ -119,6 +129,7 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("periodo"),
           parametrizationService.getLista("comercial"),
           parametrizationService.getLista("t_residuo"),
+          parametrizationService.getLista("t_cliente"),
         ])
       setPoblados(pobladosData)
       setOficinas(oficinasData)
@@ -126,6 +137,7 @@ export default function ParametrizationsPage() {
       setPeriodos(periodosData)
       setComerciales(comercialesData)
       setTResiduos(tResiduoData)
+      setTClientes(tClientesData)
     } catch (error) {
       toast({
         title: "Error",
@@ -151,6 +163,8 @@ export default function ParametrizationsPage() {
         return comerciales
       case "t_residuos":
         return t_residuos
+      case "t_clientes":
+        return t_clientes
       default:
         return []
     }
@@ -170,6 +184,8 @@ export default function ParametrizationsPage() {
         return comerciales.length
       case "t_residuos":
         return t_residuos.length
+      case "t_clientes":
+        return t_clientes.length
       default:
         return 0
     }
@@ -229,7 +245,7 @@ export default function ParametrizationsPage() {
     setLocationDialogOpen(true);
   };
 
-  const handleLocationConfirm = (
+  const handleLocationConfirm = async (
     lat: number,
     lng: number,
     address?: string
@@ -242,7 +258,8 @@ export default function ParametrizationsPage() {
       }
       item.datosJson = JSON.stringify(datos);
       setSelectedItem(item);
-      parametrizationService.updateDatosJson(item.id, item);
+      await parametrizationService.updateDatosJson(item.id, item);
+      loadData();
     }
     toast({
       title: "Ubicación seleccionada",

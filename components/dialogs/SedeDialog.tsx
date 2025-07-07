@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -15,9 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { clientService } from "@/services/clientService"
-import type { Sede, Cliente, Poblado, Oficina, Generador, Periodo, Parametrizacion } from "@/types"
+import type { Sede, Cliente, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { SelectMultiple } from "../ui/select-multiple"
 
 interface SedeDialogProps {
   open: boolean
@@ -49,7 +49,7 @@ export function SedeDialog({
     barrio: "",
     direccion: "",
     pobladoId: "",
-    oficinaId: "",
+    oficinaId: [] as string[],
     email: "",
     telefono: "",
     generadorId: "",
@@ -80,7 +80,7 @@ export function SedeDialog({
         barrio: "",
         direccion: "",
         pobladoId: "",
-        oficinaId: "",
+        oficinaId: [],
         email: "",
         telefono: "",
         generadorId: "",
@@ -184,13 +184,13 @@ export function SedeDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="poblado">Poblado *</Label>
+                <Label htmlFor="poblado">Municipio *</Label>
                 <Select
                   value={formData.pobladoId ? String(formData.pobladoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un poblado" />
+                    <SelectValue placeholder="Selecciona un municipio" />
                   </SelectTrigger>
                   <SelectContent>
                     {poblados.map((poblado) => (
@@ -229,22 +229,13 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="oficina">Oficina *</Label>
-                <Select
-                  value={formData.oficinaId ? String(formData.oficinaId) : ""}
-                  onValueChange={(value) => setFormData({ ...formData, oficinaId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una oficina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {oficinas.map((oficina) => (
-                      <SelectItem key={oficina.id} value={String(oficina.id)}>
-                        {oficina.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="oficina">Planta *</Label>
+                <SelectMultiple
+                  options={oficinas.map(tc => ({ value: tc.id, label: tc.nombre }))}
+                  value={formData.oficinaId}
+                  onChange={selected => setFormData({ ...formData, oficinaId: selected })}
+                  placeholder="Selecciona plantas"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="generador">Generador *</Label>

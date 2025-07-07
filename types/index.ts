@@ -60,8 +60,10 @@ export interface Cliente {
   comercial?: Parametrizacion
   sedes?: Sede[]
   activo: boolean
-  createdAt: string
-  updatedAt: string
+  fechaCierreFacturacion?: string
+  correo?: string
+  correoFacturacion?: string
+  tiposClienteIds?: string[]
 }
 
 export interface Sede {
@@ -71,7 +73,7 @@ export interface Sede {
   barrio: string
   direccion: string
   pobladoId: string
-  oficinaId: string
+  oficinaId: string[]
   email: string
   telefono: string
   generadorId: string

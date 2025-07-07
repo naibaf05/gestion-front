@@ -211,11 +211,59 @@ export function MapPicker({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Latitud</Label>
-            <Input value={currentLat.toFixed(6)} readOnly className="bg-gray-50" />
+            <Input
+              value={currentLat}
+              onChange={(e) => setCurrentLat(Number(e.target.value))}
+              onBlur={() => {
+                if (mapInstanceRef.current && markerRef.current) {
+                  mapInstanceRef.current.setView([currentLat, currentLng], 15)
+                  markerRef.current.setLatLng([currentLat, currentLng])
+                  onLocationSelect(currentLat, currentLng)
+                  reverseGeocode(currentLat, currentLng)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (mapInstanceRef.current && markerRef.current) {
+                    mapInstanceRef.current.setView([currentLat, currentLng], 15)
+                    markerRef.current.setLatLng([currentLat, currentLng])
+                    onLocationSelect(currentLat, currentLng)
+                    reverseGeocode(currentLat, currentLng)
+                  }
+                }
+              }}
+              className="bg-gray-50"
+              type="number"
+              step="any"
+            />
           </div>
           <div>
             <Label>Longitud</Label>
-            <Input value={currentLng.toFixed(6)} readOnly className="bg-gray-50" />
+            <Input
+              value={currentLng}
+              onChange={(e) => setCurrentLng(Number(e.target.value))}
+              onBlur={() => {
+                if (mapInstanceRef.current && markerRef.current) {
+                  mapInstanceRef.current.setView([currentLat, currentLng], 15)
+                  markerRef.current.setLatLng([currentLat, currentLng])
+                  onLocationSelect(currentLat, currentLng)
+                  reverseGeocode(currentLat, currentLng)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (mapInstanceRef.current && markerRef.current) {
+                    mapInstanceRef.current.setView([currentLat, currentLng], 15)
+                    markerRef.current.setLatLng([currentLat, currentLng])
+                    onLocationSelect(currentLat, currentLng)
+                    reverseGeocode(currentLat, currentLng)
+                  }
+                }
+              }}
+              className="bg-gray-50"
+              type="number"
+              step="any"
+            />
           </div>
         </div>
       </div>

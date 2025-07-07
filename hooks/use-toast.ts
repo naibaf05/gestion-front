@@ -10,7 +10,7 @@ type ToasterToast = {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactElement
-  variant?: "default" | "destructive"
+  variant?: "default" | "destructive" | "success" | "warning" | "error"
 }
 
 const actionTypes = {
@@ -148,10 +148,6 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
     },
   })
 
