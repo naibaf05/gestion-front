@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2 } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -15,7 +15,7 @@ import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes"
+type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores"
 
 interface ParametrizationConfig {
   key: ParametrizationType
@@ -91,6 +91,24 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     color: "text-green-600",
     bgColor: "bg-green-50",
   },
+  {
+    key: "und_medidas",
+    title: "Unidades de Medida",
+    singular_title: "Unidad de Medida",
+    description: "Administra las unidades de medida disponibles",
+    icon: PencilRuler,
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50",
+  },
+  {
+    key: "contenedores",
+    title: "Contenedores",
+    singular_title: "Contenedor",
+    description: "Administra los contenedores disponibles",
+    icon: Trash2,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+  },
 ]
 
 export default function ParametrizationsPage() {
@@ -103,6 +121,8 @@ export default function ParametrizationsPage() {
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
   const [t_residuos, setTResiduos] = useState<Parametrizacion[]>([])
   const [t_clientes, setTClientes] = useState<Parametrizacion[]>([])
+  const [und_medidas, setUndMedidas] = useState<Parametrizacion[]>([])
+  const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
@@ -121,7 +141,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData] =
+      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData] =
         await Promise.all([
           parametrizationService.getLista("poblado"),
           parametrizationService.getLista("oficina"),
@@ -130,6 +150,8 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("comercial"),
           parametrizationService.getLista("t_residuo"),
           parametrizationService.getLista("t_cliente"),
+          parametrizationService.getLista("und_medida"),
+          parametrizationService.getLista("contenedor"),
         ])
       setPoblados(pobladosData)
       setOficinas(oficinasData)
@@ -138,6 +160,8 @@ export default function ParametrizationsPage() {
       setComerciales(comercialesData)
       setTResiduos(tResiduoData)
       setTClientes(tClientesData)
+      setUndMedidas(undMedidasData)
+      setContenedores(contenedoresData)
     } catch (error) {
       toast({
         title: "Error",
@@ -165,6 +189,10 @@ export default function ParametrizationsPage() {
         return t_residuos
       case "t_clientes":
         return t_clientes
+      case "und_medidas":
+        return und_medidas
+      case "contenedores":
+        return contenedores
       default:
         return []
     }
@@ -186,6 +214,10 @@ export default function ParametrizationsPage() {
         return t_residuos.length
       case "t_clientes":
         return t_clientes.length
+      case "und_medidas":
+        return und_medidas.length
+      case "contenedores":
+        return contenedores.length
       default:
         return 0
     }

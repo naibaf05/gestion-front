@@ -34,7 +34,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       const updatedConfig = { ...config, ...newConfig }
       setConfig(updatedConfig)
     } catch (error) {
-      console.error("Error updating config:", error)
+      console.error("Error updating config: ", error)
       throw error
     }
   }

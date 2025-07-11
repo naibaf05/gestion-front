@@ -87,8 +87,6 @@ export function WeeklyScheduleDialog({
     const handleItemSelect = (item: ScheduleItem) => {
         if (!selectedCell) return
 
-        console.log("Seleccionando item:", item, "para celda:", selectedCell)
-
         setSchedule((prev) =>
             prev.map((cell) => {
                 if (cell.week === selectedCell.week && cell.day === selectedCell.day) {

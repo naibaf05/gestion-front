@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authService.logout()
     } catch (error) {
-      console.error("Error during logout:", error)
+      console.error("Error during logout: ", error)
     } finally {
       setUser(null)
       router.push("/login")

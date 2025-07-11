@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays } from "lucide-react";
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarSign } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { pathService } from "@/services/pathService";
 import { parametrizationService } from "@/services/parametrizationService";
@@ -19,6 +19,9 @@ import { SedeDialog } from "@/components/dialogs/SedeDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog";
 import { WeeklyScheduleDialog } from "@/components/dialogs/WeeklyScheduleDialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { RatesDialog } from "@/components/dialogs/RatesDialog";
 
 export default function SedesPage() {
   const [sedes, setSedes] = useState<Sede[]>([]);
@@ -30,7 +33,8 @@ export default function SedesPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [ratesDialogOpen, setRatesDialogOpen] = useState(false);
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
@@ -136,6 +140,11 @@ export default function SedesPage() {
     setScheduleDialogOpen(true)
   }
 
+  const openRatesDialog = (sede: Sede) => {
+    setSelectedSede(sede);
+    setRatesDialogOpen(true);
+  }
+
   const handleScheduleSave = async (schedule: any[]) => {
     try {
       if (selectedSede) {
@@ -205,38 +214,64 @@ export default function SedesPage() {
       cell: ({ row }) => {
         const sede = row.original;
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(sede)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openScheduleDialog(sede)}
-            >
-              <CalendarDays className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openLocationPicker(sede)}
-              className={sede.lat ? "text-green-600" : "text-red-600"}
-            >
-              {sede.lat ? (
-                <MapPin className="h-4 w-4" />
-              ) : (
-                <MapPinOff className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(sede.id)}
-              className={sede.activo ? "text-green-600" : "text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(sede)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Editar</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleStatus(sede.id)}
+                    className={sede.activo ? "text-green-600" : "text-red-600"}
+                  >
+                    <PowerSquare className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{sede.activo ? "Desactivar" : "Activar"}</TooltipContent>
+              </Tooltip>
+              <DropdownMenu>
+                <Tooltip>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <span className="sr-only">Más acciones</span>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="2" fill="currentColor" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <circle cx="19" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <TooltipContent>Más acciones</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => openScheduleDialog(sede)}>
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Frecuencias
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openLocationPicker(sede)}>
+                    {sede.lat ? (
+                      <MapPin className="h-4 w-4 mr-2 text-green-600" />
+                    ) : (
+                      <MapPinOff className="h-4 w-4 mr-2 text-red-600" />
+                    )}
+                    Ubicación
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openRatesDialog(sede)}>
+                    <CircleDollarSign className="h-4 w-4 mr-2" />
+                    Tarifas
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </TooltipProvider>
         );
       },
     },
@@ -311,6 +346,12 @@ export default function SedesPage() {
         availableItems={mockScheduleItems}
         initialSchedule={scheduleData}
         onSave={handleScheduleSave}
+      />
+
+      <RatesDialog
+        open={ratesDialogOpen}
+        onOpenChange={setRatesDialogOpen}
+        sede={selectedSede}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent } from "../ui/card"
 import { SelectMultiple } from "@/components/ui/select-multiple"
+import { InputPositiveInteger } from "../ui/input-positive-integer"
 
 interface ClientDialogProps {
   open: boolean
@@ -48,6 +49,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
     correo: "",
     correoFacturacion: "",
     tiposClienteIds: [] as string[],
+    datosJson: {} as any,
   })
   const { toast } = useToast()
 
@@ -67,6 +69,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         correo: client.correo || "",
         correoFacturacion: client.correoFacturacion || "",
         tiposClienteIds: client.tiposClienteIds || [],
+        datosJson: client.datosJson || {},
       })
     } else {
       setFormData({
@@ -83,6 +86,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         correo: "",
         correoFacturacion: "",
         tiposClienteIds: [],
+        datosJson: {},
       })
     }
   }, [client, open])
@@ -168,6 +172,18 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
+                        <Label htmlFor="nombreComercial">
+                          Nombre Comercial
+                        </Label>
+                        <Input
+                          id="nombreComercial"
+                          value={formData.datosJson?.nombreComercial || ""}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, nombreComercial: e.target.value } })}
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="contacto">
                           Contacto <span className="text-red-500">*</span>
                         </Label>
@@ -175,6 +191,36 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           id="contacto"
                           value={formData.contacto}
                           onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                          required
+                          autoComplete="off"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="direccion">
+                        Dirección <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="direccion"
+                        value={formData.direccion}
+                        onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                        required
+                        autoComplete="off"
+                        maxLength={200}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="barrio">
+                          Barrio <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="barrio"
+                          value={formData.barrio}
+                          onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
                           required
                           autoComplete="off"
                           maxLength={100}
@@ -191,35 +237,6 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={20}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="direccion">
-                          Dirección <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id="direccion"
-                          value={formData.direccion}
-                          onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                          required
-                          autoComplete="off"
-                          maxLength={200}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="barrio">
-                          Barrio <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id="barrio"
-                          value={formData.barrio}
-                          onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
-                          required
-                          autoComplete="off"
-                          maxLength={100}
                         />
                       </div>
                     </div>
@@ -291,8 +308,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <Input
                           id="fechaCierreFacturacion"
                           type="date"
-                          value={formData.fechaCierreFacturacion}
-                          onChange={(e) => setFormData({ ...formData, fechaCierreFacturacion: e.target.value })}
+                          value={formData.datosJson.fechaCierreFacturacion}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaCierreFacturacion: e.target.value } })}
                           autoComplete="off"
                         />
                       </div>
@@ -304,8 +321,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <Input
                           id="correo"
                           type="email"
-                          value={formData.correo}
-                          onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
+                          value={formData.datosJson.correo}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, correo: e.target.value } })}
                           autoComplete="off"
                           maxLength={100}
                         />
@@ -315,8 +332,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <Input
                           id="correoFacturacion"
                           type="email"
-                          value={formData.correoFacturacion}
-                          onChange={(e) => setFormData({ ...formData, correoFacturacion: e.target.value })}
+                          value={formData.datosJson.correoFacturacion}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, correoFacturacion: e.target.value } })}
                           autoComplete="off"
                           maxLength={100}
                         />
@@ -331,6 +348,26 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           value={formData.tiposClienteIds}
                           onChange={selected => setFormData({ ...formData, tiposClienteIds: selected })}
                           placeholder="Selecciona tipos de cliente"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contratoComodato">Contrato Comodato</Label>
+                        <InputPositiveInteger
+                          value={formData.datosJson.contratoComodato}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, contratoComodato: e.target.value } })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fechaVencimientoContrato">Fecha Vencimiento Contrato</Label>
+                        <Input
+                          id="fechaVencimientoContrato"
+                          type="date"
+                          value={formData.datosJson.fechaVencimientoContrato}
+                          onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaVencimientoContrato: e.target.value } })}
+                          autoComplete="off"
                         />
                       </div>
                     </div>

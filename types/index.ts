@@ -64,6 +64,7 @@ export interface Cliente {
   correo?: string
   correoFacturacion?: string
   tiposClienteIds?: string[]
+  datosJson?: any
 }
 
 export interface Sede {
@@ -123,4 +124,27 @@ export interface Path {
   dia: "l" | "m" | "x" | "j" | "v" | "s" | "d" | ""
   oficinaId: string
   activo?: boolean
+}
+
+export interface Vehicle {
+  id: string;
+  oficinaId: string;
+  oficinaNombre?: string;
+  interno: string;
+  placa: string;
+  conductorId: string;
+  conductorNombre?: string;
+  activo: boolean;
+}
+
+export interface Rate {
+  id: string
+  sedeId: string
+  sedeNombre?: string
+  undMedidaId: string
+  undMedidaNombre?: string
+  tarifa: string
+  fechaInicio: string
+  fechaFin?: string
+  activo: boolean
 }

@@ -45,8 +45,6 @@ export function ItemSelectorDialog({
         }
     }, [open])
 
-    console.log("Available items:", availableItems)
-    console.log("Search term:", selectDay)
     // Filtrar elementos disponibles
     const filteredItems = availableItems.filter(
         (item) =>

@@ -111,7 +111,7 @@ export function MapPicker({
         onLocationSelect(lat, lng, data.display_name)
       }
     } catch (error) {
-      console.error("Error en geocodificación inversa:", error)
+      console.error("Error en geocodificación inversa: ", error)
     }
   }
 
@@ -142,7 +142,7 @@ export function MapPicker({
         onLocationSelect(newLat, newLng, data[0].display_name)
       }
     } catch (error) {
-      console.error("Error en búsqueda:", error)
+      console.error("Error en búsqueda: ", error)
     } finally {
       setIsSearching(false)
     }
@@ -166,7 +166,7 @@ export function MapPicker({
           reverseGeocode(latitude, longitude)
         },
         (error) => {
-          console.error("Error obteniendo ubicación:", error)
+          console.error("Error obteniendo ubicación: ", error)
         },
       )
     }

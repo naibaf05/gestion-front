@@ -6,20 +6,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import {
-  Users,
-  Building2,
-  Settings,
-  Home,
-  UserCheck,
-  MapPin,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Route,
-} from "lucide-react"
+import { Users, Building2, Settings, Home, UserCheck, MapPin, LogOut, Menu, X, ChevronDown, ChevronRight, Route, FolderCog, Car, CalendarSearch, CalendarRange, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -38,11 +25,13 @@ const menuItems: MenuItem[] = [
     icon: Home,
   },
   {
-    title: "Usuarios",
-    icon: Users,
+    title: "General",
+    icon: FolderCog,
     children: [
       { title: "Usuarios", href: "/dashboard/users", icon: Users },
-      { title: "Perfiles", href: "/dashboard/profiles", icon: UserCheck, requiredRole: "ADMIN" },
+      { title: "Perfiles", href: "/dashboard/profiles", icon: UserCheck },
+      { title: "Rutas", href: "/dashboard/paths", icon: Route },
+      { title: "Vehículos", href: "/dashboard/vehicles", icon: Car },
     ],
   },
   {
@@ -51,7 +40,14 @@ const menuItems: MenuItem[] = [
     children: [
       { title: "Clientes", href: "/dashboard/clients", icon: Building2 },
       { title: "Sedes", href: "/dashboard/sedes", icon: MapPin },
-      { title: "Rutas", href: "/dashboard/paths", icon: Route },
+    ],
+  },
+  {
+    title: "Programación",
+    icon: CalendarSearch,
+    children: [
+      { title: "Administración", href: "/dashboard/users", icon: ShieldCheck },
+      { title: "Programación", href: "/dashboard/progs", icon: CalendarRange },
     ],
   },
   {

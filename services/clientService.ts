@@ -11,6 +11,15 @@ export class ClientService {
     })
 
     const response = await apiService.get<ApiResponse<PaginatedResponse<Cliente>>>(`/clientes?${params}`)
+
+    response.data.data.forEach((element) => {
+      if (element.datosJson && typeof element.datosJson === "string") {
+        element.datosJson = JSON.parse(element.datosJson);
+        if (element.datosJson.tiposClienteIds) {
+          element.tiposClienteIds = element.datosJson.tiposClienteIds;
+        }
+      }
+    });
     return response.data
   }
 
@@ -20,11 +29,15 @@ export class ClientService {
   }
 
   async createCliente(cliente: Partial<Cliente>): Promise<Cliente> {
+    cliente.datosJson.tiposClienteIds = cliente.tiposClienteIds;
+    cliente.datosJson = JSON.stringify(cliente.datosJson); 
     const response = await apiService.post<ApiResponse<Cliente>>("/clientes", cliente)
     return response.data
   }
 
   async updateCliente(id: string, cliente: Partial<Cliente>): Promise<Cliente> {
+    cliente.datosJson.tiposClienteIds = cliente.tiposClienteIds;
+    cliente.datosJson = JSON.stringify(cliente.datosJson);    
     const response = await apiService.put<ApiResponse<Cliente>>(`/clientes/${id}`, cliente)
     return response.data
   }

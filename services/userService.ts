@@ -13,6 +13,11 @@ export class UserService {
     return response.data
   }
 
+  async getUsersActivos(): Promise<User[]> {
+    const response = await apiService.get<ApiResponse<User[]>>('/users/activos')
+    return response.data
+  }
+
   async getUser(id: string): Promise<User> {
     const response = await apiService.get<ApiResponse<User>>(`/users/${id}`)
     return response.data

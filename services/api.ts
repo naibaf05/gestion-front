@@ -47,12 +47,12 @@ class ApiService {
             window.location.href = "/login"
           }
         }
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw await response.json()
       }
 
       return await response.json()
     } catch (error) {
-      console.error("API request failed:", error)
+      console.error("API request failed: ", error)
       throw error
     }
   }

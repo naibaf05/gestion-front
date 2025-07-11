@@ -18,7 +18,7 @@ import { parametrizationService } from "@/services/parametrizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes";
+type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores";
 
 interface ParametrizationDialogProps {
   open: boolean;
@@ -122,6 +122,10 @@ export function ParametrizationDialog({
         return "t_residuo"
       case "t_clientes":
         return "t_cliente"
+      case "und_medidas":
+        return "und_medida"
+      case "contenedores":
+        return "contenedor"
       default:
         return "";
     }
@@ -135,7 +139,9 @@ export function ParametrizationDialog({
       periodos: "Periodo",
       comerciales: "Comercial",
       t_residuos: "Tipo de Residuo",
-      t_clientes: "Tipo de Cliente"
+      t_clientes: "Tipo de Cliente",
+      und_medidas: "Unidad de Medida",
+      contenedores: "Contenedor"
     };
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
   };
@@ -148,7 +154,9 @@ export function ParametrizationDialog({
       periodos: "periodo",
       comerciales: "comercial",
       t_residuos: "tipo de residuo",
-      t_clientes: "tipo de cliente"
+      t_clientes: "tipo de cliente",
+      und_medidas: "unidad de medida",
+      contenedores: "contenedor"
     };
     return item
       ? `Modifica los datos del ${descriptions[type]}`
@@ -190,6 +198,16 @@ export function ParametrizationDialog({
       t_clientes: {
         nombre: "Nombre del tipo de cliente",
         codigo: "Código del tipo de cliente",
+        descripcion: "Descripción",
+      },
+      und_medidas: {
+        nombre: "Nombre de la unidad de medida",
+        codigo: "Código de la unidad de medida",
+        descripcion: "Descripción",
+      },
+      contenedores: {
+        nombre: "Nombre del contenedor",
+        codigo: "Código del contenedor",
         descripcion: "Descripción",
       },
     };
