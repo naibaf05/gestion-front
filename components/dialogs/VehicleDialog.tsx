@@ -11,6 +11,7 @@ import { vehicleService } from "@/services/vehicleService";
 import type { Parametrizacion, User, Vehicle } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { SelectSingle } from "../ui/select-single";
 
 interface VehicleDialogProps {
     open: boolean;
@@ -18,6 +19,7 @@ interface VehicleDialogProps {
     vehicle?: Vehicle | null;
     oficinas: Parametrizacion[];
     conductores: User[];
+    tiposVehiculo: Parametrizacion[];
     onSuccess: () => void;
 }
 
@@ -27,6 +29,7 @@ export function VehicleDialog({
     vehicle,
     oficinas,
     conductores,
+    tiposVehiculo,
     onSuccess,
 }: VehicleDialogProps) {
     const [loading, setLoading] = useState(false);
@@ -35,6 +38,7 @@ export function VehicleDialog({
         interno: "",
         placa: "",
         conductorId: "",
+        datosJson: {} as any,
     });
     const { toast } = useToast();
 
@@ -45,6 +49,7 @@ export function VehicleDialog({
                 interno: vehicle.interno,
                 placa: vehicle.placa,
                 conductorId: vehicle.conductorId,
+                datosJson: vehicle.datosJson || {},
             });
         } else {
             setFormData({
@@ -52,6 +57,7 @@ export function VehicleDialog({
                 interno: "",
                 placa: "",
                 conductorId: "",
+                datosJson: {},
             });
         }
     }, [vehicle, open]);
@@ -99,20 +105,27 @@ export function VehicleDialog({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="planta">Planta *</Label>
-                                <Select
-                                    value={formData.oficinaId ? String(formData.oficinaId) : ""}
-                                    onValueChange={v => setFormData({ ...formData, oficinaId: v })}
-                                    required
-                                >
-                                    <SelectTrigger id="planta">
-                                        <SelectValue placeholder="Seleccione una planta" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {oficinas.map(oficina => (
-                                            <SelectItem key={oficina.id} value={String(oficina.id)}>{oficina.nombre}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectSingle
+                                    id="planta"
+                                    placeholder="Seleccione una planta"
+                                    options={oficinas}
+                                    value={formData.oficinaId}
+                                    onChange={v => setFormData({ ...formData, oficinaId: v })}
+                                    valueKey="id"
+                                    labelKey="nombre"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tipoVehiculo">Tipo Vehículo *</Label>
+                                <SelectSingle
+                                    id="tipoVehiculo"
+                                    placeholder="Seleccione un tipo de vehículo"
+                                    options={tiposVehiculo}
+                                    value={formData.datosJson.tipoVehiculoId}
+                                    onChange={v => setFormData({ ...formData, datosJson: { ...formData.datosJson, tipoVehiculoId: v } })}
+                                    valueKey="id"
+                                    labelKey="nombre"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="interno">Interno *</Label>
@@ -123,8 +136,6 @@ export function VehicleDialog({
                                     required
                                 />
                             </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="placa">Placa *</Label>
                                 <Input
@@ -136,20 +147,35 @@ export function VehicleDialog({
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="conductor">Conductor *</Label>
-                                <Select
-                                    value={formData.conductorId ? String(formData.conductorId) : ""}
-                                    onValueChange={v => setFormData({ ...formData, conductorId: v })}
-                                    required
-                                >
-                                    <SelectTrigger id="conductor">
-                                        <SelectValue placeholder="Seleccione un conductor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {conductores.map(user => (
-                                            <SelectItem key={user.id} value={String(user.id)}>{user.nombre} {user.apellido}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectSingle
+                                    id="conductor"
+                                    placeholder="Seleccione un conductor"
+                                    options={conductores}
+                                    value={formData.conductorId}
+                                    onChange={v => setFormData({ ...formData, conductorId: v })}
+                                    valueKey="id"
+                                    labelKey="nombreCompleto"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fechaSOAT">Fecha Vencimiento SOAT</Label>
+                                <Input
+                                    id="fechaSOAT"
+                                    type="date"
+                                    value={formData.datosJson.fechaSOAT}
+                                    onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaSOAT: e.target.value } })}
+                                    autoComplete="off"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fechaTecnomecanica">Fecha Vencimiento Tecnomecánica</Label>
+                                <Input
+                                    id="fechaTecnomecanica"
+                                    type="date"
+                                    value={formData.datosJson.fechaTecnomecanica}
+                                    onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaTecnomecanica: e.target.value } })}
+                                    autoComplete="off"
+                                />
                             </div>
                         </div>
                     </div>

@@ -34,12 +34,30 @@ export default function ClientsPage() {
     try {
       setLoading(true);
       const [clientsData, pobladosData, comercialesData, tClientesData] = await Promise.all([
-        clientService.getClientes(1, 100),
+        clientService.getClientes(),
         parametrizationService.getListaActivos("poblado"),
         parametrizationService.getListaActivos("comercial"),
-        parametrizationService.getListaActivos("t_cliente"), 
+        parametrizationService.getListaActivos("t_cliente"),
       ]);
-      setClients(clientsData.data);
+
+      const tipoClienteMap = tClientesData.reduce((acc: any, tipo) => {
+        acc[tipo.id] = tipo.nombre;
+        return acc;
+      }, {});
+
+      clientsData.forEach(client => {
+        let t_cliente = '';
+        if (client.datosJson && Array.isArray(client.datosJson.tiposClienteIds) && client.datosJson.tiposClienteIds.length > 0) {
+          const nombres = client.datosJson.tiposClienteIds
+            .map((tipoId: string) => tipoClienteMap[tipoId])
+            .filter((nombre: string) => !!nombre);
+
+          t_cliente = nombres.join(",");
+        }
+        client.tipoCliente = t_cliente;
+      });
+
+      setClients(clientsData);
       setPoblados(pobladosData);
       setComerciales(comercialesData);
       setTClientes(tClientesData);
@@ -85,20 +103,24 @@ export default function ClientsPage() {
 
   const columns: ColumnDef<Cliente>[] = [
     {
-      accessorKey: "nombre",
-      header: "Nombre",
-    },
-    {
       accessorKey: "nit",
       header: "NIT",
     },
     {
-      accessorKey: "contacto",
-      header: "Contacto",
+      accessorKey: "nombre",
+      header: "Nombre",
     },
     {
-      accessorKey: "telefono",
-      header: "Teléfono",
+      accessorKey: "datosJson.nombre_comercial",
+      header: "Nombre Comercial",
+    },
+    {
+      accessorKey: "tipoCliente",
+      header: "Tipo de Cliente",
+    },
+    {
+      accessorKey: "contacto",
+      header: "Contacto",
     },
     {
       accessorKey: "poblado.nombre",
@@ -106,20 +128,6 @@ export default function ClientsPage() {
       cell: ({ row }) => {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
-      },
-    },
-    {
-      accessorKey: "fechaRenovacion",
-      header: "Renovación",
-      cell: ({ row }) => {
-        const fecha = row.getValue("fechaRenovacion");
-        if (typeof fecha === "string") {
-          const [anio, mes, dia] = fecha.split("-");
-          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
-          return fechaLocal.toLocaleDateString();
-        } else {
-          return "N/A";
-        }
       },
     },
     {
@@ -193,8 +201,8 @@ export default function ClientsPage() {
           <DataTable
             columns={columns}
             data={clients}
-            searchKey="nombre"
-            searchPlaceholder="Buscar por nombre..."
+            searchKey={["nombre", "nit", "datosJson.nombre_comercial", "tipoCliente"]}
+            searchPlaceholder="Buscar..."
           />
         </CardContent>
       </Card>

@@ -49,11 +49,11 @@ export default function RutasPage() {
         try {
             setLoading(true)
             const [rutasData, oficinasData] = await Promise.all([
-                pathService.getData(1, 100),
+                pathService.getData(),
                 parametrizationService.getListaActivos("oficina"),
                 parametrizationService.getListaActivos("t_residuo"),
             ])
-            setRutas(rutasData.data)
+            setRutas(rutasData)
             setOficinas(oficinasData)
         } catch (error) {
             toast({
@@ -74,25 +74,6 @@ export default function RutasPage() {
     const handleEdit = (ruta: Path) => {
         setSelectedRuta(ruta)
         setDialogOpen(true)
-    }
-
-    const handleDelete = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas eliminar esta ruta?")) {
-            try {
-                await pathService.delete(id)
-                toast({
-                    title: "Ruta eliminada",
-                    description: "La ruta ha sido eliminada exitosamente",
-                })
-                loadData()
-            } catch (error) {
-                toast({
-                    title: "Error",
-                    description: "No se pudo eliminar la ruta",
-                    variant: "destructive",
-                })
-            }
-        }
     }
 
     const handleToggleStatus = async (id: string) => {

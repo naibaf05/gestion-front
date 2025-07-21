@@ -2,21 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, PowerSquare } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, PowerSquare } from "lucide-react"
 import { userService } from "@/services/userService"
-import type { Profile } from "@/types"
+import type { User, Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { ProfileDialog } from "@/components/dialogs/ProfileDialog"
+import { UserDialog } from "@/components/dialogs/UserDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 
-export default function UsersPage() {
+export default function ProgsAdminPage() {
+  const [users, setUsers] = useState<User[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -26,9 +27,11 @@ export default function UsersPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [profilesData] = await Promise.all([
-        userService.getProfilesTable()
+      const [usersData, profilesData] = await Promise.all([
+        userService.getUsers(),
+        userService.getProfiles()
       ])
+      setUsers(usersData)
       setProfiles(profilesData)
     } catch (error) {
       toast({
@@ -42,19 +45,19 @@ export default function UsersPage() {
   }
 
   const handleCreate = () => {
-    setSelectedProfile(null)
+    setSelectedUser(null)
     setDialogOpen(true)
   }
 
-  const handleEdit = (profile: Profile) => {
-    setSelectedProfile(profile)
+  const handleEdit = (employee: User) => {
+    setSelectedUser(employee)
     setDialogOpen(true)
   }
 
   const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a este perfil?")) {
+    if (confirm("¿Estás seguro de que deseas cambiar el estado a este cliente?")) {
       try {
-        await userService.togglRolesStatus(id)
+        await userService.toggleUserStatus(id)
         toast({
           title: "Estado actualizado",
           description: "El estado del estado ha sido actualizado",
@@ -70,14 +73,33 @@ export default function UsersPage() {
     }
   }
 
-  const columns: ColumnDef<Profile>[] = [
+  const columns: ColumnDef<User>[] = [
     {
       accessorKey: "nombre",
       header: "Nombre",
+      cell: ({ row }) => {
+        return `${row.original.nombre} ${row.original.apellido}`
+      },
     },
     {
-      accessorKey: "descripcion",
-      header: "Descripción",
+      accessorKey: "documento",
+      header: "Documento",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "telefono",
+      header: "Teléfono",
+    },
+    {
+      accessorKey: "perfil",
+      header: "Perfil",
+      cell: ({ row }) => {
+        const profile = profiles.find((p) => p.id === row.original.rolId)
+        return profile?.nombre || "N/A"
+      },
     },
     {
       accessorKey: "activo",
@@ -94,17 +116,17 @@ export default function UsersPage() {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
-        const prof = row.original
+        const employee = row.original
         return (
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(prof)}>
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
               <Edit className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleToggleStatus(prof.id)}
-              className={prof.activo ? "text-green-600" : "text-red-600"}
+              onClick={() => handleToggleStatus(employee.id)}
+              className={employee.activo ? "text-green-600" : "text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>
@@ -119,7 +141,7 @@ export default function UsersPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando perfiles...</p>
+          <p className="mt-2 text-sm text-gray-600">Cargando usuarios...</p>
         </div>
       </div>
     )
@@ -129,25 +151,26 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Perfiles</h1>
-          <p className="text-gray-600">Gestiona los perfiles del sistema</p>
+          <h1 className="text-3xl font-bold text-gray-900">Usuarios</h1>
+          <p className="text-gray-600">Gestiona los usuarios del sistema</p>
         </div>
         <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
           <Plus className="mr-2 h-4 w-4" />
-          Nuevo Perfil
+          Nuevo Usuario
         </Button>
       </div>
 
       <Card>
         <CardContent>
-          <DataTable columns={columns} data={profiles} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
+          <DataTable columns={columns} data={users} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
         </CardContent>
       </Card>
 
-      <ProfileDialog
+      <UserDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        profile={selectedProfile}
+        user={selectedUser}
+        profiles={profiles}
         onSuccess={loadData}
       />
     </div>

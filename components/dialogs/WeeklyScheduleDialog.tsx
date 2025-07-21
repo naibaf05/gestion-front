@@ -6,16 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { ItemSelectorDialog } from "./ItemSelectorDialog"
-
-interface ScheduleItem {
-    id: string
-    nombre: string
-}
+import { InfoAdicional, Path } from "@/types"
 
 interface ScheduleCell {
     week: number
     day: string
-    item?: ScheduleItem
+    item?: Path
 }
 
 interface WeeklyScheduleDialogProps {
@@ -23,8 +19,9 @@ interface WeeklyScheduleDialogProps {
     onOpenChange: (open: boolean) => void
     title?: string
     description?: string
-    availableItems: ScheduleItem[]
+    availableItems: Path[]
     initialSchedule?: ScheduleCell[]
+    infoAdicional?: InfoAdicional
     onSave: (schedule: ScheduleCell[]) => void
 }
 
@@ -47,6 +44,7 @@ export function WeeklyScheduleDialog({
     description = "Configura el horario semanal seleccionando elementos para cada día",
     availableItems,
     initialSchedule = [],
+    infoAdicional,
     onSave,
 }: WeeklyScheduleDialogProps) {
     const [schedule, setSchedule] = useState<ScheduleCell[]>([])
@@ -72,7 +70,7 @@ export function WeeklyScheduleDialog({
     }, [open, initialSchedule])
 
     // Obtener elemento de una celda específica
-    const getCellItem = (week: number, day: string): ScheduleItem | undefined => {
+    const getCellItem = (week: number, day: string): Path | undefined => {
         const cell = schedule.find((cell) => cell.week === week && cell.day === day)
         return cell?.item
     }
@@ -84,7 +82,7 @@ export function WeeklyScheduleDialog({
     }
 
     // Seleccionar elemento para la celda
-    const handleItemSelect = (item: ScheduleItem) => {
+    const handleItemSelect = (item: Path) => {
         if (!selectedCell) return
 
         setSchedule((prev) =>
@@ -126,7 +124,7 @@ export function WeeklyScheduleDialog({
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
+                        <DialogTitle>{title}  -  [Semana {infoAdicional?.semanaActual}]</DialogTitle>
                         <DialogDescription>{description}</DialogDescription>
                     </DialogHeader>
 

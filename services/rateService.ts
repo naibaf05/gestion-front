@@ -1,15 +1,9 @@
 import { apiService } from "./api"
-import type { User, Profile, ApiResponse, PaginatedResponse, Rate } from "@/types"
+import type { ApiResponse, Rate } from "@/types"
 
 export class RateService {
-  async getTable(idSede: string, page = 1, limit = 10, search?: string): Promise<PaginatedResponse<Rate>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    })
-
-    const response = await apiService.get<ApiResponse<PaginatedResponse<Rate>>>(`/rates/all/${idSede}?${params}`)
+  async getTable(idSede: string): Promise<Rate[]> {
+    const response = await apiService.get<ApiResponse<Rate[]>>(`/rates/all/${idSede}`)
     return response.data
   }
 

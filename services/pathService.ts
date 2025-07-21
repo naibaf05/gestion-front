@@ -1,20 +1,24 @@
 import { apiService } from "./api"
-import type { Path, ApiResponse, PaginatedResponse } from "@/types"
+import type { Path, ApiResponse, InfoAdicional, ProgPath } from "@/types"
 
 export class PathService {
-  async getData(page = 1, limit = 10, search?: string): Promise<PaginatedResponse<Path>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    })
-
-    const response = await apiService.get<ApiResponse<PaginatedResponse<Path>>>(`/rutas?${params}`)
+  async getData(): Promise<Path[]> {
+    const response = await apiService.get<ApiResponse<Path[]>>(`/rutas`)
     return response.data
   }
 
   async getAll(): Promise<Path[]> {
     const response = await apiService.get<ApiResponse<Path[]>>(`/rutas/all`)
+    return response.data
+  }
+
+  async getActivos(): Promise<Path[]> {
+    const response = await apiService.get<ApiResponse<Path[]>>(`/rutas/activas`)
+    return response.data
+  }
+
+  async getRutasDia(fecha: string): Promise<Path[]> {
+    const response = await apiService.get<ApiResponse<Path[]>>(`/rutas/dia?fecha=${fecha}`)
     return response.data
   }
 
@@ -49,6 +53,11 @@ export class PathService {
     });
 
     const response = await apiService.post<ApiResponse<String>>("/rutas/frecuencias", list)
+    return response.data
+  }
+
+  async getInfoAdicional(fecha: string): Promise<InfoAdicional> {
+    const response = await apiService.get<ApiResponse<InfoAdicional>>(`/rutas/info-adicional?fecha=${fecha}`)
     return response.data
   }
 }

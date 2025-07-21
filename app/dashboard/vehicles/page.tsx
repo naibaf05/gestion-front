@@ -21,6 +21,7 @@ export default function VehiclesPage() {
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
     const [oficinas, setOficinas] = useState<Parametrizacion[]>([]);
     const [conductores, setConductores] = useState<User[]>([]);
+    const [tiposVehiculo, setTiposVehiculo] = useState<Parametrizacion[]>([]);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -30,14 +31,16 @@ export default function VehiclesPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [vehiclesData, oficinasData, conductoresData] = await Promise.all([
-                vehicleService.getVehicles(1, 100),
+            const [vehiclesData, oficinasData, conductoresData, tiposVehiculoData] = await Promise.all([
+                vehicleService.getVehicles(),
                 parametrizationService.getListaActivos("oficina"),
                 userService.getUsersActivos(),
+                parametrizationService.getListaActivos("t_vehiculo"),
             ]);
-            setVehicles(vehiclesData.data);
+            setVehicles(vehiclesData);
             setOficinas(oficinasData);
             setConductores(conductoresData);
+            setTiposVehiculo(tiposVehiculoData);
         } catch (error) {
             toast({
                 title: "Error",
@@ -166,6 +169,7 @@ export default function VehiclesPage() {
                 vehicle={selectedVehicle}
                 oficinas={oficinas}
                 conductores={conductores}
+                tiposVehiculo={tiposVehiculo}
                 onSuccess={loadData}
             />
         </div>

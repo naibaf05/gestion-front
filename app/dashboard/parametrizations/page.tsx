@@ -5,17 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2 } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
-import type { Parametrizacion } from "@/types"
+import type { Parametrizacion, ParametrizationType } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ParametrizationDialog } from "@/components/dialogs/ParametrizationDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores"
 
 interface ParametrizationConfig {
   key: ParametrizationType
@@ -109,11 +107,21 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     color: "text-purple-600",
     bgColor: "bg-purple-50",
   },
+  {
+    key: "t_vehiculos",
+    title: "Tipos de Vehículos",
+    singular_title: "Tipo de Vehículo",
+    description: "Administra los tipos de vehículos disponibles",
+    icon: Car,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50",
+  },
 ]
 
 export default function ParametrizationsPage() {
   const [selectedType, setSelectedType] = useState<ParametrizationType>("poblados")
   const [searchTerm, setSearchTerm] = useState("")
+
   const [poblados, setPoblados] = useState<Parametrizacion[]>([])
   const [oficinas, setOficinas] = useState<Parametrizacion[]>([])
   const [generadores, setGeneradores] = useState<Parametrizacion[]>([])
@@ -123,6 +131,8 @@ export default function ParametrizationsPage() {
   const [t_clientes, setTClientes] = useState<Parametrizacion[]>([])
   const [und_medidas, setUndMedidas] = useState<Parametrizacion[]>([])
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
+  const [t_vehiculos, setTVehiculos] = useState<Parametrizacion[]>([])
+
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
@@ -141,7 +151,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData] =
+      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData] =
         await Promise.all([
           parametrizationService.getLista("poblado"),
           parametrizationService.getLista("oficina"),
@@ -152,6 +162,7 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("t_cliente"),
           parametrizationService.getLista("und_medida"),
           parametrizationService.getLista("contenedor"),
+          parametrizationService.getLista("t_vehiculo"),
         ])
       setPoblados(pobladosData)
       setOficinas(oficinasData)
@@ -162,6 +173,7 @@ export default function ParametrizationsPage() {
       setTClientes(tClientesData)
       setUndMedidas(undMedidasData)
       setContenedores(contenedoresData)
+      setTVehiculos(tVehiculosData)
     } catch (error) {
       toast({
         title: "Error",
@@ -193,6 +205,8 @@ export default function ParametrizationsPage() {
         return und_medidas
       case "contenedores":
         return contenedores
+      case "t_vehiculos":
+        return t_vehiculos
       default:
         return []
     }
@@ -218,6 +232,8 @@ export default function ParametrizationsPage() {
         return und_medidas.length
       case "contenedores":
         return contenedores.length
+      case "t_vehiculos":
+        return t_vehiculos.length
       default:
         return 0
     }
@@ -257,14 +273,16 @@ export default function ParametrizationsPage() {
       try {
         await parametrizationService.toggleStatus(id)
         toast({
-          title: "Elemento eliminado",
-          description: "El elemento ha sido eliminado exitosamente",
+          title: "Estado actualizado",
+          description: "El estado del elemento ha sido actualizado exitosamente",
+          variant: "success",
         })
         loadData()
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "No se pudo eliminar el elemento",
+          description: (error && error.message) ?
+            error.message : "No se pudo actualizar el elemento",
           variant: "destructive",
         })
       }

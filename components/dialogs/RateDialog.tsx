@@ -30,6 +30,7 @@ interface RateDialogProps {
   rate?: Rate | null;
   sede?: Sede | null;
   undMedidas: Parametrizacion[];
+  tiposResiduos?: Parametrizacion[];
   onSuccess: () => void;
 }
 
@@ -39,12 +40,14 @@ export function RateDialog({
   rate,
   sede,
   undMedidas,
+  tiposResiduos = [],
   onSuccess,
 }: RateDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     sedeId: "",
     undMedidaId: "",
+    tipoResiduoId: "",
     tarifa: "",
     fechaInicio: "",
     fechaFin: "",
@@ -56,6 +59,7 @@ export function RateDialog({
       setFormData({
         sedeId: sede ? sede.id : "",
         undMedidaId: rate.undMedidaId,
+        tipoResiduoId: rate.tipoResiduoId,
         tarifa: rate.tarifa,
         fechaInicio: rate.fechaInicio,
         fechaFin: rate.fechaFin ?? "",
@@ -64,6 +68,7 @@ export function RateDialog({
       setFormData({
         sedeId: sede ? sede.id : "",
         undMedidaId: "",
+        tipoResiduoId: "",
         tarifa: "",
         fechaInicio: "",
         fechaFin: "",
@@ -81,12 +86,14 @@ export function RateDialog({
         toast({
           title: "Tarifa actualizada",
           description: "La tarifa ha sido actualizada exitosamente",
+          variant: "success",
         });
       } else {
         await rateService.create(formData);
         toast({
           title: "Tarifa creada",
           description: "La tarifa ha sido creada exitosamente",
+          variant: "success",
         });
       }
       onSuccess();
@@ -136,6 +143,29 @@ export function RateDialog({
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="tipoResiduoId">Tipo de Residuo *</Label>
+                <Select
+                  value={formData.tipoResiduoId ? String(formData.tipoResiduoId) : ""}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tipoResiduoId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo de residuo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tiposResiduos.map((tipoResiduo) => (
+                      <SelectItem key={tipoResiduo.id} value={String(tipoResiduo.id)}>
+                        {tipoResiduo.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="tarifa">Tarifa *</Label>
                 <Input
                   id="tarifa"
@@ -153,9 +183,6 @@ export function RateDialog({
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fechaInicio">Fecha Inicio *</Label>
                 <Input
@@ -166,6 +193,8 @@ export function RateDialog({
                   autoComplete="off"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fechaFin">Fecha Fin</Label>
                 <Input

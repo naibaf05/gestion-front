@@ -14,12 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Path } from "@/types";
+import { ProgPath, Vehicle } from "@/types";
+import { SelectSingle } from "../ui/select-single";
+import { progService } from "@/services/progService";
 
 interface ProgDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item?: Path | null;
+  item?: ProgPath | null;
+  vehiculos: Vehicle[];
+  selectedDate: string;
   onSuccess: () => void;
 }
 
@@ -27,25 +31,40 @@ export function ProgDialog({
   open,
   onOpenChange,
   item,
+  vehiculos,
+  selectedDate,
   onSuccess,
 }: ProgDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: "",
-    descripcion: "",
+    ruta: "",
+    rutaId: "",
+    planta: "",
+    vehiculoId: "",
     fecha: "",
+    fechaFin: ""
   });
   const { toast } = useToast();
 
   useEffect(() => {
     if (item) {
       setFormData({
-        nombre: item.nombre,
-        descripcion: item.nombre,
-        fecha: item.nombre,
+        ruta: item.rutaNombre,
+        rutaId: item.rutaId,
+        planta: item.planta,
+        vehiculoId: item.vehiculoId,
+        fecha: item.fecha || selectedDate,
+        fechaFin: item.fechaFin || selectedDate
       });
     } else {
-      setFormData({ nombre: "", descripcion: "", fecha: "" });
+      setFormData({
+        ruta: "",
+        rutaId: "",
+        planta: "",
+        vehiculoId: "",
+        fecha: "",
+        fechaFin: ""
+      });
     }
   }, [item, open]);
 
@@ -54,7 +73,7 @@ export function ProgDialog({
     setLoading(true);
     try {
       if (item) {
-        //await exampleService.update(item.id, formData);
+        await progService.update(formData);
         toast({
           title: "Actualizado",
           description: "El registro ha sido actualizado exitosamente",
@@ -75,37 +94,52 @@ export function ProgDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[750px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{item ? "Editar Registro" : "Ver Registro"}</DialogTitle>
+          <DialogTitle>{item ? "Edición de Programación" : "Edición de Programación"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre *</Label>
-              <Input
-                id="nombre"
-                value={formData.nombre}
-                onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="descripcion">Descripción</Label>
-              <Input
-                id="descripcion"
-                value={formData.descripcion}
-                onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fecha">Fecha</Label>
-              <Input
-                id="fecha"
-                type="date"
-                value={formData.fecha}
-                onChange={e => setFormData({ ...formData, fecha: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ruta">Ruta</Label>
+                <Input
+                  id="ruta"
+                  value={formData.ruta}
+                  onChange={e => setFormData({ ...formData, ruta: e.target.value })}
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="planta">Planta</Label>
+                <Input
+                  id="planta"
+                  value={formData.planta}
+                  onChange={e => setFormData({ ...formData, planta: e.target.value })}
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vehiculoId">Vehículo *</Label>
+                <SelectSingle
+                  id="vehiculoId"
+                  placeholder="Seleccione un Vehículo"
+                  options={vehiculos}
+                  value={formData.vehiculoId}
+                  onChange={v => setFormData({ ...formData, vehiculoId: v })}
+                  valueKey="id"
+                  labelKey="interno"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fechaFin">Fecha Fin *</Label>
+                <Input
+                  id="fechaFin"
+                  type="date"
+                  value={formData.fechaFin}
+                  onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

@@ -34,6 +34,7 @@ export function RatesDialog({
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [undMedidas, setUndMedidas] = useState<Parametrizacion[]>([])
+  const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
   const [selectedRate, setSelectedRate] = useState<Rate | null>(null)
   const { toast } = useToast()
 
@@ -49,12 +50,14 @@ export function RatesDialog({
     try {
       if (sede) {
         setLoading(true)
-        const [ratesData, undMedidasData] = await Promise.all([
-          rateService.getTable(sede.id, 1, 100),
+        const [ratesData, undMedidasData, tiposResiduosData] = await Promise.all([
+          rateService.getTable(sede.id),
           parametrizationService.getListaActivos("und_medida"),
+          parametrizationService.getListaActivos("t_residuo"),
         ])
-        setRates(ratesData.data)
+        setRates(ratesData)
         setUndMedidas(undMedidasData)
+        setTiposResiduos(tiposResiduosData)
       }
     } catch (error) {
       toast({
@@ -84,12 +87,13 @@ export function RatesDialog({
         toast({
           title: "Estado actualizado",
           description: "El estado de la tarifa ha sido actualizado",
+          variant: "success",
         })
         loadData()
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "No se pudo actualizar el estado",
+          description: (error && error.message) ? error.message : "No se pudo actualizar el estado",
           variant: "destructive",
         })
       }
@@ -100,6 +104,10 @@ export function RatesDialog({
     {
       accessorKey: "undMedidaNombre",
       header: "Unidad de Medida",
+    },
+    {
+      accessorKey: "tipoResiduoNombre",
+      header: "Tipo de Residuo",
     },
     {
       accessorKey: "tarifa",
@@ -214,6 +222,7 @@ export function RatesDialog({
         rate={selectedRate}
         sede={sede}
         undMedidas={undMedidas}
+        tiposResiduos={tiposResiduos}
         onSuccess={loadData}
       />
     </>

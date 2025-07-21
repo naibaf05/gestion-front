@@ -1,3 +1,5 @@
+export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos"
+
 export interface LoginCredentials {
   username: string
   password: string
@@ -14,6 +16,7 @@ export interface User {
   id: string
   nombre: string
   apellido: string
+  nombreCompleto: string
   documento: string
   telefono: string
   email: string
@@ -65,6 +68,7 @@ export interface Cliente {
   correoFacturacion?: string
   tiposClienteIds?: string[]
   datosJson?: any
+  tipoCliente?: string
 }
 
 export interface Sede {
@@ -109,14 +113,6 @@ export interface ApiResponse<T> {
   errors?: string[]
 }
 
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
-
 export interface Path {
   id: string
   codigo: string
@@ -135,6 +131,7 @@ export interface Vehicle {
   conductorId: string;
   conductorNombre?: string;
   activo: boolean;
+  datosJson?: any
 }
 
 export interface Rate {
@@ -143,8 +140,49 @@ export interface Rate {
   sedeNombre?: string
   undMedidaId: string
   undMedidaNombre?: string
+  tipoResiduoId: string
+  tipoResiduoNombre?: string
   tarifa: string
   fechaInicio: string
   fechaFin?: string
   activo: boolean
+}
+
+export interface ProgPath {
+  programacionId: string
+  rutaId: string
+  rutaNombre: string
+  rutaCodigo: string
+  planta: string
+  vehiculoId: string
+  vehiculoInterno: string
+  fecha?: string
+  fechaFin?: string
+}
+
+export interface ProgEvPath {
+  id: string
+  progId: string
+  sedeId: string
+  sedeNombre: string
+  rutaId: string
+  rutaNombre: string
+  vehId: string
+  vehInterno: string
+}
+
+export interface ProgRutas {
+  frId: string
+  psId: string
+  sedeId: string
+  sedeNombre: string
+  sedeDireccion: string
+  sedeBarrio: string
+  sedeLat: string
+  sedeLon: string
+  rutaNombre: string
+}
+
+export interface InfoAdicional {
+  semanaActual: string
 }

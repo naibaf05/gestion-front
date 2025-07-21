@@ -17,8 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { parametrizationService } from "@/services/parametrizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-
-type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores";
+import { ParametrizationType } from "@/types";
 
 interface ParametrizationDialogProps {
   open: boolean;
@@ -82,6 +81,7 @@ export function ParametrizationDialog({
         toast({
           title: "Elemento actualizado",
           description: "El elemento ha sido actualizado exitosamente",
+          variant: "success",
         });
       } else {
         // Crear
@@ -89,16 +89,19 @@ export function ParametrizationDialog({
         toast({
           title: "Elemento creado",
           description: "El elemento ha sido creado exitosamente",
+          variant: "success",
         });
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: item
-          ? "No se pudo actualizar el elemento"
-          : "No se pudo crear el elemento",
+        title: item ? "Error al actualizar" : "Error al crear",
+        description: (error && error.message) ?
+          error.message :
+          item
+            ? "No se pudo actualizar el elemento"
+            : "No se pudo crear el elemento",
         variant: "destructive",
       });
     } finally {
@@ -126,6 +129,8 @@ export function ParametrizationDialog({
         return "und_medida"
       case "contenedores":
         return "contenedor"
+      case "t_vehiculos":
+        return "t_vehiculo"
       default:
         return "";
     }
@@ -141,7 +146,8 @@ export function ParametrizationDialog({
       t_residuos: "Tipo de Residuo",
       t_clientes: "Tipo de Cliente",
       und_medidas: "Unidad de Medida",
-      contenedores: "Contenedor"
+      contenedores: "Contenedor",
+      t_vehiculos: "Tipo de Vehículo"
     };
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
   };
@@ -156,7 +162,8 @@ export function ParametrizationDialog({
       t_residuos: "tipo de residuo",
       t_clientes: "tipo de cliente",
       und_medidas: "unidad de medida",
-      contenedores: "contenedor"
+      contenedores: "contenedor",
+      t_vehiculos: "tipo de vehículo"
     };
     return item
       ? `Modifica los datos del ${descriptions[type]}`
@@ -208,6 +215,11 @@ export function ParametrizationDialog({
       contenedores: {
         nombre: "Nombre del contenedor",
         codigo: "Código del contenedor",
+        descripcion: "Descripción",
+      },
+      t_vehiculos: {
+        nombre: "Nombre del tipo de vehículo",
+        codigo: "Código del tipo de vehículo",
         descripcion: "Descripción",
       },
     };

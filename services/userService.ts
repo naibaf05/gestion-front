@@ -1,20 +1,17 @@
 import { apiService } from "./api"
-import type { User, Profile, ApiResponse, PaginatedResponse } from "@/types"
+import type { User, Profile, ApiResponse } from "@/types"
 
 export class UserService {
-  async getUsers(page = 1, limit = 10, search?: string): Promise<PaginatedResponse<User>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    })
-
-    const response = await apiService.get<ApiResponse<PaginatedResponse<User>>>(`/users?${params}`)
+  async getUsers(): Promise<User[]> {
+    const response = await apiService.get<ApiResponse<User[]>>(`/users`)
     return response.data
   }
 
   async getUsersActivos(): Promise<User[]> {
     const response = await apiService.get<ApiResponse<User[]>>('/users/activos')
+    response.data.forEach((element) => {
+      element.nombreCompleto = `${element.nombre} ${element.apellido}`;
+    });
     return response.data
   }
 
@@ -43,15 +40,8 @@ export class UserService {
   }
 
   // Perfiles
-
-  async getProfilesTable(page = 1, limit = 10, search?: string): Promise<PaginatedResponse<Profile>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    })
-
-    const response = await apiService.get<ApiResponse<PaginatedResponse<Profile>>>(`/roles/all?${params}`)
+  async getProfilesTable(): Promise<Profile[]> {
+    const response = await apiService.get<ApiResponse<Profile[]>>(`/roles/all`)
     return response.data
   }
 

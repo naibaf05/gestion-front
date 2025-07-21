@@ -28,10 +28,10 @@ export default function UsersPage() {
     try {
       setLoading(true)
       const [usersData, profilesData] = await Promise.all([
-        userService.getUsers(1, 100),
+        userService.getUsers(),
         userService.getProfiles()
       ])
-      setUsers(usersData.data)
+      setUsers(usersData)
       setProfiles(profilesData)
     } catch (error) {
       toast({

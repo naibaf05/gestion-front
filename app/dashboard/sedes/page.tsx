@@ -9,11 +9,7 @@ import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarS
 import { clientService } from "@/services/clientService";
 import { pathService } from "@/services/pathService";
 import { parametrizationService } from "@/services/parametrizationService";
-import type {
-  Sede,
-  Cliente,
-  Parametrizacion,
-} from "@/types";
+import type { Sede, Cliente, Parametrizacion, Path, InfoAdicional } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { SedeDialog } from "@/components/dialogs/SedeDialog";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -24,12 +20,26 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { RatesDialog } from "@/components/dialogs/RatesDialog";
 
 export default function SedesPage() {
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
+  });
+
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [poblados, setPoblados] = useState<Parametrizacion[]>([]);
   const [oficinas, setOficinas] = useState<Parametrizacion[]>([]);
   const [generadores, setGeneradores] = useState<Parametrizacion[]>([]);
   const [periodos, setPeriodos] = useState<Parametrizacion[]>([]);
+  const [mockScheduleItems, setMockScheduleItems] = useState<Path[]>([]);
+  const [infoAdicional, setInfoAdicional] = useState<InfoAdicional>();
+
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
@@ -38,7 +48,6 @@ export default function SedesPage() {
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
-  const [mockScheduleItems, setMockScheduleItems] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -55,22 +64,25 @@ export default function SedesPage() {
         generadoresData,
         periodosData,
         pathData,
+        infoAdicionalData,
       ] = await Promise.all([
-        clientService.getSedes(undefined, 1, 100),
-        clientService.getClientes(1, 100),
+        clientService.getSedes(),
+        clientService.getClientes(),
         parametrizationService.getListaActivos("poblado"),
         parametrizationService.getListaActivos("oficina"),
         parametrizationService.getListaActivos("generador"),
         parametrizationService.getListaActivos("periodo"),
-        pathService.getAll()
+        pathService.getAll(),
+        pathService.getInfoAdicional(selectedDate),
       ]);
-      setSedes(sedesData.data);
-      setClientes(clientesData.data);
+      setSedes(sedesData);
+      setClientes(clientesData);
       setPoblados(pobladosData);
       setOficinas(oficinasData);
       setGeneradores(generadoresData);
       setPeriodos(periodosData);
       setMockScheduleItems(pathData);
+      setInfoAdicional(infoAdicionalData);
     } catch (error) {
       toast({
         title: "Error",
@@ -345,6 +357,7 @@ export default function SedesPage() {
         description="Configura los frecuencia de recolección para cada día de la semana"
         availableItems={mockScheduleItems}
         initialSchedule={scheduleData}
+        infoAdicional={infoAdicional}
         onSave={handleScheduleSave}
       />
 

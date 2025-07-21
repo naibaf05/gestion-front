@@ -4,26 +4,44 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Edit, PowerSquare } from "lucide-react";
+import { Edit, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ProgDialog } from "@/components/dialogs/ProgDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { pathService } from "@/services/pathService";
-import { Path } from "@/types";
+import { progService } from "@/services/progService";
+import { InfoAdicional, Path, ProgEvPath, ProgPath, Sede, Vehicle, ProgRutas } from "@/types";
+import { vehicleService } from "@/services/vehicleService";
+import { ProgEvDialog } from "@/components/dialogs/ProgEvDialog";
+import { clientService } from "@/services/clientService";
+import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 
-export default function ExampleDashboardPage() {
+export default function ProgsPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().slice(0, 10);
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
   });
-  const [tab, setTab] = useState("tabla1");
-  const [tabla, setTabla] = useState<Path[]>([]);
-  const [tablaEventual, setTablaEventual] = useState<Path[]>([]);
+  const [tab, setTab] = useState("tabla");
+  const [tabla, setTabla] = useState<ProgPath[]>([]);
+  const [tablaEventual, setTablaEventual] = useState<ProgEvPath[]>([]);
+  const [infoAdicional, setInfoAdicional] = useState<InfoAdicional>();
+  const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
+  const [rutas, setRutas] = useState<Path[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
+  const [progRutas, setProgRutas] = useState<ProgRutas[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Path | null>(null);
+  const [dialogEvOpen, setDialogEvOpen] = useState(false);
+  const [dialogTableOpen, setDialogTableOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ProgPath | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,64 +51,81 @@ export default function ExampleDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [data1, data2] = await Promise.all([
-        pathService.getData(1, 100),
-        pathService.getData(1, 100),
+      const [data1, data2, infoAdicionalData, vehiclesData, pathData, sedesData] = await Promise.all([
+        progService.getData(selectedDate),
+        progService.getDataEv(selectedDate),
+        pathService.getInfoAdicional(selectedDate),
+        vehicleService.getVehiclesActivos(),
+        pathService.getRutasDia(selectedDate),
+        clientService.getSedesActivas()
       ]);
-      setTabla(data1.data);
-      setTablaEventual(data2.data);
+      setTabla(data1);
+      setTablaEventual(data2);
+      setInfoAdicional(infoAdicionalData);
+      setVehiculos(vehiclesData);
+      setRutas(pathData);
+      setSedes(sedesData);
     } catch (error) {
       toast({
         title: "Error",
         description: "No se pudieron cargar los datos",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (item: Path) => {
+  const handleCreateEv = () => {
+    setSelectedItem(null);
+    setDialogEvOpen(true);
+  };
+
+  const handleEdit = (item: ProgPath) => {
     setSelectedItem(item);
     setDialogOpen(true);
   };
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado?")) {
+  const openTableDialog = async (item: ProgPath) => {
+    const dataRutas = await progService.getDataRutas(selectedDate, item.rutaId);
+    setSelectedItem(item);
+    setProgRutas(dataRutas);
+    setDialogTableOpen(true);
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm("¿Estás seguro de que deseas eliminar la programación eventual?")) {
       try {
-        //await pathService.toggle(id);
+        await progService.deleteEv(id);
         toast({
-          title: "Estado actualizado",
-          description: "El estado ha sido actualizado",
+          title: "Eliminar",
+          description: "La programación eventual ha sido eliminada correctamente",
+          variant: "success"
         });
         loadData();
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        });
+          description: (error && error.message) ?
+            error.message : "No se pudo eliminar",
+          variant: "error",
+        })
       }
     }
   };
 
-  const columns: ColumnDef<Path>[] = [
+  const columns: ColumnDef<ProgPath>[] = [
     {
-      accessorKey: "nombre",
-      header: "Nombre",
+      accessorKey: "rutaNombre",
+      header: "Ruta",
     },
     {
-      accessorKey: "descripcion",
-      header: "Descripción",
+      accessorKey: "planta",
+      header: "Planta",
     },
     {
-      accessorKey: "activo",
-      header: "Estado",
-      cell: ({ row }) => (
-        <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
-          {row.getValue("activo") ? "Activo" : "Inactivo"}
-        </Badge>
-      ),
+      accessorKey: "vehiculoInterno",
+      header: "Vehículo",
     },
     {
       id: "actions",
@@ -102,18 +137,77 @@ export default function ExampleDashboardPage() {
             <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(item.id)}
-              className={item.activo ? "text-green-600" : "text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={() => openTableDialog(item)}            >
+              <FileSpreadsheet className="h-4 w-4" />
             </Button>
           </div>
         );
       },
     },
+  ];
+
+  const columns_ev: ColumnDef<ProgEvPath>[] = [
+    {
+      accessorKey: "sedeNombre",
+      header: "Sede",
+    },
+    {
+      accessorKey: "rutaNombre",
+      header: "Ruta",
+    },
+    {
+      accessorKey: "vehInterno",
+      header: "Vehículo",
+    },
+    {
+      id: "actions",
+      header: "Acciones",
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(item.id)}
+              className="text-red-600"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  const columns_table: ColumnDef<ProgRutas>[] = [
+    {
+      accessorKey: "tipo",
+      header: "Tipo",
+    },
+    {
+      accessorKey: "sedeNombre",
+      header: "Sede",
+    },
+    {
+      accessorKey: "sedeDireccion",
+      header: "Dirección",
+    },
+    {
+      accessorKey: "sedeBarrio",
+      header: "Barrio",
+    },
+    {
+      accessorKey: "rutaNombre",
+      header: "Ruta",
+    },
+    {
+      accessorKey: "sedeLat",
+      header: "Coordenadas",
+      cell: ({ row }) => {
+        return row.original?.sedeLat ? "SI" : "NO";
+      },
+    }
   ];
 
   return (
@@ -123,7 +217,7 @@ export default function ExampleDashboardPage() {
           <h1 className="text-3xl font-bold text-gray-900">Programación</h1>
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="fecha" className="mr-2 font-medium">Fecha:</label>
+          <label htmlFor="fecha" className="mr-2 font-medium">Semana {infoAdicional?.semanaActual}</label>
           <input
             id="fecha"
             type="date"
@@ -144,7 +238,17 @@ export default function ExampleDashboardPage() {
               <DataTable columns={columns} data={tabla} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
             </TabsContent>
             <TabsContent value="tablaEventual">
-              <DataTable columns={columns} data={tablaEventual} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
+              <div className="flex justify-between items-center">
+                <div></div>
+                <Button
+                  onClick={handleCreateEv}
+                  className="bg-primary hover:bg-primary-hover"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nuevo Eventual
+                </Button>
+              </div>
+              <DataTable columns={columns_ev} data={tablaEventual} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -153,7 +257,29 @@ export default function ExampleDashboardPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={selectedItem}
+        vehiculos={vehiculos}
+        selectedDate={selectedDate}
         onSuccess={loadData}
+      />
+
+      <ProgEvDialog
+        open={dialogEvOpen}
+        onOpenChange={setDialogEvOpen}
+        rutas={rutas}
+        sedes={sedes}
+        selectedDate={selectedDate}
+        onSuccess={loadData}
+      />
+
+      <GenericTableDialog
+        open={dialogTableOpen}
+        onOpenChange={setDialogTableOpen}
+        columns={columns_table}
+        data={progRutas}
+        searchKey={["tipo", "sedeNombre", "sedeDireccion"]}
+        title="Programación Ruta"
+        exportColumns={["tipo", "sedeNombre", "sedeDireccion", "sedeBarrio", "rutaNombre", "sedeLat"]}
+        exportHeaders={["Tipo", "Sede", "Dirección", "Barrio", "Ruta", "Coordenadas"]}
       />
     </div>
   );

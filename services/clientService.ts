@@ -1,18 +1,12 @@
 import { apiService } from "./api"
-import type { Cliente, Sede, ApiResponse, PaginatedResponse } from "@/types"
+import type { Cliente, Sede, ApiResponse } from "@/types"
 
 export class ClientService {
   // Clientes
-  async getClientes(page = 1, limit = 10, search?: string): Promise<PaginatedResponse<Cliente>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    })
+  async getClientes(): Promise<Cliente[]> {
+    const response = await apiService.get<ApiResponse<Cliente[]>>(`/clientes`)
 
-    const response = await apiService.get<ApiResponse<PaginatedResponse<Cliente>>>(`/clientes?${params}`)
-
-    response.data.data.forEach((element) => {
+    response.data.forEach((element) => {
       if (element.datosJson && typeof element.datosJson === "string") {
         element.datosJson = JSON.parse(element.datosJson);
         if (element.datosJson.tiposClienteIds) {
@@ -52,16 +46,10 @@ export class ClientService {
   }
 
   // Sedes
-  async getSedes(clienteId?: string, page = 1, limit = 10): Promise<PaginatedResponse<Sede>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(clienteId && { clienteId }),
-    })
+  async getSedes(): Promise<Sede[]> {
+    const response = await apiService.get<ApiResponse<Sede[]>>(`/sedes`)
 
-    const response = await apiService.get<ApiResponse<PaginatedResponse<Sede>>>(`/sedes?${params}`)
-
-    response.data.data.forEach((sede: Sede) => {
+    response.data.forEach((sede: Sede) => {
       if (sede.frecuencias) {
         sede.frecuencias.forEach((frecuencia: any) => {
           frecuencia.week = parseInt(frecuencia.semana);
@@ -73,6 +61,11 @@ export class ClientService {
         });
       }
     });
+    return response.data
+  }
+
+  async getSedesActivas(): Promise<Sede[]> {
+    const response = await apiService.get<ApiResponse<Sede[]>>(`/sedes/activas`)
     return response.data
   }
 

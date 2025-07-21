@@ -1,22 +1,31 @@
 import { apiService } from "./api";
-import type { ApiResponse, PaginatedResponse, Vehicle } from "@/types";
+import type { ApiResponse, Vehicle } from "@/types";
 
 export class VehicleService {
-    async getVehicles(page = 1, limit = 100): Promise<PaginatedResponse<Vehicle>> {
-        const params = new URLSearchParams({
-            page: page.toString(),
-            limit: limit.toString(),
+    async getVehicles(): Promise<Vehicle[]> {
+        const response = await apiService.get<ApiResponse<Vehicle[]>>(`/vehicles`);
+
+        response.data.forEach((element) => {
+            if (element.datosJson && typeof element.datosJson === "string") {
+                element.datosJson = JSON.parse(element.datosJson);
+            }
         });
-        const response = await apiService.get<ApiResponse<PaginatedResponse<Vehicle>>>(`/vehicles?${params}`);
         return response.data;
     }
 
+    async getVehiclesActivos(): Promise<Vehicle[]> {
+        const response = await apiService.get<ApiResponse<Vehicle[]>>('/vehicles/activos')
+        return response.data
+      }
+
     async createVehicle(vehicle: Partial<Vehicle>): Promise<Vehicle> {
+        vehicle.datosJson = JSON.stringify(vehicle.datosJson);
         const response = await apiService.post<ApiResponse<Vehicle>>("/vehicles", vehicle);
         return response.data;
     }
 
     async updateVehicle(id: string, vehicle: Partial<Vehicle>): Promise<Vehicle> {
+        vehicle.datosJson = JSON.stringify(vehicle.datosJson);
         const response = await apiService.put<ApiResponse<Vehicle>>(`/vehicles/${id}`, vehicle);
         return response.data;
     }

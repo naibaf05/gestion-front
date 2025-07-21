@@ -305,12 +305,9 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="fechaCierreFacturacion">Fecha Cierre Facturación</Label>
-                        <Input
-                          id="fechaCierreFacturacion"
-                          type="date"
+                        <InputPositiveInteger
                           value={formData.datosJson.fechaCierreFacturacion}
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaCierreFacturacion: e.target.value } })}
-                          autoComplete="off"
                         />
                       </div>
                     </div>
@@ -351,7 +348,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="contratoComodato">Contrato Comodato</Label>
+                        <Label htmlFor="contratoComodato">Contenedores Comodato</Label>
                         <InputPositiveInteger
                           value={formData.datosJson.contratoComodato}
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, contratoComodato: e.target.value } })}
@@ -361,7 +358,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="fechaVencimientoContrato">Fecha Vencimiento Contrato</Label>
+                        <Label htmlFor="fechaVencimientoContrato">Fecha Vencimiento Contrato Comodato</Label>
                         <Input
                           id="fechaVencimientoContrato"
                           type="date"
