@@ -2,37 +2,66 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye, PowerSquare } from "lucide-react"
+import { Plus, Edit, Check, PlusCircle, TableProperties } from "lucide-react"
 import { userService } from "@/services/userService"
-import type { User, Profile } from "@/types"
+import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { UserDialog } from "@/components/dialogs/UserDialog"
 import type { ColumnDef } from "@tanstack/react-table"
+import { progService } from "@/services/progService"
+import { Badge } from "@/components/ui/badge"
+import { VisitDialog } from "@/components/dialogs/VisitDialog"
+import { clientService } from "@/services/clientService"
+import { vehicleService } from "@/services/vehicleService"
+import { parametrizationService } from "@/services/parametrizationService"
+import { visitService } from "@/services/visitService"
+import { AmountsDialog } from "@/components/dialogs/AmountsDialog"
+import { ButtonTooltip } from "@/components/ui/button-tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function ProgsAdminPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAmountsOpen, setDialogAmountsOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
+  });
+  const [progs, setProgs] = useState<ProgVisitaRecol[]>([])
+  const [sedes, setSedes] = useState<Sede[]>([])
+  const [vehiculos, setVehiculos] = useState<Vehicle[]>([])
+  const [recolectores, setRecolectores] = useState<User[]>([])
+  const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
+  const [visitaRecol, setVisitaRecol] = useState<VisitaRecol | null>(null)
   const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selected, setSelected] = useState<ProgVisitaRecol | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [selectedDate])
 
   const loadData = async () => {
     try {
       setLoading(true)
-      const [usersData, profilesData] = await Promise.all([
-        userService.getUsers(),
-        userService.getProfiles()
+      const [progsData, sedesData, vehiclesData, recolData, comercialData] = await Promise.all([
+        progService.getDataProgsAdmin(selectedDate),
+        clientService.getSedesActivas(),
+        vehicleService.getVehiclesActivos(),
+        userService.getUsersActivos(),
+        parametrizationService.getListaActivos("comercial")
       ])
-      setUsers(usersData)
-      setProfiles(profilesData)
+      setProgs(progsData);
+      setSedes(sedesData);
+      setVehiculos(vehiclesData);
+      setRecolectores(recolData);
+      setComerciales(comercialData);
     } catch (error) {
       toast({
         title: "Error",
@@ -45,13 +74,29 @@ export default function ProgsAdminPage() {
   }
 
   const handleCreate = () => {
-    setSelectedUser(null)
+    setVisitaRecol(null);
+    setSelected(null)
     setDialogOpen(true)
   }
 
-  const handleEdit = (employee: User) => {
-    setSelectedUser(employee)
+  const handleEdit = async (obj: ProgVisitaRecol) => {
+    const visita = await visitService.getId(obj.visitaRecolId);
+    setVisitaRecol(visita);
+    setSelected(obj);
+    setDialogOpen(true);
+  }
+
+  const handleEditNew = (obj: ProgVisitaRecol) => {
+    setVisitaRecol(null);
+    setSelected(obj)
     setDialogOpen(true)
+  }
+
+  const handleAmounts = async (obj: ProgVisitaRecol) => {
+    const visita = await visitService.getId(obj.visitaRecolId);
+    setVisitaRecol(visita);
+    setSelected(obj)
+    setDialogAmountsOpen(true)
   }
 
   const handleToggleStatus = async (id: string) => {
@@ -73,64 +118,79 @@ export default function ProgsAdminPage() {
     }
   }
 
-  const columns: ColumnDef<User>[] = [
+  const columns: ColumnDef<ProgVisitaRecol>[] = [
     {
-      accessorKey: "nombre",
-      header: "Nombre",
-      cell: ({ row }) => {
-        return `${row.original.nombre} ${row.original.apellido}`
-      },
-    },
-    {
-      accessorKey: "documento",
-      header: "Documento",
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-    },
-    {
-      accessorKey: "telefono",
-      header: "Teléfono",
-    },
-    {
-      accessorKey: "perfil",
-      header: "Perfil",
-      cell: ({ row }) => {
-        const profile = profiles.find((p) => p.id === row.original.rolId)
-        return profile?.nombre || "N/A"
-      },
-    },
-    {
-      accessorKey: "activo",
-      header: "Estado",
+      accessorKey: "tipoNombre",
+      header: "Tipo",
       cell: ({ row }) => {
         return (
-          <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
-            {row.getValue("activo") ? "Activo" : "Inactivo"}
+          <Badge className={row.original.tipoColor}>
+            {row.original.tipoNombre}
           </Badge>
-        )
+        );
+      },
+      enableColumnFilter: true
+    },
+    {
+      accessorKey: "sedeNombre",
+      header: "Sede",
+      enableColumnFilter: true
+    },
+    {
+      accessorKey: "recolNombre",
+      header: "Recolector",
+      cell: ({ row }) => {
+        return `${row.original.recolNombre} ${row.original.recolApellido}`
+      },
+    },
+    {
+      accessorKey: "vehInterno",
+      header: "Vehículo",
+    },
+    {
+      accessorKey: "novs",
+      header: "Novedades",
+      cell: ({ row }) => {
+        const obj = row.getValue("novs");
+        return (
+          obj ? <Check className="h-4 w-4" /> : null
+        );
+      },
+    },
+    {
+      accessorKey: "visitaRecolId",
+      header: "Visita",
+      cell: ({ row }) => {
+        const obj = row.getValue("visitaRecolId");
+        return (
+          obj ? <Check className="h-4 w-4" /> : null
+        );
       },
     },
     {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
-        const employee = row.original
+        const obj = row.original
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(employee.id)}
-              className={employee.activo ? "text-green-600" : "text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              {obj.visitaRecolId ?
+                <div>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
+                    <TableProperties className="h-4 w-4" />
+                  </ButtonTooltip>
+                </div>
+                :
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
+                  <PlusCircle className="h-4 w-4" />
+                </ButtonTooltip>
+              }
+            </div>
+          </TooltipProvider>
         )
       },
     },
@@ -141,7 +201,7 @@ export default function ProgsAdminPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando usuarios...</p>
+          <p className="mt-2 text-sm text-gray-600">Cargando administración visitas...</p>
         </div>
       </div>
     )
@@ -151,28 +211,52 @@ export default function ProgsAdminPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Usuarios</h1>
-          <p className="text-gray-600">Gestiona los usuarios del sistema</p>
+          <h1 className="text-3xl font-bold text-gray-900">Administración Visitas</h1>
         </div>
-        <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Usuario
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            id="fecha"
+            type="date"
+            value={selectedDate}
+            onChange={e => setSelectedDate(e.target.value)}
+            className="border rounded px-2 py-1"
+          />
+        </div>
       </div>
 
       <Card>
         <CardContent>
-          <DataTable columns={columns} data={users} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
+          <div className="flex justify-between items-center">
+            <div></div>
+            <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Visita
+            </Button>
+          </div>
+          <DataTable columns={columns} data={progs} searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]} searchPlaceholder="Buscar por nombre..." />
         </CardContent>
       </Card>
 
-      <UserDialog
+      <VisitDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        user={selectedUser}
-        profiles={profiles}
+        selectedDate={selectedDate}
+        visitaId={selected ? selected.visitaRecolId : null}
+        visita={visitaRecol}
+        progVisitaRecol={selected}
+        sedes={sedes}
+        vehiculos={vehiculos}
+        recolectores={recolectores}
+        comerciales={comerciales}
         onSuccess={loadData}
       />
+
+      {visitaRecol ?
+        <AmountsDialog
+          open={dialogAmountsOpen}
+          onOpenChange={setDialogAmountsOpen}
+          visitaRecol={visitaRecol}
+        /> : ''}
     </div>
   )
 }

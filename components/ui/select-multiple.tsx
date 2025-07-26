@@ -11,6 +11,7 @@ interface SelectMultipleProps {
     value: string[]
     onChange: (selected: string[]) => void
     placeholder?: string
+    isFilter?: boolean
 }
 
 export const SelectMultiple: React.FC<SelectMultipleProps> = ({
@@ -18,6 +19,7 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
     value,
     onChange,
     placeholder = "Selecciona opciones",
+    isFilter = false
 }) => {
     return (
         <ReactSelect
@@ -33,8 +35,8 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
                 control: (base, state) => ({
                     ...base,
                     backgroundColor: 'white',
-                    fontSize: '0.875rem',
-                    lineHeight: '1.25rem',
+                    fontSize: isFilter ? '0.75rem' : '0.875rem',
+                    lineHeight: isFilter ? '1rem' : '1.25rem',
                     borderColor: '#e2e8f0',
                     boxShadow: state.isFocused ? '0 0 0 2px #090a16' : 'none',
                     minHeight: 40,
@@ -61,7 +63,7 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
                 }),
                 placeholder: (base) => ({
                     ...base,
-                    color: '#020817',
+                    color: '#657283',
                 }),
             }}
         />

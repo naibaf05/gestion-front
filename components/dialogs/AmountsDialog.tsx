@@ -9,38 +9,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
-import { Check, CircleDollarSign, Edit, MapPin, Plus, PowerSquare } from "lucide-react"
-import { Parametrizacion, Rate, Sede } from "@/types"
+import { Edit, Plus, TableProperties } from "lucide-react"
+import { Parametrizacion, VisitaCantidad, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { rateService } from "@/services/rateService"
 import { parametrizationService } from "@/services/parametrizationService"
-import { RateDialog } from "./RateDialog";
+import { visitService } from "@/services/visitService";
+import { AmountDialog } from "./AmountDialog";
 
-interface RatesDialogProps {
+interface AmountsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  sede?: Sede | null
+  visitaRecol: VisitaRecol
 }
 
-export function RatesDialog({
+export function AmountsDialog({
   open,
   onOpenChange,
-  sede,
-}: RatesDialogProps) {
-  const [rates, setRates] = useState<Rate[]>([])
+  visitaRecol,
+}: AmountsDialogProps) {
+  const [amounts, setAmounts] = useState<VisitaCantidad[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [undMedidas, setUndMedidas] = useState<Parametrizacion[]>([])
+  const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
-  const [selectedRate, setSelectedRate] = useState<Rate | null>(null)
+  const [selectedAmount, setSelectedAmount] = useState<VisitaCantidad | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
     loadData()
-  }, [sede])
+  }, [visitaRecol])
 
   const handleCancel = () => {
     onOpenChange(false)
@@ -48,16 +48,16 @@ export function RatesDialog({
 
   const loadData = async () => {
     try {
-      if (sede) {
+      if (visitaRecol) {
         setLoading(true)
-        const [ratesData, undMedidasData, tiposResiduosData] = await Promise.all([
-          rateService.getTable(sede.id),
+        const [amountsData, contenedoresData, tiposResiduosData] = await Promise.all([
+          visitService.getCantidades(),
           parametrizationService.getListaActivos("und_medida"),
           parametrizationService.getListaActivos("t_residuo"),
         ])
-        setRates(ratesData)
-        setUndMedidas(undMedidasData)
-        setTiposResiduos(tiposResiduosData)
+        setAmounts(amountsData);
+        setContenedores(contenedoresData);
+        setTiposResiduos(tiposResiduosData);
       }
     } catch (error) {
       toast({
@@ -71,12 +71,12 @@ export function RatesDialog({
   }
 
   const handleCreate = () => {
-    setSelectedRate(null)
+    setSelectedAmount(null)
     setDialogOpen(true)
   }
 
-  const handleEdit = (rate: Rate) => {
-    setSelectedRate(rate)
+  const handleEdit = (obj: VisitaCantidad) => {
+    setSelectedAmount(obj)
     setDialogOpen(true)
   }
 
@@ -101,85 +101,32 @@ export function RatesDialog({
     }
   }
 
-  const columns: ColumnDef<Rate>[] = [
+  const columns: ColumnDef<VisitaCantidad>[] = [
     {
-      accessorKey: "undMedidaNombre",
-      header: "Unidad de Medida",
-    },
-    {
-      accessorKey: "tipoResiduoNombre",
+      accessorKey: "tResiduoNombre",
       header: "Tipo de Residuo",
     },
     {
-      accessorKey: "tarifa",
+      accessorKey: "contenedorNombre",
+      header: "Contenedor",
+    },
+    {
+      accessorKey: "numContenedor",
+      header: "Num Contenedor",
+    },
+    {
+      accessorKey: "tarifaNombre",
       header: "Tarifa",
-    },
-    {
-      accessorKey: "fechaInicio",
-      header: "Fecha Inicio",
-      cell: ({ row }) => {
-        const fecha = row.getValue("fechaInicio");
-        if (typeof fecha === "string") {
-          const [anio, mes, dia] = fecha.split("-");
-          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
-          return fechaLocal.toLocaleDateString();
-        } else {
-          return "";
-        }
-      },
-    },
-    {
-      accessorKey: "fechaFin",
-      header: "Fecha Fin",
-      cell: ({ row }) => {
-        const fecha = row.getValue("fechaFin");
-        if (typeof fecha === "string") {
-          const [anio, mes, dia] = fecha.split("-");
-          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
-          return fechaLocal.toLocaleDateString();
-        } else {
-          return "";
-        }
-      },
-    },
-    {
-      accessorKey: "puestoPlanta",
-      header: "Puesto en planta",
-      cell: ({ row }) => {
-        const obj = row.getValue("puestoPlanta");
-        return (
-          obj ? <Check className="h-4 w-4" /> : null
-        );
-      },
-    },
-    {
-      accessorKey: "activo",
-      header: "Estado",
-      cell: ({ row }) => {
-        return (
-          <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
-            {row.getValue("activo") ? "Activo" : "Inactivo"}
-          </Badge>
-        )
-      },
     },
     {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
-        const prof = row.original
+        const obj = row.original
         return (
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(prof)}>
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(obj)}>
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(prof.id)}
-              className={prof.activo ? "text-green-600" : "text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
             </Button>
           </div>
         )
@@ -192,7 +139,7 @@ export function RatesDialog({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando perfiles...</p>
+          <p className="mt-2 text-sm text-gray-600">Cargando cantidades...</p>
         </div>
       </div>
     )
@@ -204,8 +151,8 @@ export function RatesDialog({
         <DialogContent className="sm:max-w-[1050px] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CircleDollarSign className="h-5 w-5" />
-              Tarifas - [{sede ? sede.nombre : "Todas las sedes"}]
+              <TableProperties className="h-5 w-5" />
+              Administración de Cantidades
             </DialogTitle>
           </DialogHeader>
 
@@ -213,11 +160,11 @@ export function RatesDialog({
             <div></div>
             <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
               <Plus className="mr-2 h-4 w-4" />
-              Nueva Tarifa
+              Nueva Cantidad
             </Button>
           </div>
 
-          <DataTable columns={columns} data={rates} searchKey="undMedidaNombre" searchPlaceholder="Buscar por unidad de medida..." />
+          <DataTable columns={columns} data={amounts} searchKey="undMedidaNombre" searchPlaceholder="Buscar..." />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>
@@ -227,13 +174,13 @@ export function RatesDialog({
         </DialogContent>
       </Dialog>
 
-      <RateDialog
+      <AmountDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        rate={selectedRate}
-        sede={sede}
-        undMedidas={undMedidas}
+        cantidad={selectedAmount}
+        visitaRecol={visitaRecol}
         tiposResiduos={tiposResiduos}
+        contenedores={contenedores}
         onSuccess={loadData}
       />
     </>

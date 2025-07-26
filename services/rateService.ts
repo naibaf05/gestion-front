@@ -7,6 +7,11 @@ export class RateService {
     return response.data
   }
 
+  async getDataActivos(idSede: string): Promise<Rate[]> {
+    const response = await apiService.get<ApiResponse<Rate[]>>(`/rates/all/activos/${idSede}`)
+    return response.data
+  }
+
   async getActivos(): Promise<Rate[]> {
     const response = await apiService.get<ApiResponse<Rate[]>>('/rates/activos')
     return response.data

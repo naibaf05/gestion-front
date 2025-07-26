@@ -12,26 +12,7 @@ import type { Path, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { PathDialog } from "@/components/dialogs/PathDialog"
 import type { ColumnDef } from "@tanstack/react-table"
-
-const DIAS_SEMANA = {
-    l: "Lunes",
-    m: "Martes",
-    x: "Miércoles",
-    j: "Jueves",
-    v: "Viernes",
-    s: "Sábado",
-    d: "Domingo",
-}
-
-const DIAS_COLORS = {
-    l: "bg-blue-100 text-blue-800",
-    m: "bg-green-100 text-green-800",
-    x: "bg-yellow-100 text-yellow-800",
-    j: "bg-purple-100 text-purple-800",
-    v: "bg-pink-100 text-pink-800",
-    s: "bg-indigo-100 text-indigo-800",
-    d: "bg-red-100 text-red-800",
-}
+import { DiaKey, getDiaColor, getDiaSemana } from "@/utils/utils"
 
 export default function RutasPage() {
     const [rutas, setRutas] = useState<Path[]>([])
@@ -108,11 +89,14 @@ export default function RutasPage() {
             header: "Nombre",
         },
         {
-            accessorKey: "dia",
+            accessorKey: "diaNombre",
             header: "Día",
             cell: ({ row }) => {
-                const dia = row.getValue("dia") as keyof typeof DIAS_SEMANA
-                return <Badge className={DIAS_COLORS[dia]}>{DIAS_SEMANA[dia]}</Badge>
+                return (
+                    <Badge className={row.original.diaColor}>
+                        {row.original.diaNombre}
+                    </Badge>
+                );
             },
         },
         {

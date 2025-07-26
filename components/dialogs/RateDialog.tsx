@@ -12,17 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { rateService } from "@/services/rateService";
 import type { Rate, Sede, Parametrizacion } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { SelectSingle } from "../ui/select-single";
+import { InputDecimal } from "../ui/input-decimal";
+import { InputCheck } from "../ui/input-check";
 
 interface RateDialogProps {
   open: boolean;
@@ -51,6 +47,7 @@ export function RateDialog({
     tarifa: "",
     fechaInicio: "",
     fechaFin: "",
+    puestoPlanta: false
   });
   const { toast } = useToast();
 
@@ -63,6 +60,7 @@ export function RateDialog({
         tarifa: rate.tarifa,
         fechaInicio: rate.fechaInicio,
         fechaFin: rate.fechaFin ?? "",
+        puestoPlanta: rate.puestoPlanta ?? false,
       });
     } else {
       setFormData({
@@ -72,6 +70,7 @@ export function RateDialog({
         tarifa: "",
         fechaInicio: "",
         fechaFin: "",
+        puestoPlanta: false
       });
     }
   }, [rate, open]);
@@ -124,63 +123,26 @@ export function RateDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="undMedidaId">Unidad de Medida *</Label>
-                <Select
-                  value={formData.undMedidaId ? String(formData.undMedidaId) : ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, undMedidaId: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una unidad de medida" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {undMedidas.map((undMedida) => (
-                      <SelectItem key={undMedida.id} value={String(undMedida.id)}>
-                        {undMedida.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectSingle
+                  id="undMedidaId"
+                  placeholder="Selecciona una unidad de medida"
+                  options={undMedidas}
+                  value={formData.undMedidaId}
+                  onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tipoResiduoId">Tipo de Residuo *</Label>
-                <Select
-                  value={formData.tipoResiduoId ? String(formData.tipoResiduoId) : ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, tipoResiduoId: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tipo de residuo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposResiduos.map((tipoResiduo) => (
-                      <SelectItem key={tipoResiduo.id} value={String(tipoResiduo.id)}>
-                        {tipoResiduo.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tarifa">Tarifa *</Label>
-                <Input
-                  id="tarifa"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.tarifa}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d.]/g, "");
-                    const decimalValue = value.includes(".")
-                      ? value.split(".")[0] + "." + value.split(".")[1].slice(0, 2)
-                      : value;
-                    setFormData({ ...formData, tarifa: decimalValue });
-                  }}
-                  required
+                <SelectSingle
+                  id="tipoResiduoId"
+                  placeholder="Selecciona un tipo de residuo"
+                  options={tiposResiduos}
+                  value={formData.tipoResiduoId}
+                  onChange={(value) => setFormData({ ...formData, tipoResiduoId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
                 />
               </div>
               <div className="space-y-2">
@@ -190,11 +152,8 @@ export function RateDialog({
                   type="date"
                   value={formData.fechaInicio}
                   onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
-                  autoComplete="off"
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fechaFin">Fecha Fin</Label>
                 <Input
@@ -202,7 +161,27 @@ export function RateDialog({
                   type="date"
                   value={formData.fechaFin}
                   onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-                  autoComplete="off"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tarifa">Tarifa *</Label>
+                <InputDecimal
+                  id="tarifa"
+                  value={formData.tarifa}
+                  onChange={(e) => setFormData({ ...formData, tarifa: e.target.value })}
+                  decimalPlaces={2}
+                  placeholder="Ingrese la tarifa"
+                />
+              </div>
+              <div className="space-y-2">
+                <br></br>
+                <InputCheck
+                  id="puestoPlanta"
+                  checked={formData.puestoPlanta}
+                  onChange={e =>
+                    setFormData({ ...formData, puestoPlanta: e.target.checked })
+                  }
+                  label="¿Es puesto de planta?"
                 />
               </div>
             </div>

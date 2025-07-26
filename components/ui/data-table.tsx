@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { SelectMultiple } from "./select-multiple";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -39,17 +40,39 @@ export function DataTable<TData, TValue>({
   const [pageSize, setPageSize] = React.useState(10);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [searchValue, setSearchValue] = React.useState("");
+  const [columnFilters, setColumnFilters] = React.useState<{ [key: string]: string | string[] }>({});
 
   const filteredData = React.useMemo(() => {
-    if (!searchKey || !searchValue) return data;
-    const keys = Array.isArray(searchKey) ? searchKey : [searchKey];
-    return data.filter((row) =>
-      keys.some((key) => {
-        const value = key.split('.').reduce((acc: any, k) => acc?.[k], row);
-        return value?.toString().toLowerCase().includes(searchValue.toLowerCase());
-      })
-    );
-  }, [data, searchKey, searchValue]);
+    let filtered = data;
+
+    // Filtro global
+    if (searchValue && searchKey) {
+      const keys = Array.isArray(searchKey) ? searchKey : [searchKey];
+      filtered = filtered.filter((row) =>
+        keys.some((key) => {
+          const value = key.split('.').reduce((acc: any, k) => acc?.[k], row);
+          return value?.toString().toLowerCase().includes(searchValue.toLowerCase());
+        })
+      );
+    }
+
+    // Filtros por columna
+    Object.entries(columnFilters).forEach(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) {
+        filtered = filtered.filter((row) => {
+          const cellValue = key.split('.').reduce((acc: any, k) => acc?.[k], row);
+          return value.includes(cellValue);
+        });
+      } else if (typeof value === "string" && value) {
+        filtered = filtered.filter((row) => {
+          const cellValue = key.split('.').reduce((acc: any, k) => acc?.[k], row);
+          return cellValue?.toString().toLowerCase().includes(value.toLowerCase());
+        });
+      }
+    });
+
+    return filtered;
+  }, [data, searchValue, searchKey, columnFilters]);
 
   const table = useReactTable({
     data: filteredData,
@@ -66,7 +89,7 @@ export function DataTable<TData, TValue>({
 
   React.useEffect(() => {
     setPageIndex(0);
-  }, [pageSize, searchValue, sorting, data]);
+  }, [pageSize, sorting, data]);
 
   return (
     <div className="space-y-4">
@@ -89,14 +112,52 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup: any) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: any) => {
+                  const colKey = header.column.columnDef.accessorKey || header.column.id;
                   return (
-                    <TableHead key={header.id} className="bg-gray-50 text-gray-700 font-semibold">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                    <TableHead key={header.id} className="bg-gray-50 text-gray-700 font-semibold" style={{ maxWidth: "200px" }}>
+                      <div className="flex flex-col gap-1">
+                        <span className="px-3">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </span>
+                        {header.column.columnDef.enableColumnFilter && colKey !== "actions" && (
+                          (() => {
+                            // Obtener valores únicos para la columna
+                            const uniqueValues = Array.from(
+                              new Set(data.map((row: any) => {
+                                const v = colKey.split('.').reduce((acc: any, k: string) => acc?.[k], row);
+                                return v ?? "";
+                              }))
+                            ).filter(v => v !== "");
+
+                            // Si hay pocos valores únicos, usar select, si no, input
+                            if (uniqueValues.length > 0 && uniqueValues.length <= 20) {
+                              return (
+                                <SelectMultiple
+                                  options={uniqueValues.map((v) => ({ label: v, value: v }))}
+                                  value={Array.isArray(columnFilters[colKey]) ? columnFilters[colKey] : []}
+                                  onChange={(vals) => setColumnFilters(f => ({ ...f, [colKey]: vals }))}
+                                  placeholder="Filtrar..."
+                                  isFilter={true}
+                                />
+                              );
+                            }
+                            return (
+                              <input
+                                type="text"
+                                value={columnFilters[colKey] || ""}
+                                onChange={e => setColumnFilters(f => ({ ...f, [colKey]: e.target.value }))}
+                                placeholder={`Filtrar...`}
+                                className="mt-1 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            );
+                          })()
                         )}
+                      </div>
                     </TableHead>
                   );
                 })}

@@ -120,6 +120,8 @@ export interface Path {
   dia: "l" | "m" | "x" | "j" | "v" | "s" | "d" | ""
   oficinaId: string
   activo?: boolean
+  diaNombre?: string
+  diaColor?: string
 }
 
 export interface Vehicle {
@@ -146,6 +148,7 @@ export interface Rate {
   fechaInicio: string
   fechaFin?: string
   activo: boolean
+  puestoPlanta: boolean
 }
 
 export interface ProgPath {
@@ -181,6 +184,57 @@ export interface ProgRutas {
   sedeLat: string
   sedeLon: string
   rutaNombre: string
+}
+
+export interface ProgVisitaRecol {
+  id: string
+  sedeId: string
+  sedeNombre: string
+  recolId: string
+  recolNombre: string
+  recolApellido: string
+  vehId: string
+  vehInterno: string
+  novs: string
+  visitaRecolId: string
+  tipo: string
+  tipoNombre?: string
+  tipoColor?: string
+}
+
+export interface VisitaRecol {
+  id: string;
+  tipo: string;
+  lat: string;
+  lon: string;
+  fecha: string;
+  inicio: string;
+  fin: string;
+  notas?: string;
+  sedeId: string;
+  sedeNombre?: string;
+  recolId: string;
+  recolNombre?: string;
+  recolApellido?: string;
+  vehId: string;
+  vehInterno?: string;
+  tieneFoto?: Boolean;
+  numMan?: string;
+  comercialId: string;
+  comercialNombre?: string;
+}
+
+export interface VisitaCantidad {
+  id: string;
+  cantidad: string;
+  tResiduoId: string;
+  tResiduoNombre?: string;
+  contenedorId: string;
+  contenedorNombre?: string;
+  numContenedor: string;
+  visitaRecolId: string;
+  tarifaId: string;
+  tarifaNombre?: string;
 }
 
 export interface InfoAdicional {

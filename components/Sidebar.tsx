@@ -43,10 +43,10 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: "Programación",
+    title: "Recolección",
     icon: CalendarSearch,
     children: [
-      { title: "Administración", href: "/dashboard/users", icon: ShieldCheck },
+      { title: "Admin Visitas", href: "/dashboard/progs-admin", icon: ShieldCheck },
       { title: "Programación", href: "/dashboard/progs", icon: CalendarRange },
     ],
   },

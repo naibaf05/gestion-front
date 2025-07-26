@@ -117,6 +117,7 @@ export default function ClientsPage() {
     {
       accessorKey: "tipoCliente",
       header: "Tipo de Cliente",
+      enableColumnFilter: true
     },
     {
       accessorKey: "contacto",

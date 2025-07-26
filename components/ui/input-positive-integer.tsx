@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 
 type InputPositiveIntegerProps = React.ComponentProps<"input"> & {
     error?: string;
+    maxLength?: number;
 };
 
 const InputPositiveInteger = React.forwardRef<HTMLInputElement, InputPositiveIntegerProps>(
-    ({ className, value, onChange, error, ...props }, ref) => {
+    ({ className, value, onChange, error, maxLength = 10, ...props }, ref) => {
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const val = e.target.value;
             if (val === "" || /^[0-9]+$/.test(val)) {
@@ -28,6 +29,7 @@ const InputPositiveInteger = React.forwardRef<HTMLInputElement, InputPositiveInt
                     ref={ref}
                     value={value}
                     onChange={handleChange}
+                    autoComplete="off"
                     {...props}
                 />
                 {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

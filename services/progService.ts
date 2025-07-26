@@ -1,5 +1,6 @@
+import { getTipoColor, getTipoVisita, TipoVisitaKey } from "@/utils/utils"
 import { apiService } from "./api"
-import type { ApiResponse, ProgEvPath, ProgPath, ProgRutas } from "@/types"
+import type { ApiResponse, ProgEvPath, ProgPath, ProgRutas, ProgVisitaRecol } from "@/types"
 
 export class ProgService {
   async getData(fecha: string): Promise<ProgPath[]> {
@@ -19,6 +20,18 @@ export class ProgService {
 
   async getDataRutas(fecha: string, rutaId: string): Promise<ProgRutas[]> {
     const response = await apiService.get<ApiResponse<ProgRutas[]>>(`/progs/rutas?fecha=${fecha}&rutaId=${rutaId}`)
+    return response.data
+  }
+
+  async getDataProgsAdmin(fecha: string): Promise<ProgVisitaRecol[]> {
+    const response = await apiService.get<ApiResponse<ProgVisitaRecol[]>>(`/progs/progs-admin?fecha=${fecha}`)
+
+    response.data.forEach(obj => {
+      const tipo = obj.tipo as TipoVisitaKey
+      obj.tipoNombre = getTipoVisita(tipo);
+      obj.tipoColor = getTipoColor(tipo);
+    });
+    console.log(response.data);
     return response.data
   }
 

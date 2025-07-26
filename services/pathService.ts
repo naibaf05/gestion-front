@@ -1,9 +1,19 @@
+import { DiaKey, getDiaColor, getDiaSemana } from "@/utils/utils";
 import { apiService } from "./api"
-import type { Path, ApiResponse, InfoAdicional, ProgPath } from "@/types"
+import type { Path, ApiResponse, InfoAdicional } from "@/types"
 
 export class PathService {
   async getData(): Promise<Path[]> {
     const response = await apiService.get<ApiResponse<Path[]>>(`/rutas`)
+
+    response.data.forEach(obj => {
+      if (obj.dia) {
+        const dia = obj.dia as DiaKey
+        obj.diaNombre = getDiaSemana(dia);
+        obj.diaColor = getDiaColor(dia);
+      }
+    });
+    console.log(response.data);
     return response.data
   }
 
