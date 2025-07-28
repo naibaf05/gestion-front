@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, PlusCircle, TableProperties } from "lucide-react"
+import { Plus, Edit, Check, PlusCircle, TableProperties, FileText } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -19,10 +19,13 @@ import { visitService } from "@/services/visitService"
 import { AmountsDialog } from "@/components/dialogs/AmountsDialog"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { PdfDialog } from "@/components/dialogs/PdfDialog"
+import { certificatesService } from "@/services/certificatesService"
 
 export default function ProgsAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAmountsOpen, setDialogAmountsOpen] = useState(false);
+  const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -41,6 +44,7 @@ export default function ProgsAdminPage() {
   const [visitaRecol, setVisitaRecol] = useState<VisitaRecol | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<ProgVisitaRecol | null>(null)
+  const [base64, setBase64] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -97,6 +101,13 @@ export default function ProgsAdminPage() {
     setVisitaRecol(visita);
     setSelected(obj)
     setDialogAmountsOpen(true)
+  }
+
+  const handlePdf = async (obj: ProgVisitaRecol) => {
+    const base64 = await certificatesService.getCertificadoPDF();
+    setBase64(base64);
+    setSelected(obj)
+    setDialogPdfOpen(true)
   }
 
   const handleToggleStatus = async (id: string) => {
@@ -183,6 +194,9 @@ export default function ProgsAdminPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
                     <TableProperties className="h-4 w-4" />
                   </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
+                    <FileText className="h-4 w-4" />
+                  </ButtonTooltip>
                 </div>
                 :
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
@@ -251,12 +265,21 @@ export default function ProgsAdminPage() {
         onSuccess={loadData}
       />
 
-      {visitaRecol ?
+      {visitaRecol && (
         <AmountsDialog
           open={dialogAmountsOpen}
           onOpenChange={setDialogAmountsOpen}
           visitaRecol={visitaRecol}
-        /> : ''}
+        />
+      )}
+
+      {base64 && (
+        <PdfDialog
+          open={dialogPdfOpen}
+          onOpenChange={setDialogPdfOpen}
+          base64={base64}
+        />
+      )}
     </div>
   )
 }

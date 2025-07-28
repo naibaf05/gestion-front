@@ -8,6 +8,7 @@ type SelectSingleProps<T> = {
     labelKey: keyof T;
     placeholder: string;
     id: string;
+    disabled?: boolean;
 };
 
 export function SelectSingle<T extends Record<string, any>>({
@@ -18,13 +19,14 @@ export function SelectSingle<T extends Record<string, any>>({
     labelKey,
     placeholder,
     id,
+    disabled = false,
 }: SelectSingleProps<T>) {
     return (
         <Select
             value={value !== undefined && value !== null ? String(value) : ""}
             onValueChange={onChange}
         >
-            <SelectTrigger id={id}>
+            <SelectTrigger id={id} disabled={disabled}>
                 <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>

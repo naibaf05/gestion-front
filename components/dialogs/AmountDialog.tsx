@@ -16,12 +16,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
 import { InputDecimal } from "../ui/input-decimal";
+import { Input } from "../ui/input";
 import { visitService } from "@/services/visitService";
 import { InputPositiveInteger } from "../ui/input-positive-integer";
+import { rateService } from "@/services/rateService";
 
 interface AmountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  progVisitaRecolId?: string | null;
   cantidad?: VisitaCantidad | null;
   visitaRecol: VisitaRecol;
   contenedores: Parametrizacion[];
@@ -32,6 +35,7 @@ interface AmountDialogProps {
 export function AmountDialog({
   open,
   onOpenChange,
+  progVisitaRecolId,
   cantidad,
   visitaRecol,
   contenedores,
@@ -39,6 +43,7 @@ export function AmountDialog({
   onSuccess,
 }: AmountDialogProps) {
   const [tarifas, setTarifas] = useState<Rate[]>([]);
+  const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     cantidad: "",
@@ -46,7 +51,8 @@ export function AmountDialog({
     contenedorId: "",
     numContenedor: "",
     visitaRecolId: "",
-    tarifaId: ""
+    tarifaId: "",
+    tarifaNombre: ""
   });
   const { toast } = useToast();
 
@@ -58,7 +64,8 @@ export function AmountDialog({
         contenedorId: cantidad.contenedorId,
         numContenedor: cantidad.numContenedor,
         visitaRecolId: cantidad.visitaRecolId,
-        tarifaId: cantidad.tarifaId
+        tarifaId: cantidad.tarifaId,
+        tarifaNombre: cantidad.tarifaNombre || ''
       });
     } else {
       setFormData({
@@ -67,7 +74,8 @@ export function AmountDialog({
         contenedorId: "",
         numContenedor: "",
         visitaRecolId: visitaRecol.id,
-        tarifaId: ""
+        tarifaId: "",
+        tarifaNombre: ""
       });
     }
   }, [cantidad, open]);
@@ -109,6 +117,38 @@ export function AmountDialog({
     }
   };
 
+  const handleTResiduoChange = async (v: string) => {
+    formData.tResiduoId = v;
+
+    const residuoEncontrado = tiposResiduos.find(tr => parseInt(tr.id) === parseInt(v));
+    if (residuoEncontrado) {
+      formData.cantidad = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
+      setSelectedTResiduo(residuoEncontrado);
+    } else {
+      formData.cantidad = '';
+      setSelectedTResiduo(null);
+    }
+
+    const list_tarifas = await rateService.getDataActivos(visitaRecol.sedeId, v);
+    if (list_tarifas && list_tarifas.length > 0) {
+      setTarifas(list_tarifas);
+      list_tarifas.forEach(element => {
+        if (element.puestoPlanta && progVisitaRecolId) {
+          formData.tarifaId = element.id;
+          formData.tarifaNombre = element.tarifaNombre || '';
+        } else {
+          formData.tarifaId = element.id;
+          formData.tarifaNombre = element.tarifaNombre || '';
+        }
+      });
+    } else {
+      setTarifas([]);
+      formData.tarifaId = '';
+      formData.tarifaNombre = '';
+    }
+    setFormData(formData);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
@@ -125,21 +165,18 @@ export function AmountDialog({
                   placeholder="Selecciona un tipo de residuo"
                   options={tiposResiduos}
                   value={formData.tResiduoId}
-                  onChange={(value) => setFormData({ ...formData, tResiduoId: value })}
+                  onChange={handleTResiduoChange}
                   valueKey="id"
                   labelKey="nombre"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tarifaId">Tarifa</Label>
-                <SelectSingle
-                  id="tarifaId"
-                  placeholder="Selecciona una tarifa"
-                  options={tarifas}
-                  value={formData.tarifaId}
-                  onChange={(value) => setFormData({ ...formData, tarifaId: value })}
-                  valueKey="id"
-                  labelKey="tarifa"
+                <Input
+                  id="tarifaNombre"
+                  value={formData.tarifaNombre}
+                  placeholder="Tarifa"
+                  disabled={true}
                 />
               </div>
               <div className="space-y-2">
@@ -169,6 +206,7 @@ export function AmountDialog({
                   onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
                   decimalPlaces={2}
                   placeholder="Ingrese una cantidad"
+                  disabled={selectedTResiduo ? selectedTResiduo.datosJson?.esllanta : false}
                 />
               </div>
             </div>

@@ -158,12 +158,16 @@ export function VisitDialog({
       }
       onSuccess()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: visita ? "No se pudo actualizar la visita" : "No se pudo crear la visita",
-        variant: "destructive",
-      })
+        title: progVisitaRecol ? "Error al actualizar la visita" : "Error al crear la visita",
+        description: (error && error.message) ?
+          error.message :
+          progVisitaRecol
+            ? "No se pudo actualizar la visita"
+            : "No se pudo crear la visita",
+        variant: "error",
+      });
     } finally {
       setLoading(false)
     }

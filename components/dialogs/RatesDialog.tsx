@@ -111,7 +111,7 @@ export function RatesDialog({
       header: "Tipo de Residuo",
     },
     {
-      accessorKey: "tarifa",
+      accessorKey: "tarifaNombre",
       header: "Tarifa",
     },
     {

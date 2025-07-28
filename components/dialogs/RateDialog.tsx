@@ -178,9 +178,7 @@ export function RateDialog({
                 <InputCheck
                   id="puestoPlanta"
                   checked={formData.puestoPlanta}
-                  onChange={e =>
-                    setFormData({ ...formData, puestoPlanta: e.target.checked })
-                  }
+                  onChange={e => setFormData({ ...formData, puestoPlanta: e.target.checked })}
                   label="¿Es puesto de planta?"
                 />
               </div>

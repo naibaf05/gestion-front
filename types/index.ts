@@ -145,6 +145,7 @@ export interface Rate {
   tipoResiduoId: string
   tipoResiduoNombre?: string
   tarifa: string
+  tarifaNombre?: string
   fechaInicio: string
   fechaFin?: string
   activo: boolean

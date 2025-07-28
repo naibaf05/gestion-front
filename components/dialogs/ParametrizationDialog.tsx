@@ -18,6 +18,8 @@ import { parametrizationService } from "@/services/parametrizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ParametrizationType } from "@/types";
+import { InputCheck } from "../ui/input-check";
+import { InputDecimal } from "../ui/input-decimal";
 
 interface ParametrizationDialogProps {
   open: boolean;
@@ -41,6 +43,7 @@ export function ParametrizationDialog({
     direccion: "",
     telefono: "",
     descripcion: "",
+    datosJson: {} as any,
   });
   const { toast } = useToast();
 
@@ -52,6 +55,7 @@ export function ParametrizationDialog({
         direccion: item.direccion || "",
         telefono: item.telefono || "",
         descripcion: item.descripcion || "",
+        datosJson: item.datosJson || {}
       });
     } else {
       setFormData({
@@ -60,6 +64,7 @@ export function ParametrizationDialog({
         direccion: "",
         telefono: "",
         descripcion: "",
+        datosJson: {}
       });
     }
   }, [item, open]);
@@ -77,7 +82,7 @@ export function ParametrizationDialog({
 
       if (item) {
         // Actualizar
-        await parametrizationService.update(getStringType(type), item.id, data);
+        await parametrizationService.update(getStringType(type), item.id, formData);
         toast({
           title: "Elemento actualizado",
           description: "El elemento ha sido actualizado exitosamente",
@@ -85,7 +90,7 @@ export function ParametrizationDialog({
         });
       } else {
         // Crear
-        await parametrizationService.create(getStringType(type), data);
+        await parametrizationService.create(getStringType(type), formData);
         toast({
           title: "Elemento creado",
           description: "El elemento ha sido creado exitosamente",
@@ -242,12 +247,7 @@ export function ParametrizationDialog({
               <Input
                 id="codigo"
                 value={formData.codigo}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    codigo: e.target.value.toUpperCase(),
-                  })
-                }
+                onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase(), })}
                 placeholder={placeholders.codigo}
                 maxLength={10}
               />
@@ -257,22 +257,40 @@ export function ParametrizationDialog({
               <Input
                 id="nombre"
                 value={formData.nombre}
-                onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 required
                 placeholder={placeholders.nombre}
               />
             </div>
+            {type === 't_residuos' && (
+              <div className="space-y-2">
+                <InputCheck
+                  id="esllanta"
+                  checked={formData.datosJson?.esllanta}
+                  onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, esllanta: e.target.checked } })}
+                  label="¿Es Llanta?"
+                />
+              </div>
+            )}
+            {formData.datosJson?.esllanta && (
+              <div className="space-y-2">
+                <Label htmlFor="cantidad">Cantidad *</Label>
+                <InputDecimal
+                  id="cantidad"
+                  value={formData.datosJson?.cantidad || ''}
+                  onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, cantidad: e.target.value } })}
+                  decimalPlaces={2}
+                  placeholder="Ingrese una cantidad"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción</Label>
               <Textarea
                 id="descripcion"
                 value={formData.descripcion}
-                onChange={(e) =>
-                  setFormData({ ...formData, descripcion: e.target.value })
-                }
-                rows={3}
+                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                rows={2}
                 placeholder={placeholders.descripcion}
               />
             </div>

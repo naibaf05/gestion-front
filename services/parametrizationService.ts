@@ -8,7 +8,7 @@ export class ParametrizationService {
     );
 
     response.data.forEach((element) => {
-      if (element.datosJson) {
+      if (element.datosJson && typeof element.datosJson === "string") {
         element.datosJson = JSON.parse(element.datosJson);
       }
     });
@@ -19,28 +19,29 @@ export class ParametrizationService {
     const response = await apiService.get<ApiResponse<Parametrizacion[]>>(
       `/parametrizaciones/tipo/${type}/activas`
     );
+
+    response.data.forEach((element) => {
+      if (element.datosJson && typeof element.datosJson === "string") {
+        element.datosJson = JSON.parse(element.datosJson);
+      }
+    });
     return response.data;
   }
 
-  async create(
-    type: string,
-    periodo: Omit<Parametrizacion, "id">
-  ): Promise<Parametrizacion> {
+  async create(type: string, obj: Partial<Parametrizacion>): Promise<Parametrizacion> {
+    obj.datosJson = JSON.stringify(obj.datosJson);
     const response = await apiService.post<ApiResponse<Parametrizacion>>(
       `/parametrizaciones/tipo/${type}`,
-      periodo
+      obj
     );
     return response.data;
   }
 
-  async update(
-    type: string,
-    id: string,
-    periodo: Partial<Parametrizacion>
-  ): Promise<Parametrizacion> {
+  async update(type: string, id: string, obj: Partial<Parametrizacion>): Promise<Parametrizacion> {
+    obj.datosJson = JSON.stringify(obj.datosJson);
     const response = await apiService.put<ApiResponse<Parametrizacion>>(
       `/parametrizaciones/tipo/${type}/${id}`,
-      periodo
+      obj
     );
     return response.data;
   }
@@ -52,10 +53,7 @@ export class ParametrizationService {
     return response.data;
   }
 
-  async updateDatosJson(
-    id: string,
-    user: Partial<Parametrizacion>
-  ): Promise<Parametrizacion> {
+  async updateDatosJson(id: string, user: Partial<Parametrizacion>): Promise<Parametrizacion> {
     const response = await apiService.patch<ApiResponse<Parametrizacion>>(
       `/parametrizaciones/updateDatosJson/${id}`,
       user

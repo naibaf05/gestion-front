@@ -5,6 +5,7 @@ type InputDecimalProps = React.ComponentProps<"input"> & {
     error?: string;
     decimalPlaces?: number;
     maxLength?: number;
+    disabled?: boolean;
 };
 
 const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
@@ -18,6 +19,7 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
             min = 0,
             step = "0.01",
             maxLength = 10,
+            disabled = false,
             ...props
         },
         ref
@@ -67,6 +69,7 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
                     step={step}
                     maxLength={maxLength}
                     autoComplete="off"
+                    disabled={disabled}
                     {...props}
                 />
                 {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

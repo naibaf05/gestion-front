@@ -51,8 +51,8 @@ export function AmountsDialog({
       if (visitaRecol) {
         setLoading(true)
         const [amountsData, contenedoresData, tiposResiduosData] = await Promise.all([
-          visitService.getCantidades(),
-          parametrizationService.getListaActivos("und_medida"),
+          visitService.getCantidades(visitaRecol.id),
+          parametrizationService.getListaActivos("contenedor"),
           parametrizationService.getListaActivos("t_residuo"),
         ])
         setAmounts(amountsData);

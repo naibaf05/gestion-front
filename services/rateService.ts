@@ -7,8 +7,8 @@ export class RateService {
     return response.data
   }
 
-  async getDataActivos(idSede: string): Promise<Rate[]> {
-    const response = await apiService.get<ApiResponse<Rate[]>>(`/rates/all/activos/${idSede}`)
+  async getDataActivos(sedeId: string, tResiduoId: string): Promise<Rate[]> {
+    const response = await apiService.get<ApiResponse<Rate[]>>(`/rates/all/activos/${sedeId}/${tResiduoId}`)
     return response.data
   }
 
