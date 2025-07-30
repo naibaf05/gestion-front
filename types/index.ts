@@ -75,6 +75,7 @@ export interface Sede {
   id: string
   nombre: string
   clienteId: string
+  clienteNombre: string
   barrio: string
   direccion: string
   pobladoId: string

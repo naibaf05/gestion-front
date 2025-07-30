@@ -182,12 +182,8 @@ export default function SedesPage() {
       header: "Nombre",
     },
     {
-      accessorKey: "cliente",
+      accessorKey: "clienteNombre",
       header: "Cliente",
-      cell: ({ row }) => {
-        const cliente = clientes.find((c) => c.id === row.original.clienteId);
-        return cliente?.nombre || "N/A";
-      },
     },
     {
       accessorKey: "direccion",
@@ -321,7 +317,7 @@ export default function SedesPage() {
           <DataTable
             columns={columns}
             data={sedes}
-            searchKey="nombre"
+            searchKey={["nombre", "clienteNombre", "direccion"]}
             searchPlaceholder="Buscar por nombre..."
           />
         </CardContent>

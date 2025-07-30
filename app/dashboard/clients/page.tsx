@@ -111,7 +111,7 @@ export default function ClientsPage() {
       header: "Nombre",
     },
     {
-      accessorKey: "datosJson.nombre_comercial",
+      accessorKey: "datosJson.nombreComercial",
       header: "Nombre Comercial",
     },
     {
@@ -202,7 +202,7 @@ export default function ClientsPage() {
           <DataTable
             columns={columns}
             data={clients}
-            searchKey={["nombre", "nit", "datosJson.nombre_comercial", "tipoCliente"]}
+            searchKey={["nombre", "nit", "datosJson.nombreComercial", "tipoCliente"]}
             searchPlaceholder="Buscar..."
           />
         </CardContent>
