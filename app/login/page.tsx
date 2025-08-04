@@ -38,7 +38,7 @@ export default function LoginPage() {
             <img className="mx-auto h-24 w-auto" src={config.logo || "/placeholder.svg"} alt={config.companyName} />
           )}
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Iniciar Sesión</h2>
-          <p className="mt-2 text-sm text-gray-600">{config?.companyName || "Sistema de Gestión"}</p>
+          <p className="mt-2 text-sm text-gray-600">{config?.companyName || ""}</p>
         </div>
 
         <Card>

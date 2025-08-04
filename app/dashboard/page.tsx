@@ -53,7 +53,7 @@ export default function DashboardPage() {
         <Button
           variant="outline"
           onClick={logout}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
+          className="new-text-red-600 hover:new-text-red-700 hover:new-bg-red-50 bg-transparent"
         >
           <LogOut className="mr-2 h-4 w-4" />
           Cerrar Sesión

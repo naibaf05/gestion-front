@@ -7,13 +7,14 @@ import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
-import type { Parametrizacion, ParametrizationType } from "@/types"
+import type { Cliente, Parametrizacion, ParametrizationType } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ParametrizationDialog } from "@/components/dialogs/ParametrizationDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { clientService } from "@/services/clientService"
 
 interface ParametrizationConfig {
   key: ParametrizationType
@@ -100,9 +101,9 @@ const parametrizationConfigs: ParametrizationConfig[] = [
   },
   {
     key: "contenedores",
-    title: "Contenedores",
-    singular_title: "Contenedor",
-    description: "Administra los contenedores disponibles",
+    title: "Unidades de Entrega",
+    singular_title: "Unidad de Entrega",
+    description: "Administra las unidades de entrega disponibles",
     icon: Trash2,
     color: "text-purple-600",
     bgColor: "bg-purple-50",
@@ -121,6 +122,8 @@ const parametrizationConfigs: ParametrizationConfig[] = [
 export default function ParametrizationsPage() {
   const [selectedType, setSelectedType] = useState<ParametrizationType>("poblados")
   const [searchTerm, setSearchTerm] = useState("")
+
+  const [clientes, setClientes] = useState<Cliente[]>([])
 
   const [poblados, setPoblados] = useState<Parametrizacion[]>([])
   const [oficinas, setOficinas] = useState<Parametrizacion[]>([])
@@ -151,8 +154,9 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData] =
+      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData] =
         await Promise.all([
+          clientService.getClientesActivos(),
           parametrizationService.getLista("poblado"),
           parametrizationService.getLista("oficina"),
           parametrizationService.getLista("generador"),
@@ -164,6 +168,7 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("contenedor"),
           parametrizationService.getLista("t_vehiculo"),
         ])
+      setClientes(clientesData)
       setPoblados(pobladosData)
       setOficinas(oficinasData)
       setGeneradores(generadoresData)
@@ -362,7 +367,7 @@ export default function ParametrizationsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => openLocationPicker(item, type)}
-                className={item.datosJson?.lat ? "text-green-600" : "text-red-600"}
+                className={item.datosJson?.lat ? "new-text-green-600" : "new-text-red-600"}
               >
                 {item.datosJson?.lat ? (
                   <MapPin className="h-4 w-4" />
@@ -377,7 +382,7 @@ export default function ParametrizationsPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(item.id)}
-              className={item.activo ? "text-green-600" : "text-red-600"}
+              className={item.activo ? "new-text-green-600" : "new-text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>
@@ -487,6 +492,7 @@ export default function ParametrizationsPage() {
         onOpenChange={setDialogOpen}
         item={selectedItem}
         type={currentType}
+        clientes={clientes}
         onSuccess={loadData}
       />
 

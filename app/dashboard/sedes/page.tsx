@@ -18,6 +18,8 @@ import { WeeklyScheduleDialog } from "@/components/dialogs/WeeklyScheduleDialog"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { RatesDialog } from "@/components/dialogs/RatesDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { ButtonTooltip } from "@/components/ui/button-tooltip";
 
 export default function SedesPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -30,6 +32,8 @@ export default function SedesPage() {
     });
     return formatter.format(today);
   });
+
+  const { user, logout } = useAuth();
 
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -48,6 +52,16 @@ export default function SedesPage() {
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData();
@@ -224,27 +238,17 @@ export default function SedesPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(sede)}>
+              {hasPermission("sedes.edit") && (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(sede)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Editar</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleToggleStatus(sede.id)}
-                    className={sede.activo ? "text-green-600" : "text-red-600"}
-                  >
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(sede.id)}
+                    tooltipContent={sede.activo ? "Desactivar" : "Activar"} className={sede.activo ? "new-text-green-600" : "new-text-red-600"}>
                     <PowerSquare className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{sede.activo ? "Desactivar" : "Activar"}</TooltipContent>
-              </Tooltip>
+                  </ButtonTooltip>
+                </>
+              )}
               <DropdownMenu>
                 <Tooltip>
                   <DropdownMenuTrigger asChild>
@@ -260,22 +264,28 @@ export default function SedesPage() {
                   <TooltipContent>Más acciones</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openScheduleDialog(sede)}>
-                    <CalendarDays className="h-4 w-4 mr-2" />
-                    Frecuencias
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openLocationPicker(sede)}>
-                    {sede.lat ? (
-                      <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                    ) : (
-                      <MapPinOff className="h-4 w-4 mr-2 text-red-600" />
-                    )}
-                    Ubicación
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openRatesDialog(sede)}>
-                    <CircleDollarSign className="h-4 w-4 mr-2" />
-                    Tarifas
-                  </DropdownMenuItem>
+                  {hasPermission("schedule.view") && (
+                    <DropdownMenuItem onClick={() => openScheduleDialog(sede)}>
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Frecuencias
+                    </DropdownMenuItem>
+                  )}
+                  {hasPermission("geo.view") && (
+                    <DropdownMenuItem onClick={() => openLocationPicker(sede)}>
+                      {sede.lat ? (
+                        <MapPin className="h-4 w-4 mr-2 new-text-green-600" />
+                      ) : (
+                        <MapPinOff className="h-4 w-4 mr-2 new-text-red-600" />
+                      )}
+                      Ubicación
+                    </DropdownMenuItem>
+                  )}
+                  {hasPermission("rates.view") && (
+                    <DropdownMenuItem onClick={() => openRatesDialog(sede)}>
+                      <CircleDollarSign className="h-4 w-4 mr-2" />
+                      Tarifas
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -303,13 +313,11 @@ export default function SedesPage() {
           <h1 className="text-3xl font-bold text-gray-900">Sedes</h1>
           <p className="text-gray-600">Gestiona las sedes de los clientes</p>
         </div>
-        <Button
-          onClick={handleCreate}
-          className="bg-primary hover:bg-primary-hover"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Sede
-        </Button>
+        {hasPermission("sedes.edit") && (
+          <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+            <Plus className="mr-2 h-4 w-4" />Nueva Sede
+          </Button>
+        )}
       </div>
 
       <Card>

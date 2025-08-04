@@ -115,7 +115,7 @@ export default function ResetPasswordPageInner() {
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <AlertCircle className="h-6 w-6 text-red-600" />
+                <AlertCircle className="h-6 w-6 new-text-red-600" />
               </div>
               <CardTitle>Enlace Inválido</CardTitle>
               <CardDescription>El enlace de restablecimiento no es válido o ha expirado</CardDescription>
@@ -231,7 +231,7 @@ export default function ResetPasswordPageInner() {
                   <div className="mt-2 space-y-1">
                     <div className="text-xs space-y-1">
                       <div
-                        className={`flex items-center ${passwordValidation.minLength ? "text-green-600" : "text-red-600"}`}
+                        className={`flex items-center ${passwordValidation.minLength ? "new-text-green-600" : "new-text-red-600"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${passwordValidation.minLength ? "bg-green-600" : "bg-red-600"}`}
@@ -239,7 +239,7 @@ export default function ResetPasswordPageInner() {
                         Mínimo 8 caracteres
                       </div>
                       <div
-                        className={`flex items-center ${passwordValidation.hasUpperCase ? "text-green-600" : "text-red-600"}`}
+                        className={`flex items-center ${passwordValidation.hasUpperCase ? "new-text-green-600" : "new-text-red-600"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${passwordValidation.hasUpperCase ? "bg-green-600" : "bg-red-600"}`}
@@ -247,7 +247,7 @@ export default function ResetPasswordPageInner() {
                         Al menos una mayúscula
                       </div>
                       <div
-                        className={`flex items-center ${passwordValidation.hasLowerCase ? "text-green-600" : "text-red-600"}`}
+                        className={`flex items-center ${passwordValidation.hasLowerCase ? "new-text-green-600" : "new-text-red-600"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${passwordValidation.hasLowerCase ? "bg-green-600" : "bg-red-600"}`}
@@ -255,7 +255,7 @@ export default function ResetPasswordPageInner() {
                         Al menos una minúscula
                       </div>
                       <div
-                        className={`flex items-center ${passwordValidation.hasNumbers ? "text-green-600" : "text-red-600"}`}
+                        className={`flex items-center ${passwordValidation.hasNumbers ? "new-text-green-600" : "new-text-red-600"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${passwordValidation.hasNumbers ? "bg-green-600" : "bg-red-600"}`}
@@ -263,7 +263,7 @@ export default function ResetPasswordPageInner() {
                         Al menos un número
                       </div>
                       <div
-                        className={`flex items-center ${passwordValidation.hasSpecialChar ? "text-green-600" : "text-red-600"}`}
+                        className={`flex items-center ${passwordValidation.hasSpecialChar ? "new-text-green-600" : "new-text-red-600"}`}
                       >
                         <div
                           className={`w-2 h-2 rounded-full mr-2 ${passwordValidation.hasSpecialChar ? "bg-green-600" : "bg-red-600"}`}
@@ -299,11 +299,11 @@ export default function ResetPasswordPageInner() {
                 </div>
 
                 {confirmPassword && !passwordsMatch && (
-                  <p className="mt-1 text-xs text-red-600">Las contraseñas no coinciden</p>
+                  <p className="mt-1 text-xs new-text-red-600">Las contraseñas no coinciden</p>
                 )}
 
                 {confirmPassword && passwordsMatch && (
-                  <p className="mt-1 text-xs text-green-600">Las contraseñas coinciden</p>
+                  <p className="mt-1 text-xs new-text-green-600">Las contraseñas coinciden</p>
                 )}
               </div>
 

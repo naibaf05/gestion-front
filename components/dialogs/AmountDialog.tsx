@@ -20,6 +20,7 @@ import { Input } from "../ui/input";
 import { visitService } from "@/services/visitService";
 import { InputPositiveInteger } from "../ui/input-positive-integer";
 import { rateService } from "@/services/rateService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AmountDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ export function AmountDialog({
   tiposResiduos,
   onSuccess,
 }: AmountDialogProps) {
+  const { user, logout } = useAuth()
   const [tarifas, setTarifas] = useState<Rate[]>([]);
   const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,16 @@ export function AmountDialog({
     tarifaNombre: ""
   });
   const { toast } = useToast();
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     if (cantidad) {
@@ -167,23 +179,25 @@ export function AmountDialog({
                   value={formData.tResiduoId}
                   onChange={handleTResiduoChange}
                   valueKey="id"
-                  labelKey="nombre"
+                  labelKey="nombreMostrar"
                 />
               </div>
+              {hasPermission("rates.view") && (
+                <div className="space-y-2">
+                  <Label htmlFor="tarifaId">Tarifa</Label>
+                  <Input
+                    id="tarifaNombre"
+                    value={formData.tarifaNombre}
+                    placeholder="Tarifa"
+                    disabled={true}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="tarifaId">Tarifa</Label>
-                <Input
-                  id="tarifaNombre"
-                  value={formData.tarifaNombre}
-                  placeholder="Tarifa"
-                  disabled={true}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contenedorId">Contenedor *</Label>
+                <Label htmlFor="contenedorId">Unidad de Entrega</Label>
                 <SelectSingle
                   id="contenedorId"
-                  placeholder="Selecciona un contenedor"
+                  placeholder="Selecciona una unidad de entrega"
                   options={contenedores}
                   value={formData.contenedorId}
                   onChange={(value) => setFormData({ ...formData, contenedorId: value })}
@@ -192,21 +206,21 @@ export function AmountDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numContenedor">Num Contenedor *</Label>
+                <Label htmlFor="numContenedor">Unidades *</Label>
                 <InputPositiveInteger
                   value={formData.numContenedor}
                   onChange={(e) => setFormData({ ...formData, numContenedor: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cantidad">Cantidad *</Label>
+                <Label htmlFor="cantidad">Cantidad (KG, M3, ...) *</Label>
                 <InputDecimal
                   id="cantidad"
                   value={formData.cantidad}
                   onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
                   decimalPlaces={2}
                   placeholder="Ingrese una cantidad"
-                  disabled={selectedTResiduo ? selectedTResiduo.datosJson?.esllanta : false}
+                  disabled={selectedTResiduo ? selectedTResiduo.datosJson?.tieneCantidad : false}
                 />
               </div>
             </div>

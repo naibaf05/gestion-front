@@ -160,7 +160,7 @@ export default function ClientsPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(client.id)}
-              className={client.activo ? "text-green-600" : "text-red-600"}
+              className={client.activo ? "new-text-green-600" : "new-text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>

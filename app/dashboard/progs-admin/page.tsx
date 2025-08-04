@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, PlusCircle, TableProperties, FileText } from "lucide-react"
+import { Plus, Edit, Check, PlusCircle, TableProperties, FileText, Trash2 } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -21,6 +21,7 @@ import { ButtonTooltip } from "@/components/ui/button-tooltip"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { PdfDialog } from "@/components/dialogs/PdfDialog"
 import { certificatesService } from "@/services/certificatesService"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function ProgsAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,6 +48,12 @@ export default function ProgsAdminPage() {
   const [base64, setBase64] = useState<string | null>(null)
   const { toast } = useToast()
 
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [idToConfirm, setIdToConfirm] = useState<string | null>(null)
+  const [tipoConfirm, setTipoConfirm] = useState<string | null>(null)
+  const [titleConfirm, setTitleConfirm] = useState<string | null>(null)
+  const [descripcionConfirm, setDescripcionConfirm] = useState<string | null>(null)
+
   useEffect(() => {
     loadData()
   }, [selectedDate])
@@ -70,7 +77,7 @@ export default function ProgsAdminPage() {
       toast({
         title: "Error",
         description: "No se pudieron cargar los datos",
-        variant: "destructive",
+        variant: "error",
       })
     } finally {
       setLoading(false)
@@ -110,23 +117,40 @@ export default function ProgsAdminPage() {
     setDialogPdfOpen(true)
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a este cliente?")) {
-      try {
-        await userService.toggleUserStatus(id)
+  const handleDelete = async (id: string) => {
+    setIdToConfirm(id)
+    setTipoConfirm("1")
+    setTitleConfirm("Eliminar")
+    setDescripcionConfirm("¿Estás seguro de que deseas eliminar esta visita?")
+    setConfirmDialogOpen(true)
+  }
+
+  const confirm = async () => {
+    if (!idToConfirm) return
+
+    try {
+      if (tipoConfirm === "1") {
+        await progService.deleteVisita(idToConfirm);
         toast({
-          title: "Estado actualizado",
-          description: "El estado del estado ha sido actualizado",
-        })
-        loadData()
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        })
+          title: "Visita eliminada",
+          description: "La visita ha sido eliminada exitosamente",
+          variant: "success",
+        });
       }
+      loadData()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: (error && error.message ? error.message : "No se pudo realizar la acción"),
+        variant: "destructive",
+      });
+    } finally {
+      setIdToConfirm(null)
     }
+  }
+
+  const cancel = () => {
+    setIdToConfirm(null)
   }
 
   const columns: ColumnDef<ProgVisitaRecol>[] = [
@@ -169,6 +193,10 @@ export default function ProgsAdminPage() {
       },
     },
     {
+      accessorKey: "inicio",
+      header: "Inicio",
+    },
+    {
       accessorKey: "visitaRecolId",
       header: "Visita",
       cell: ({ row }) => {
@@ -187,7 +215,7 @@ export default function ProgsAdminPage() {
           <TooltipProvider>
             <div className="flex items-center space-x-2">
               {obj.visitaRecolId ?
-                <div>
+                <>
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
                   </ButtonTooltip>
@@ -197,7 +225,13 @@ export default function ProgsAdminPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
                     <FileText className="h-4 w-4" />
                   </ButtonTooltip>
-                </div>
+                  {obj.tipo === "puesto" ?
+                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(obj.visitaRecolId)} tooltipContent="Eliminar" className="new-text-red-600" >
+                      <Trash2 className="h-4 w-4" />
+                    </ButtonTooltip>
+                    : ''
+                  }
+                </>
                 :
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
                   <PlusCircle className="h-4 w-4" />
@@ -215,7 +249,7 @@ export default function ProgsAdminPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando administración visitas...</p>
+          <p className="mt-2 text-sm text-gray-600">Cargando administración recolección...</p>
         </div>
       </div>
     )
@@ -225,7 +259,7 @@ export default function ProgsAdminPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Administración Visitas</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Administración Recolecciones</h1>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -280,6 +314,15 @@ export default function ProgsAdminPage() {
           base64={base64}
         />
       )}
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title={titleConfirm || "Confirmar"}
+        description={descripcionConfirm || "¿Estás seguro de que deseas eliminar este elemento?"}
+        onConfirm={confirm}
+        onCancel={cancel}
+      />
     </div>
   )
 }

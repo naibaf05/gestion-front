@@ -24,6 +24,21 @@ export class ParametrizationService {
       if (element.datosJson && typeof element.datosJson === "string") {
         element.datosJson = JSON.parse(element.datosJson);
       }
+      element.nombreMostrar = element.codigo ? `[${element.codigo}]-${element.nombre}` : element.nombre;
+    });
+    return response.data;
+  }
+
+  async getListaTResiduosActivos(clienteId: string): Promise<Parametrizacion[]> {
+    const response = await apiService.get<ApiResponse<Parametrizacion[]>>(
+      `/parametrizaciones/t_residuo/activas/${clienteId}`
+    );
+
+    response.data.forEach((element) => {
+      if (element.datosJson && typeof element.datosJson === "string") {
+        element.datosJson = JSON.parse(element.datosJson);
+      }
+      element.nombreMostrar = element.codigo ? `[${element.codigo}]-${element.nombre}` : element.nombre;
     });
     return response.data;
   }

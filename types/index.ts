@@ -1,3 +1,5 @@
+import { init } from "next/dist/compiled/webpack/webpack"
+
 export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos"
 
 export interface LoginCredentials {
@@ -27,6 +29,7 @@ export interface User {
   createdAt: string
   updatedAt: string
   username: string
+  permisos?: any
 }
 
 export interface Profile {
@@ -41,6 +44,7 @@ export interface Profile {
 export interface Parametrizacion {
   id: string
   nombre: string
+  nombreMostrar: string
   codigo?: string
   descripcion?: string
   datosJson?: any
@@ -202,6 +206,7 @@ export interface ProgVisitaRecol {
   tipo: string
   tipoNombre?: string
   tipoColor?: string
+  inicio: string
 }
 
 export interface VisitaRecol {
@@ -215,6 +220,7 @@ export interface VisitaRecol {
   notas?: string;
   sedeId: string;
   sedeNombre?: string;
+  clienteId: string;
   recolId: string;
   recolNombre?: string;
   recolApellido?: string;
@@ -241,4 +247,18 @@ export interface VisitaCantidad {
 
 export interface InfoAdicional {
   semanaActual: string
+}
+
+export interface Permission {
+    id: string
+    name: string
+    category: string
+    icon?: any
+}
+
+export interface PermissionCategory {
+    id: string
+    name: string
+    icon: any
+    permissions: Permission[]
 }

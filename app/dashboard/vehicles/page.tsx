@@ -123,7 +123,7 @@ export default function VehiclesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(veh.id)}
-                            className={veh.activo ? "text-green-600" : "text-red-600"}
+                            className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
                         >
                             <PowerSquare className="h-4 w-4" />
                         </Button>

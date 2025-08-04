@@ -31,6 +31,10 @@ export class VisitService {
         const response = await apiService.get<ApiResponse<VisitaCantidad[]>>(`/visitas/cantidades/${visitaRecolId}`);
         return response.data;
     }
+
+    async deleteCantidad(id: string): Promise<void> {
+        await apiService.delete(`/visitas/cantidades/${id}`);
+    }
 }
 
 export const visitService = new VisitService();

@@ -143,9 +143,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                   <div className="grid gap-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nombre">
-                          Nombre <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="nombre" required>Nombre</Label>
                         <Input
                           id="nombre"
                           value={formData.nombre}
@@ -156,9 +154,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="nit">
-                          NIT <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="nit" required>NIT</Label>
                         <Input
                           id="nit"
                           value={formData.nit}
@@ -172,9 +168,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nombreComercial">
-                          Nombre Comercial
-                        </Label>
+                        <Label htmlFor="nombreComercial">Nombre Comercial</Label>
                         <Input
                           id="nombreComercial"
                           value={formData.datosJson?.nombreComercial || ""}
@@ -184,9 +178,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="contacto">
-                          Contacto <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="contacto" required>Contacto</Label>
                         <Input
                           id="contacto"
                           value={formData.contacto}
@@ -199,9 +191,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="direccion">
-                        Dirección <span className="text-red-500">*</span>
-                      </Label>
+                      <Label htmlFor="direccion" required>Dirección</Label>
                       <Input
                         id="direccion"
                         value={formData.direccion}
@@ -214,9 +204,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="barrio">
-                          Barrio <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="barrio" required>Barrio</Label>
                         <Input
                           id="barrio"
                           value={formData.barrio}
@@ -227,9 +215,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telefono">
-                          Teléfono <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="telefono" required>Teléfono</Label>
                         <Input
                           id="telefono"
                           value={formData.telefono}
@@ -243,9 +229,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="poblado">
-                          Municipio <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="poblado" required>Municipio</Label>
                         <Select
                           value={formData.pobladoId ? String(formData.pobladoId) : ""}
                           onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
@@ -263,9 +247,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="comercial">
-                          Comercial <span className="text-red-500">*</span>
-                        </Label>
+                        <Label htmlFor="comercial" required>Comercial</Label>
                         <Select
                           value={formData.comercialId ? String(formData.comercialId) : ""}
                           onValueChange={(value) => setFormData({ ...formData, comercialId: value })}

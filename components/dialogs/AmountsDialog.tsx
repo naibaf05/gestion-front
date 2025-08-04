@@ -2,22 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Plus, TableProperties } from "lucide-react"
+import { Edit, Plus, TableProperties, Trash2 } from "lucide-react"
 import { Parametrizacion, VisitaCantidad, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { rateService } from "@/services/rateService"
 import { parametrizationService } from "@/services/parametrizationService"
 import { visitService } from "@/services/visitService";
 import { AmountDialog } from "./AmountDialog";
+import { ButtonTooltip } from "../ui/button-tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AmountsDialogProps {
   open: boolean
@@ -30,13 +27,26 @@ export function AmountsDialog({
   onOpenChange,
   visitaRecol,
 }: AmountsDialogProps) {
+  const { user, logout } = useAuth()
   const [amounts, setAmounts] = useState<VisitaCantidad[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
   const [selectedAmount, setSelectedAmount] = useState<VisitaCantidad | null>(null)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [amountToDelete, setAmountToDelete] = useState<string | null>(null)
   const { toast } = useToast()
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData()
@@ -53,7 +63,7 @@ export function AmountsDialog({
         const [amountsData, contenedoresData, tiposResiduosData] = await Promise.all([
           visitService.getCantidades(visitaRecol.id),
           parametrizationService.getListaActivos("contenedor"),
-          parametrizationService.getListaActivos("t_residuo"),
+          parametrizationService.getListaTResiduosActivos(visitaRecol.clienteId),
         ])
         setAmounts(amountsData);
         setContenedores(contenedoresData);
@@ -80,25 +90,35 @@ export function AmountsDialog({
     setDialogOpen(true)
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a esta tarifa?")) {
-      try {
-        await rateService.toggleStatus(id);
-        toast({
-          title: "Estado actualizado",
-          description: "El estado de la tarifa ha sido actualizado",
-          variant: "success",
-        });
-        loadData();
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: (error && error.message ? error.message : "No se pudo actualizar el estado"),
-          variant: "error",
-        });
-        loadData();
-      }
+  const handleDelete = (id: string) => {
+    setAmountToDelete(id)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!amountToDelete) return
+
+    try {
+      await visitService.deleteCantidad(amountToDelete);
+      toast({
+        title: "Cantidad eliminada",
+        description: "La cantidad ha sido eliminada exitosamente",
+        variant: "default",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: (error && error.message ? error.message : "No se pudo eliminar la cantidad"),
+        variant: "destructive",
+      });
+    } finally {
+      setAmountToDelete(null)
     }
+  }
+
+  const cancelDelete = () => {
+    setAmountToDelete(null)
   }
 
   const columns: ColumnDef<VisitaCantidad>[] = [
@@ -107,28 +127,33 @@ export function AmountsDialog({
       header: "Tipo de Residuo",
     },
     {
-      accessorKey: "contenedorNombre",
-      header: "Contenedor",
-    },
-    {
       accessorKey: "numContenedor",
-      header: "Num Contenedor",
+      header: "Unidades",
     },
     {
-      accessorKey: "tarifaNombre",
-      header: "Tarifa",
+      accessorKey: "cantidad",
+      header: "Cantidad",
     },
+    ...(hasPermission("rates.view") ? [{
+      accessorKey: "tarifaNombre" as keyof VisitaCantidad,
+      header: "Tarifa",
+    }] : []),
     {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
         const obj = row.original
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(obj)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
+                <Edit className="h-4 w-4" />
+              </ButtonTooltip>
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(obj.id)} className="new-text-red-600" tooltipContent="Eliminar">
+                <Trash2 className="h-4 w-4" />
+              </ButtonTooltip>
+            </div>
+          </TooltipProvider>
         )
       },
     },
@@ -182,6 +207,15 @@ export function AmountsDialog({
         tiposResiduos={tiposResiduos}
         contenedores={contenedores}
         onSuccess={loadData}
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Eliminar cantidad"
+        description="¿Estás seguro de que deseas eliminar esta cantidad?"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
       />
     </>
   )

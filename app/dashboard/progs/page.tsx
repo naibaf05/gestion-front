@@ -170,7 +170,7 @@ export default function ProgsPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleDelete(item.id)}
-              className="text-red-600"
+              className="new-text-red-600"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

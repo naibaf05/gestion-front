@@ -15,7 +15,7 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined)
 const defaultConfig: AppConfig = {
   primaryColor: "#46B171",
   logo: "/logo.png",
-  companyName: "Sistema de Trazabilidad",
+  companyName: "FocusWeb",
   version: "1.0.0",
 }
 

@@ -132,7 +132,7 @@ export default function RutasPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(ruta.id)}
-                            className={ruta.activo ? "text-green-600" : "text-red-600"}
+                            className={ruta.activo ? "new-text-green-600" : "new-text-red-600"}
                         >
                             <PowerSquare className="h-4 w-4" />
                         </Button>

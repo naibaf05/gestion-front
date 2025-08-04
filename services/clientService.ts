@@ -17,6 +17,11 @@ export class ClientService {
     return response.data
   }
 
+  async getClientesActivos(): Promise<Cliente[]> {
+    const response = await apiService.get<ApiResponse<Cliente[]>>(`/clientes/activos`)
+    return response.data
+  }
+
   async getCliente(id: string): Promise<Cliente> {
     const response = await apiService.get<ApiResponse<Cliente>>(`/clientes/${id}`)
     return response.data

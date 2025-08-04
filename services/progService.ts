@@ -44,6 +44,11 @@ export class ProgService {
     const response = await apiService.delete<ApiResponse<ProgEvPath>>(`/progs/${id}`)
     return response.data
   }
+
+  async deleteVisita(id: string): Promise<ProgEvPath> {
+    const response = await apiService.delete<ApiResponse<ProgEvPath>>(`/progs/visita/${id}`)
+    return response.data
+  }
 }
 
 export const progService = new ProgService()

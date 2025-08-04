@@ -131,7 +131,7 @@ export function SedeDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre *</Label>
+                <Label htmlFor="nombre" required>Nombre</Label>
                 <Input
                   id="nombre"
                   value={formData.nombre}
@@ -141,7 +141,7 @@ export function SedeDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cliente">Cliente *</Label>
+                <Label htmlFor="cliente" required>Cliente</Label>
                 <Select
                   required
                   value={formData.clienteId ? String(formData.clienteId) : ""}
@@ -162,7 +162,7 @@ export function SedeDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="direccion">Dirección *</Label>
+              <Label htmlFor="direccion" required>Dirección</Label>
               <Input
                 id="direccion"
                 value={formData.direccion}
@@ -174,7 +174,7 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="barrio">Barrio *</Label>
+                <Label htmlFor="barrio" required>Barrio</Label>
                 <Input
                   id="barrio"
                   value={formData.barrio}
@@ -184,7 +184,7 @@ export function SedeDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="poblado">Municipio *</Label>
+                <Label htmlFor="poblado" required>Municipio</Label>
                 <Select
                   value={formData.pobladoId ? String(formData.pobladoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
@@ -205,7 +205,7 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email" required>Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -216,7 +216,7 @@ export function SedeDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfono *</Label>
+                <Label htmlFor="telefono" required>Teléfono</Label>
                 <Input
                   id="telefono"
                   value={formData.telefono}
@@ -229,7 +229,7 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="oficina">Planta *</Label>
+                <Label htmlFor="oficina" required>Planta</Label>
                 <SelectMultiple
                   options={oficinas.map(tc => ({ value: tc.id, label: tc.nombre }))}
                   value={formData.oficinaId}
@@ -238,7 +238,7 @@ export function SedeDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="generador">Generador *</Label>
+                <Label htmlFor="generador" required>Generador</Label>
                 <Select
                   value={formData.generadorId ? String(formData.generadorId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, generadorId: value })}
@@ -259,7 +259,7 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="periodo">Periodo *</Label>
+                <Label htmlFor="periodo" required>Periodo</Label>
                 <Select
                   value={formData.periodoId ? String(formData.periodoId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, periodoId: value })}

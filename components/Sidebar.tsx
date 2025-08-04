@@ -16,6 +16,7 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>
   children?: MenuItem[]
   requiredRole?: string
+  requiredPermission?: string // Nueva propiedad para el permiso requerido
 }
 
 const menuItems: MenuItem[] = [
@@ -28,32 +29,73 @@ const menuItems: MenuItem[] = [
     title: "General",
     icon: FolderCog,
     children: [
-      { title: "Usuarios", href: "/dashboard/users", icon: Users },
-      { title: "Perfiles", href: "/dashboard/profiles", icon: UserCheck },
-      { title: "Rutas", href: "/dashboard/paths", icon: Route },
-      { title: "Vehículos", href: "/dashboard/vehicles", icon: Car },
+      {
+        title: "Usuarios",
+        href: "/dashboard/users",
+        icon: Users,
+        requiredPermission: "users.view"
+      },
+      {
+        title: "Perfiles",
+        href: "/dashboard/profiles",
+        icon: UserCheck,
+        requiredPermission: "profiles.view"
+      },
+      {
+        title: "Rutas",
+        href: "/dashboard/paths",
+        icon: Route,
+        requiredPermission: "routes.view"
+      },
+      {
+        title: "Vehículos",
+        href: "/dashboard/vehicles",
+        icon: Car,
+        requiredPermission: "vehicles.view"
+      },
     ],
   },
   {
     title: "Clientes",
     icon: Building2,
     children: [
-      { title: "Clientes", href: "/dashboard/clients", icon: Building2 },
-      { title: "Sedes", href: "/dashboard/sedes", icon: MapPin },
+      {
+        title: "Clientes",
+        href: "/dashboard/clients",
+        icon: Building2,
+        requiredPermission: "clients.view"
+      },
+      {
+        title: "Sedes",
+        href: "/dashboard/sedes",
+        icon: MapPin,
+        requiredPermission: "sedes.view"
+      },
     ],
   },
   {
     title: "Recolección",
     icon: CalendarSearch,
     children: [
-      { title: "Admin Visitas", href: "/dashboard/progs-admin", icon: ShieldCheck },
-      { title: "Programación", href: "/dashboard/progs", icon: CalendarRange },
+      {
+        title: "Admin Recolección",
+        href: "/dashboard/progs-admin",
+        icon: ShieldCheck,
+        requiredPermission: "admin.view"
+      },
+      {
+        title: "Programación",
+        href: "/dashboard/progs",
+        icon: CalendarRange,
+        requiredPermission: "prog.view"
+      },
     ],
   },
   {
     title: "Parametrizaciones",
     href: "/dashboard/parametrizations",
     icon: Settings,
+    requiredPermission: "settings.view",
   },
 ]
 
@@ -64,12 +106,54 @@ export function Sidebar() {
   const { config } = useConfig()
   const pathname = usePathname()
 
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  // Función para verificar si el usuario tiene un permiso específico
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+
+    // Si es admin, tiene todos los permisos
+    if (user.rolNombre === "ADMIN") return true
+
+    // Verificar si el usuario tiene el permiso específico
+    return user.permisos[permission] === true
+  }
+
+  // Función para verificar si un elemento del menú debe mostrarse
+  const shouldShowMenuItem = (item: MenuItem): boolean => {
+    // Verificar rol requerido (lógica existente)
+    if (item.requiredRole && user?.rolNombre !== item.requiredRole && user?.rolNombre !== "ADMIN") {
+      return false
+    }
+
+    // Verificar permiso requerido
+    if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+      return false
+    }
+
+    return true
+  }
+
+  // Función para verificar si un grupo debe mostrarse
+  const shouldShowGroup = (item: MenuItem): boolean => {
+    // Si tiene hijos, verificar si al menos uno es visible
+    if (item.children && item.children.length > 0) {
+      return item.children.some(child => shouldShowMenuItem(child))
+    }
+
+    // Si no tiene hijos, usar la lógica normal
+    return shouldShowMenuItem(item)
+  }
+
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) => (prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]))
   }
 
   const renderMenuItem = (item: MenuItem, level = 0) => {
-    if (item.requiredRole && user?.rolNombre !== item.requiredRole && user?.rolNombre !== "admin") {
+    // Verificar si el elemento debe mostrarse
+    if (!shouldShowMenuItem(item)) {
       return null
     }
 
@@ -78,6 +162,14 @@ export function Sidebar() {
     const isActive = item.href === pathname
 
     if (hasChildren) {
+      // Para grupos, verificar si tiene hijos visibles
+      const visibleChildren = item.children?.filter(child => shouldShowMenuItem(child)) || []
+
+      // Si no hay hijos visibles, no mostrar el grupo
+      if (visibleChildren.length === 0) {
+        return null
+      }
+
       return (
         <div key={item.title}>
           <Button
@@ -89,7 +181,11 @@ export function Sidebar() {
             {item.title}
             {isExpanded ? <ChevronDown className="ml-auto h-4 w-4" /> : <ChevronRight className="ml-auto h-4 w-4" />}
           </Button>
-          {isExpanded && <div className="ml-4">{item.children?.map((child) => renderMenuItem(child, level + 1))}</div>}
+          {isExpanded && (
+            <div className="ml-4">
+              {visibleChildren.map((child) => renderMenuItem(child, level + 1))}
+            </div>
+          )}
         </div>
       )
     }
@@ -136,12 +232,14 @@ export function Sidebar() {
             {config?.logo && (
               <img src={config.logo || "/placeholder.svg"} alt={config.companyName} className="h-10 w-auto mr-3" />
             )}
-            <span className="font-semibold text-lg">{config?.companyName || "Sistema"}</span>
+            <span className="font-semibold text-lg">{config?.companyName || ""}</span>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => renderMenuItem(item))}
+            {menuItems
+              .filter(item => shouldShowGroup(item)) // Filtrar grupos no visibles
+              .map((item) => renderMenuItem(item))}
           </nav>
 
           {/* User info and logout */}
@@ -154,7 +252,7 @@ export function Sidebar() {
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start new-text-red-600 hover:new-text-red-700 hover:new-bg-red-50"
               onClick={logout}
             >
               <LogOut className="mr-2 h-4 w-4" />

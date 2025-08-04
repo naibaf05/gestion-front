@@ -5,18 +5,25 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, PowerSquare } from "lucide-react"
+import { Plus, Edit, PowerSquare, ListTodo } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ProfileDialog } from "@/components/dialogs/ProfileDialog"
+import { PermsDialog } from "@/components/dialogs/PermsDialog"
 import type { ColumnDef } from "@tanstack/react-table"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { ButtonTooltip } from "@/components/ui/button-tooltip"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function UsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [permsDialogOpen, setPermsDialogOpen] = useState(false)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+  const [profileToToggle, setProfileToToggle] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -51,23 +58,40 @@ export default function UsersPage() {
     setDialogOpen(true)
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a este perfil?")) {
-      try {
-        await userService.togglRolesStatus(id)
-        toast({
-          title: "Estado actualizado",
-          description: "El estado del estado ha sido actualizado",
-        })
-        loadData()
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        })
-      }
+  const handlePerms = (profile: Profile) => {
+    setSelectedProfile(profile)
+    setPermsDialogOpen(true)
+  }
+
+  const handleToggleStatus = (id: string) => {
+    setProfileToToggle(id)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmToggleStatus = async () => {
+    if (!profileToToggle) return
+
+    try {
+      await userService.togglRolesStatus(profileToToggle)
+      toast({
+        title: "Estado actualizado",
+        description: "El estado del perfil ha sido actualizado exitosamente",
+        variant: "default",
+      })
+      loadData()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      })
+    } finally {
+      setProfileToToggle(null)
     }
+  }
+
+  const cancelToggleStatus = () => {
+    setProfileToToggle(null)
   }
 
   const columns: ColumnDef<Profile>[] = [
@@ -96,19 +120,20 @@ export default function UsersPage() {
       cell: ({ row }) => {
         const prof = row.original
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(prof)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(prof.id)}
-              className={prof.activo ? "text-green-600" : "text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(prof)} tooltipContent="Editar">
+                <Edit className="h-4 w-4" />
+              </ButtonTooltip>
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePerms(prof)} tooltipContent="Permisos">
+                <ListTodo className="h-4 w-4" />
+              </ButtonTooltip>
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(prof.id)}
+                className={prof.activo ? "new-text-green-600" : "new-text-red-600"} tooltipContent="Cambiar estado">
+                <PowerSquare className="h-4 w-4" />
+              </ButtonTooltip>
+            </div>
+          </TooltipProvider>
         )
       },
     },
@@ -149,6 +174,27 @@ export default function UsersPage() {
         onOpenChange={setDialogOpen}
         profile={selectedProfile}
         onSuccess={loadData}
+      />
+
+      {selectedProfile && (
+        <PermsDialog
+          open={permsDialogOpen}
+          onOpenChange={setPermsDialogOpen}
+          profile={selectedProfile}
+          onSuccess={loadData}
+        />
+      )}
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Cambiar estado del perfil"
+        description="¿Estás seguro de que deseas cambiar el estado de este perfil? Esta acción afectará a todos los usuarios asociados."
+        confirmText="Cambiar Estado"
+        cancelText="Cancelar"
+        onConfirm={confirmToggleStatus}
+        onCancel={cancelToggleStatus}
+        variant="default"
       />
     </div>
   )

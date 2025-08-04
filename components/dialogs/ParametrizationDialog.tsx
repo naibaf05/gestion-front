@@ -3,29 +3,24 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parametrizationService } from "@/services/parametrizationService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { ParametrizationType } from "@/types";
+import { Cliente, ParametrizationType } from "@/types";
 import { InputCheck } from "../ui/input-check";
 import { InputDecimal } from "../ui/input-decimal";
+import { SelectSingle } from "../ui/select-single";
 
 interface ParametrizationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item?: any | null;
   type: ParametrizationType;
+  clientes: Cliente[];
   onSuccess: () => void;
 }
 
@@ -34,6 +29,7 @@ export function ParametrizationDialog({
   onOpenChange,
   item,
   type,
+  clientes,
   onSuccess,
 }: ParametrizationDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -151,28 +147,10 @@ export function ParametrizationDialog({
       t_residuos: "Tipo de Residuo",
       t_clientes: "Tipo de Cliente",
       und_medidas: "Unidad de Medida",
-      contenedores: "Contenedor",
+      contenedores: "Unidad de Entrega",
       t_vehiculos: "Tipo de Vehículo"
     };
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
-  };
-
-  const getDescription = () => {
-    const descriptions = {
-      poblados: "municipio",
-      oficinas: "planta",
-      generadores: "generador",
-      periodos: "periodo",
-      comerciales: "comercial",
-      t_residuos: "tipo de residuo",
-      t_clientes: "tipo de cliente",
-      und_medidas: "unidad de medida",
-      contenedores: "contenedor",
-      t_vehiculos: "tipo de vehículo"
-    };
-    return item
-      ? `Modifica los datos del ${descriptions[type]}`
-      : `Completa los datos para crear un nuevo ${descriptions[type]}`;
   };
 
   const getPlaceholders = () => {
@@ -218,8 +196,8 @@ export function ParametrizationDialog({
         descripcion: "Descripción",
       },
       contenedores: {
-        nombre: "Nombre del contenedor",
-        codigo: "Código del contenedor",
+        nombre: "Nombre de la unidad de entrega",
+        codigo: "Código de la unidad de entrega",
         descripcion: "Descripción",
       },
       t_vehiculos: {
@@ -238,7 +216,6 @@ export function ParametrizationDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
-          <DialogDescription>{getDescription()}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -263,18 +240,32 @@ export function ParametrizationDialog({
               />
             </div>
             {type === 't_residuos' && (
-              <div className="space-y-2">
-                <InputCheck
-                  id="esllanta"
-                  checked={formData.datosJson?.esllanta}
-                  onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, esllanta: e.target.checked } })}
-                  label="¿Es Llanta?"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="clienteId">Cliente</Label>
+                  <SelectSingle
+                    id="clienteId"
+                    placeholder="Todos los clientes"
+                    options={clientes}
+                    value={formData.datosJson?.clienteId}
+                    onChange={(value) => setFormData({ ...formData, datosJson: { ...formData.datosJson, clienteId: value } })}
+                    valueKey="id"
+                    labelKey="nombre"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <InputCheck
+                    id="tieneCantidad"
+                    checked={formData.datosJson?.tieneCantidad}
+                    onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, tieneCantidad: e.target.checked } })}
+                    label="¿Tiene Cantidad?"
+                  />
+                </div>
+              </>
             )}
-            {formData.datosJson?.esllanta && (
+            {formData.datosJson?.tieneCantidad && (
               <div className="space-y-2">
-                <Label htmlFor="cantidad">Cantidad *</Label>
+                <Label htmlFor="cantidad">Cantidad (KG, M3, ...) *</Label>
                 <InputDecimal
                   id="cantidad"
                   value={formData.datosJson?.cantidad || ''}

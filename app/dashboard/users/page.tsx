@@ -126,7 +126,7 @@ export default function UsersPage() {
               variant="ghost"
               size="sm"
               onClick={() => handleToggleStatus(employee.id)}
-              className={employee.activo ? "text-green-600" : "text-red-600"}
+              className={employee.activo ? "new-text-green-600" : "new-text-red-600"}
             >
               <PowerSquare className="h-4 w-4" />
             </Button>
