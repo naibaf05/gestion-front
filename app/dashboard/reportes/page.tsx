@@ -147,8 +147,10 @@ export default function ReportesPage() {
                     break;
                 case "reporte2":
                     dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
-                    exportCols = ["nombreSede", "direccionSede", "emailSede", "tipo_residuo", "tarifa", "fecha_inicio", "fecha_fin"];
-                    exportHeads = ["Sede", "Dirección", "Email", "Tipo de Residuo", "Tarifa", "Fecha Inicio", "Fecha Fin"];
+                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
+                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad", "Recolección"];
+                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
+                    setColumns_table(tableR1);
                     break;
                 case "reporte3":
                     dataP = await reportesService.generarReporte3(fechaInicio, fechaFin);
