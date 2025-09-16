@@ -95,7 +95,7 @@ export function DataTable<TData, TValue>({
     <div className="space-y-4">
       {searchKey && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2">
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative flex-1 max-w-sm p-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}

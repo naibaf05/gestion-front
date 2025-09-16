@@ -131,7 +131,7 @@ export function AmountsDialog({
       header: "Unidades",
     },
     {
-      accessorKey: "cantidad",
+      accessorKey: "cantidadUnidad",
       header: "Cantidad",
     },
     ...(hasPermission("rates.view") ? [{

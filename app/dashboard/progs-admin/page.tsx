@@ -106,15 +106,15 @@ export default function ProgsAdminPage() {
   const handleAmounts = async (obj: ProgVisitaRecol) => {
     const visita = await visitService.getId(obj.visitaRecolId);
     setVisitaRecol(visita);
-    setSelected(obj)
-    setDialogAmountsOpen(true)
+    setSelected(obj);
+    setDialogAmountsOpen(true);
   }
 
   const handlePdf = async (obj: ProgVisitaRecol) => {
-    const base64 = await certificatesService.getCertificadoPDF();
+    const base64 = await certificatesService.getCertificadoRecoleccionPDF();
     setBase64(base64);
-    setSelected(obj)
-    setDialogPdfOpen(true)
+    setSelected(obj);
+    setDialogPdfOpen(true);
   }
 
   const handleDelete = async (id: string) => {

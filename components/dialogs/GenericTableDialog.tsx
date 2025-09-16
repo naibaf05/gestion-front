@@ -24,6 +24,7 @@ interface GenericTableDialogProps<TData, TValue> {
     title?: string;
     exportColumns?: string[]; // array de keys a exportar
     exportHeaders?: string[]; // opcional: nombres de columnas en Excel
+    maxWidth?: string; // ancho máximo configurable (ej: "1200px", "95vw", "90%")
 }
 
 export function GenericTableDialog<TData, TValue>({
@@ -36,6 +37,7 @@ export function GenericTableDialog<TData, TValue>({
     title = "Tabla de datos",
     exportColumns,
     exportHeaders,
+    maxWidth = "95vw",
 }: GenericTableDialogProps<TData, TValue>) {
     const handleExportExcel = () => {
         const keys = exportColumns && exportColumns.length > 0
@@ -63,7 +65,10 @@ export function GenericTableDialog<TData, TValue>({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[900px] max-h-[95vh] overflow-y-auto">
+            <DialogContent
+                className="max-h-[95vh] overflow-y-auto"
+                style={{ maxWidth: maxWidth }}
+            >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
@@ -73,7 +78,7 @@ export function GenericTableDialog<TData, TValue>({
                         Descargar Excel
                     </Button>
                 </div>
-                <div>
+                <div className="overflow-x-auto">
                     <DataTable
                         columns={columns}
                         data={data}

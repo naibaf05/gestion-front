@@ -29,6 +29,13 @@ export class VisitService {
 
     async getCantidades(visitaRecolId: string): Promise<VisitaCantidad[]> {
         const response = await apiService.get<ApiResponse<VisitaCantidad[]>>(`/visitas/cantidades/${visitaRecolId}`);
+        for (const cantidad of response.data) {
+            if (cantidad.unidadMedida) {
+                cantidad.cantidadUnidad = cantidad.cantidad + " " + cantidad.unidadMedida;
+            } else {
+                cantidad.cantidadUnidad = cantidad.cantidad;
+            }
+        }
         return response.data;
     }
 

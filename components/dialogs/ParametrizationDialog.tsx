@@ -242,35 +242,23 @@ export function ParametrizationDialog({
             {type === 't_residuos' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="clienteId">Cliente</Label>
-                  <SelectSingle
-                    id="clienteId"
-                    placeholder="Todos los clientes"
-                    options={clientes}
-                    value={formData.datosJson?.clienteId}
-                    onChange={(value) => setFormData({ ...formData, datosJson: { ...formData.datosJson, clienteId: value } })}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                </div>
-                <div className="space-y-2">
                   <InputCheck
-                    id="tieneCantidad"
-                    checked={formData.datosJson?.tieneCantidad}
-                    onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, tieneCantidad: e.target.checked } })}
-                    label="¿Tiene Cantidad?"
+                    id="esLlanta"
+                    checked={formData.datosJson?.esLlanta}
+                    onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, esLlanta: e.target.checked } })}
+                    label="¿Es Llanta?"
                   />
                 </div>
               </>
             )}
-            {formData.datosJson?.tieneCantidad && (
+            {formData.datosJson?.esLlanta && (
               <div className="space-y-2">
-                <Label htmlFor="cantidad">Cantidad (KG, M3, ...) *</Label>
+                <Label htmlFor="cantidad">Cantidad (KGs) *</Label>
                 <InputDecimal
                   id="cantidad"
                   value={formData.datosJson?.cantidad || ''}
                   onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, cantidad: e.target.value } })}
-                  decimalPlaces={2}
+                  decimalPlaces={4}
                   placeholder="Ingrese una cantidad"
                 />
               </div>

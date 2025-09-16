@@ -3,8 +3,8 @@ import { apiService } from "./api"
 import type { ApiResponse, ProgEvPath, ProgPath, ProgRutas, ProgVisitaRecol } from "@/types"
 
 export class ProgService {
-  async getData(fecha: string): Promise<ProgPath[]> {
-    const response = await apiService.get<ApiResponse<ProgPath[]>>(`/progs?fecha=${fecha}`)
+  async getData(fecha: string, semanal: boolean): Promise<ProgPath[]> {
+    const response = await apiService.get<ApiResponse<ProgPath[]>>(`/progs?fecha=${fecha}&semanal=${semanal}`)
     return response.data
   }
 
@@ -13,8 +13,8 @@ export class ProgService {
     return response.data
   }
 
-  async getDataEv(fecha: string): Promise<ProgEvPath[]> {
-    const response = await apiService.get<ApiResponse<ProgEvPath[]>>(`/progs/eventuales?fecha=${fecha}`)
+  async getDataEv(fecha: string, semanal: boolean): Promise<ProgEvPath[]> {
+    const response = await apiService.get<ApiResponse<ProgEvPath[]>>(`/progs/eventuales?fecha=${fecha}&semanal=${semanal}`)
     return response.data
   }
 

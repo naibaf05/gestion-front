@@ -10,6 +10,8 @@ interface PdfDialogProps {
     onOpenChange: (open: boolean) => void
     title?: string
     base64: string
+    viewSaveButton?: boolean
+    onSuccess?: () => void;
 }
 
 export function PdfDialog({
@@ -17,11 +19,18 @@ export function PdfDialog({
     onOpenChange,
     title = "Visualización PDF",
     base64,
+    viewSaveButton = false,
+    onSuccess = () => { },
 }: PdfDialogProps) {
     const pdfData = `data:application/pdf;base64,${base64}`;
 
     useEffect(() => {
     }, [])
+
+    const save = async () => {
+        onSuccess();
+        onOpenChange(false);
+    };
 
     return (
         <>
@@ -44,6 +53,11 @@ export function PdfDialog({
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
                             Cerrar
                         </Button>
+                        {viewSaveButton && (
+                            <Button onClick={() => save()}>
+                                Guardar
+                            </Button>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

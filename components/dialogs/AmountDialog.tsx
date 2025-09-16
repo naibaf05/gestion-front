@@ -161,6 +161,16 @@ export function AmountDialog({
     setFormData(formData);
   };
 
+  const handleUnidadChange = async (value: string) => {
+    formData.numContenedor = value;
+    if (selectedTResiduo?.datosJson?.cantidad) {
+      const cantidad = selectedTResiduo.datosJson?.cantidad;
+      const cantidadTotal = parseFloat(cantidad) * parseInt(value);
+      formData.cantidad = cantidadTotal.toString();
+    }
+    setFormData(formData);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
@@ -171,7 +181,7 @@ export function AmountDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tResiduoId">Tipo de Residuo *</Label>
+                <Label htmlFor="tResiduoId" required>Tipo de Residuo</Label>
                 <SelectSingle
                   id="tResiduoId"
                   placeholder="Selecciona un tipo de residuo"
@@ -206,21 +216,20 @@ export function AmountDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numContenedor">Unidades *</Label>
+                <Label htmlFor="numContenedor">Unidades</Label>
                 <InputPositiveInteger
                   value={formData.numContenedor}
                   onChange={(e) => setFormData({ ...formData, numContenedor: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cantidad">Cantidad (KG, M3, ...) *</Label>
+                <Label htmlFor="cantidad" required>Cantidad (KG, M3, ...)</Label>
                 <InputDecimal
                   id="cantidad"
                   value={formData.cantidad}
                   onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
-                  decimalPlaces={2}
+                  decimalPlaces={4}
                   placeholder="Ingrese una cantidad"
-                  disabled={selectedTResiduo ? selectedTResiduo.datosJson?.tieneCantidad : false}
                 />
               </div>
             </div>

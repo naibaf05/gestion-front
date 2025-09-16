@@ -16,6 +16,9 @@ import { vehicleService } from "@/services/vehicleService";
 import { ProgEvDialog } from "@/components/dialogs/ProgEvDialog";
 import { clientService } from "@/services/clientService";
 import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
+import { WeekPicker } from "@/components/ui/week-picker";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function ProgsPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -28,6 +31,7 @@ export default function ProgsPage() {
     });
     return formatter.format(today);
   });
+  const [isWeekMode, setIsWeekMode] = useState(false);
   const [tab, setTab] = useState("tabla");
   const [tabla, setTabla] = useState<ProgPath[]>([]);
   const [tablaEventual, setTablaEventual] = useState<ProgEvPath[]>([]);
@@ -46,14 +50,14 @@ export default function ProgsPage() {
 
   useEffect(() => {
     loadData();
-  }, [selectedDate]);
+  }, [selectedDate, isWeekMode]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [data1, data2, infoAdicionalData, vehiclesData, pathData, sedesData] = await Promise.all([
-        progService.getData(selectedDate),
-        progService.getDataEv(selectedDate),
+        progService.getData(selectedDate, isWeekMode),
+        progService.getDataEv(selectedDate, isWeekMode),
         pathService.getInfoAdicional(selectedDate),
         vehicleService.getVehiclesActivos(),
         pathService.getRutasDia(selectedDate),
@@ -216,15 +220,38 @@ export default function ProgsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Programación</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="fecha" className="mr-2 font-medium">Semana {infoAdicional?.semanaActual}</label>
-          <input
-            id="fecha"
-            type="date"
-            value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-            className="border rounded px-2 py-1"
-          />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="week-mode"
+              checked={isWeekMode}
+              onCheckedChange={(checked) => setIsWeekMode(checked === true)}
+            />
+            <Label htmlFor="week-mode" className="text-sm font-medium">
+              Selección por semana
+            </Label>
+          </div>
+
+          {isWeekMode ? (
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Semana {infoAdicional?.semanaActual}</label>
+              <WeekPicker
+                value={selectedDate}
+                onChange={setSelectedDate}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <label htmlFor="fecha" className="text-sm font-medium">Semana {infoAdicional?.semanaActual}</label>
+              <input
+                id="fecha"
+                type="date"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
         </div>
       </div>
       <Card>
@@ -280,6 +307,7 @@ export default function ProgsPage() {
         title="Programación Ruta"
         exportColumns={["tipo", "sedeNombre", "sedeDireccion", "sedeBarrio", "rutaNombre", "sedeLat"]}
         exportHeaders={["Tipo", "Sede", "Dirección", "Barrio", "Ruta", "Coordenadas"]}
+        maxWidth="60vw"
       />
     </div>
   );

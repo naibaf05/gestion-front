@@ -243,6 +243,8 @@ export interface VisitaCantidad {
   visitaRecolId: string;
   tarifaId: string;
   tarifaNombre?: string;
+  unidadMedida?: string;
+  cantidadUnidad?: string;
 }
 
 export interface InfoAdicional {
@@ -261,4 +263,34 @@ export interface PermissionCategory {
     name: string
     icon: any
     permissions: Permission[]
+}
+
+// Tipos para certificados
+export interface Certificados {
+  id: string
+  sedeId: string
+  sedeNombre?: string
+  tipo: string
+  inicio: string
+  fin: string
+  activo: boolean
+}
+
+// Tipos para salidas
+export interface Salida {
+  id: string
+  sedeId: string
+  sedeNombre?: string
+  conductorId: string
+  conductorNombre?: string
+  productoId: string
+  productoNombre?: string
+  peso: number
+  fecha: string
+  activo: boolean
+  createdAt: string
+  updatedAt: string
+  sede?: Sede
+  conductor?: User
+  producto?: Parametrizacion
 }

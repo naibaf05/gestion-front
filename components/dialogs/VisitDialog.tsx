@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react"
 import { visitService } from "@/services/visitService"
 import { SelectSingle } from "../ui/select-single"
 import { Textarea } from "../ui/textarea"
+import { getTipoVisita } from "@/utils/utils"
 
 interface VisitDialogProps {
   open: boolean
@@ -66,6 +67,12 @@ export function VisitDialog({
   interface LocationState { latitude: number | null; longitude: number | null; error: string | null; }
 
   const [location, setLocation] = useState<LocationState>({ latitude: null, longitude: null, error: null, });
+
+  const tipos = [
+    { value: "puesto", label: getTipoVisita("puesto") },
+    { value: "eventual", label: getTipoVisita("eventual") },
+    { value: "ruta", label: getTipoVisita("ruta") },
+  ];
 
   useEffect(() => {
     if (visita) {
@@ -141,10 +148,8 @@ export function VisitDialog({
         })
       } else {
         if (progVisitaRecol) {
-          formData.tipo = progVisitaRecol.tipo;
           formData.progVisitaRecolId = progVisitaRecol.id;
         } else {
-          formData.tipo = "puesto";
           formData.progVisitaRecolId = "";
         }
         formData.lat = location.latitude + "";
@@ -183,7 +188,7 @@ export function VisitDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fecha">Fecha <span className="text-red-500">*</span></Label>
+                <Label htmlFor="fecha" required>Fecha</Label>
                 <Input
                   id="fecha"
                   type="date"
@@ -193,7 +198,7 @@ export function VisitDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="inicio">Inicio <span className="text-red-500">*</span></Label>
+                <Label htmlFor="inicio" required>Inicio</Label>
                 <Input
                   id="inicio"
                   type="time"
@@ -203,7 +208,7 @@ export function VisitDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fin">Fin <span className="text-red-500">*</span></Label>
+                <Label htmlFor="fin">Fin</Label>
                 <Input
                   id="fin"
                   type="time"
@@ -213,7 +218,19 @@ export function VisitDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sede">Sede <span className="text-red-500">*</span></Label>
+                <Label htmlFor="tipo" required>Tipo</Label>
+                <SelectSingle
+                  id="tipo"
+                  placeholder="Seleccione un tipo"
+                  options={tipos}
+                  value={formData.tipo}
+                  onChange={v => setFormData({ ...formData, tipo: v })}
+                  valueKey="value"
+                  labelKey="label"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sede" required>Sede</Label>
                 <SelectSingle
                   id="sede"
                   placeholder="Seleccione una sede"
@@ -226,7 +243,7 @@ export function VisitDialog({
               </div>
               {progVisitaRecol && progVisitaRecol.id ?
                 <div className="space-y-2">
-                  <Label htmlFor="vehiculo">Vehículo <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="vehiculo" required>Vehículo</Label>
                   <SelectSingle
                     id="vehiculo"
                     placeholder="Seleccione un vehículo"
@@ -238,7 +255,7 @@ export function VisitDialog({
                   />
                 </div> : ''}
               <div className="space-y-2">
-                <Label htmlFor="recolector">Recolector <span className="text-red-500">*</span></Label>
+                <Label htmlFor="recolector" required>Recolector</Label>
                 <SelectSingle
                   id="recolector"
                   placeholder="Seleccione un recolector"
@@ -250,7 +267,7 @@ export function VisitDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="comercial">Comercial <span className="text-red-500">*</span></Label>
+                <Label htmlFor="comercial" required>Comercial</Label>
                 <SelectSingle
                   id="comercial"
                   placeholder="Seleccione un comercial"
