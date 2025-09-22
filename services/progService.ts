@@ -23,8 +23,8 @@ export class ProgService {
     return response.data
   }
 
-  async getDataProgsAdmin(fecha: string): Promise<ProgVisitaRecol[]> {
-    const response = await apiService.get<ApiResponse<ProgVisitaRecol[]>>(`/progs/progs-admin?fecha=${fecha}`)
+  async getDataProgsAdmin(inicio: string, fin: string): Promise<ProgVisitaRecol[]> {
+    const response = await apiService.get<ApiResponse<ProgVisitaRecol[]>>(`/progs/progs-admin?inicio=${inicio}&fin=${fin}`)
 
     response.data.forEach(obj => {
       const tipo = obj.tipo as TipoVisitaKey

@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import "../styles/custom-scroll.css";
+@import "react-datepicker/dist/react-datepicker.css";
 
 :root {
   --primary-color: #46b171;

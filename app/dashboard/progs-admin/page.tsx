@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
@@ -22,12 +22,31 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { PdfDialog } from "@/components/dialogs/PdfDialog"
 import { certificatesService } from "@/services/certificatesService"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { DatePicker } from "@/components/ui/date-picker"
 
 export default function ProgsAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAmountsOpen, setDialogAmountsOpen] = useState(false);
   const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today;
+  });
+  const [fechaFin, setFechaFin] = useState(() => {
+    const today = new Date();
+    return today;
+  });
+  const [dateString, setDateString] = useState(() => {
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
+  });
+  const [fechaFinString, setFechaFinString] = useState(() => {
     const today = new Date();
     const formatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Bogota',
@@ -47,6 +66,7 @@ export default function ProgsAdminPage() {
   const [selected, setSelected] = useState<ProgVisitaRecol | null>(null)
   const [base64, setBase64] = useState<string | null>(null)
   const { toast } = useToast()
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>()
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [idToConfirm, setIdToConfirm] = useState<string | null>(null)
@@ -55,14 +75,79 @@ export default function ProgsAdminPage() {
   const [descripcionConfirm, setDescripcionConfirm] = useState<string | null>(null)
 
   useEffect(() => {
-    loadData()
-  }, [selectedDate])
+    // Limpiar timeout anterior si existe
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current)
+    }
+
+    // Agregar un pequeño delay para evitar múltiples llamadas
+    loadingTimeoutRef.current = setTimeout(() => {
+      loadData()
+    }, 100)
+
+    // Cleanup function
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+    }
+  }, [dateString, fechaFinString])
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (newDate && !isNaN(newDate.getTime())) {
+      // Validar que la fecha inicio no sea mayor que la fecha fin
+      if (fechaFin && newDate > fechaFin) {
+        toast({
+          title: "Fecha inválida",
+          description: "La fecha inicio no puede ser mayor que la fecha fin",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setSelectedDate(newDate);
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      setDateString(formatter.format(newDate));
+    }
+  };
+
+  const handleFechaFinChange = (newDate: Date | undefined) => {
+    if (newDate && !isNaN(newDate.getTime())) {
+      // Validar que la fecha fin no sea menor que la fecha inicio
+      if (selectedDate && newDate < selectedDate) {
+        toast({
+          title: "Fecha inválida",
+          description: "La fecha fin no puede ser menor que la fecha inicio",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setFechaFin(newDate);
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      setFechaFinString(formatter.format(newDate));
+    }
+  };
 
   const loadData = async () => {
+    if (!dateString || !fechaFinString) {
+      return;
+    }
+    
     try {
       setLoading(true)
       const [progsData, sedesData, vehiclesData, recolData, comercialData] = await Promise.all([
-        progService.getDataProgsAdmin(selectedDate),
+        progService.getDataProgsAdmin(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         userService.getUsersActivos(),
@@ -193,8 +278,8 @@ export default function ProgsAdminPage() {
       },
     },
     {
-      accessorKey: "inicio",
-      header: "Inicio",
+      accessorKey: "fecha",
+      header: "Fecha",
     },
     {
       accessorKey: "visitaRecolId",
@@ -261,14 +346,25 @@ export default function ProgsAdminPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Administración Recolecciones</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            id="fecha"
-            type="date"
-            value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-            className="border rounded px-2 py-1"
-          />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Inicio:</label>
+            <DatePicker
+              date={selectedDate}
+              onDateChange={handleDateChange}
+              placeholder="dd/mm/aaaa"
+              className="w-40"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Fin:</label>
+            <DatePicker
+              date={fechaFin}
+              onDateChange={handleFechaFinChange}
+              placeholder="dd/mm/aaaa"
+              className="w-40"
+            />
+          </div>
         </div>
       </div>
 
@@ -288,7 +384,7 @@ export default function ProgsAdminPage() {
       <VisitDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        selectedDate={selectedDate}
+        selectedDate={dateString}
         visitaId={selected ? selected.visitaRecolId : null}
         visita={visitaRecol}
         progVisitaRecol={selected}
