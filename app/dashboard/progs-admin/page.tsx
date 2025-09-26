@@ -104,7 +104,7 @@ export default function ProgsAdminPage() {
         });
         return;
       }
-      
+
       setSelectedDate(newDate);
       const formatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Bogota',
@@ -127,7 +127,7 @@ export default function ProgsAdminPage() {
         });
         return;
       }
-      
+
       setFechaFin(newDate);
       const formatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Bogota',
@@ -143,7 +143,7 @@ export default function ProgsAdminPage() {
     if (!dateString || !fechaFinString) {
       return;
     }
-    
+
     try {
       setLoading(true)
       const [progsData, sedesData, vehiclesData, recolData, comercialData] = await Promise.all([
@@ -242,6 +242,7 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "tipoNombre",
       header: "Tipo",
+      width: "15%",
       cell: ({ row }) => {
         return (
           <Badge className={row.original.tipoColor}>
@@ -254,11 +255,13 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "sedeNombre",
       header: "Sede",
+      width: "25%",
       enableColumnFilter: true
     },
     {
       accessorKey: "recolNombre",
       header: "Recolector",
+      width: "20%",
       cell: ({ row }) => {
         return `${row.original.recolNombre} ${row.original.recolApellido}`
       },
@@ -266,10 +269,17 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "vehInterno",
       header: "Vehículo",
+      width: "12%",
+    },
+    {
+      accessorKey: "fecha",
+      header: "Fecha",
+      width: "10%",
     },
     {
       accessorKey: "novs",
       header: "Novedades",
+      width: "7%",
       cell: ({ row }) => {
         const obj = row.getValue("novs");
         return (
@@ -278,12 +288,9 @@ export default function ProgsAdminPage() {
       },
     },
     {
-      accessorKey: "fecha",
-      header: "Fecha",
-    },
-    {
       accessorKey: "visitaRecolId",
       header: "Visita",
+      width: "7%",
       cell: ({ row }) => {
         const obj = row.getValue("visitaRecolId");
         return (
@@ -294,6 +301,7 @@ export default function ProgsAdminPage() {
     {
       id: "actions",
       header: "Acciones",
+      width: "15%",
       cell: ({ row }) => {
         const obj = row.original
         return (

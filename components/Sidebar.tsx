@@ -101,7 +101,7 @@ const menuItems: MenuItem[] = [
     title: "Certificados",
     href: "/dashboard/certificados",
     icon: FolderDown,
-    requiredPermission: "settings.view",
+    requiredPermission: "certificados.view",
   },
   {
     title: "Reportes",

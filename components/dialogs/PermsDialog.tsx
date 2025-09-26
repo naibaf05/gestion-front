@@ -82,6 +82,15 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
             { id: "settings.view", name: "Ver parametrizaciones", category: "settings" },
             { id: "settings.edit", name: "Editar parametrizaciones", category: "settings" },
         ]
+    },
+    {
+        id: "certificados",
+        name: "Certificados",
+        icon: Settings,
+        permissions: [
+            { id: "certificados.view", name: "Ver certificados", category: "certificados" },
+            { id: "certificados.edit", name: "Editar certificados", category: "certificados" },
+        ]
     }
 ]
 

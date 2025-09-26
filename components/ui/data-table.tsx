@@ -23,6 +23,12 @@ import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { SelectMultiple } from "./select-multiple";
 
+declare module "@tanstack/react-table" {
+  interface ColumnDefBase<TData, TValue> {
+    width?: string; // Ancho de la columna en porcentaje (ej: "20%", "150px", "auto")
+  }
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -113,8 +119,19 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: any) => {
                   const colKey = header.column.columnDef.accessorKey || header.column.id;
+                  const columnWidth = header.column.columnDef.width;
+
+                  const columnStyle = {
+                    width: columnWidth || "auto",
+                    maxWidth: columnWidth || "200px"
+                  };
+
                   return (
-                    <TableHead key={header.id} className="bg-gray-50 text-gray-700 font-semibold" style={{ maxWidth: "200px" }}>
+                    <TableHead
+                      key={header.id}
+                      className="bg-gray-50 text-gray-700 font-semibold"
+                      style={columnStyle}
+                    >
                       <div className="flex flex-col gap-1">
                         <span className="px-3">
                           {header.isPlaceholder
@@ -172,14 +189,26 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  {row.getVisibleCells().map((cell: any) => (
-                    <TableCell key={cell.id} className="align-middle">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell: any) => {
+                    const columnWidth = cell.column.columnDef.width;
+                    const cellStyle = {
+                      width: columnWidth || "auto",
+                      maxWidth: columnWidth || "200px"
+                    };
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className="align-middle"
+                        style={cellStyle}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
