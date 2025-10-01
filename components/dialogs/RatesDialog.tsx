@@ -217,7 +217,7 @@ export function RatesDialog({
             </Button>
           </div>
 
-          <DataTable columns={columns} data={rates} searchKey="undMedidaNombre" searchPlaceholder="Buscar por unidad de medida..." />
+          <DataTable columns={columns} data={rates} searchKey={["undMedidaNombre", "tipoResiduoNombre", "tarifaNombre"]} searchPlaceholder="Buscar por unidad de medida..." />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>

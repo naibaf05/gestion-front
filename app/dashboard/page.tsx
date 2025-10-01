@@ -3,45 +3,173 @@
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Building2, MapPin, Settings, LogOut } from "lucide-react"
+import { Users, Building2, MapPin, Settings, LogOut, Loader2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { reportesService } from "@/services/reportesService";
+import { DashboardStats, DashboardStatsResponse, MonthlySedeData, SedeInfo } from "@/types"
+import { DashboardBarChart } from "@/components/ui/dashboard-bar-chart"
+
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
+  const router = useRouter()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const stats = [
-    {
-      title: "Empleados",
-      value: "24",
-      description: "Empleados activos",
+  // Estados para el gráfico
+  const [chartData, setChartData] = useState<MonthlySedeData[]>([])
+  const [sedesData, setSedesData] = useState<SedeInfo[]>([])
+  const [chartLoading, setChartLoading] = useState(true)
+  const [chartError, setChartError] = useState<string | null>(null)
+  const [selectedMetric, setSelectedMetric] = useState<string>("empleados")
+
+
+
+  // Configuración de iconos y colores para cada estadística
+  const statsConfig = {
+    empleados: {
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
-    {
-      title: "Clientes",
-      value: "156",
-      description: "Clientes registrados",
+    clientes: {
       icon: Building2,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
-    {
-      title: "Sedes",
-      value: "89",
-      description: "Sedes activas",
+    sedes: {
       icon: MapPin,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
     },
-    {
-      title: "Parametrizaciones",
-      value: "12",
-      description: "Listas configuradas",
+    parametrizaciones: {
       icon: Settings,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
     },
+  }
+
+  // Función para cargar estadísticas
+  const loadStats = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const dashboardStats: DashboardStatsResponse = await reportesService.getStats()
+      console.log('Estadísticas del dashboard:', dashboardStats)
+
+      // Transformar la respuesta del backend al formato esperado
+      const transformedStats: DashboardStats = {
+        empleados: {
+          title: "Empleados",
+          value: dashboardStats.empleados?.toString() || "0",
+          description: "Empleados activos"
+        },
+        clientes: {
+          title: "Clientes",
+          value: dashboardStats.clientes?.toString() || "0",
+          description: "Clientes registrados"
+        },
+        sedes: {
+          title: "Sedes",
+          value: dashboardStats.sedes?.toString() || "0",
+          description: "Sedes activas"
+        },
+        parametrizaciones: {
+          title: "Parametrizaciones",
+          value: dashboardStats.parametrizaciones?.toString() || "0",
+          description: "Listas configuradas"
+        },
+      }
+
+      setStats(transformedStats)
+    } catch (err) {
+      console.error('Error al cargar estadísticas:', err)
+      setError('Error al cargar las estadísticas del dashboard')
+      // Valores por defecto en caso de error
+      setStats({
+        empleados: { title: "Empleados", value: "---", description: "Error al cargar" },
+        clientes: { title: "Clientes", value: "---", description: "Error al cargar" },
+        sedes: { title: "Sedes", value: "---", description: "Error al cargar" },
+        parametrizaciones: { title: "Parametrizaciones", value: "---", description: "Error al cargar" },
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadStats()
+    loadChartData()
+  }, [])
+
+  // Efecto para recargar datos del gráfico cuando cambia la métrica
+  useEffect(() => {
+    loadChartData()
+  }, [selectedMetric])
+
+  // Función para cargar datos del gráfico
+  const loadChartData = async () => {
+    try {
+      setChartLoading(true)
+      setChartError(null)
+      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric)
+      setChartData(response.data)
+      setSedesData(response.sedes)
+    } catch (err) {
+      console.error('Error al cargar datos del gráfico:', err)
+      setChartError('Error al cargar los datos del gráfico')
+      setChartData([])
+      setSedesData([])
+    } finally {
+      setChartLoading(false)
+    }
+  }
+
+  // Función para reintentar cargar estadísticas
+  const handleRetry = () => {
+    loadStats()
+  }
+
+  // Función para reintentar cargar gráfico
+  const handleChartRetry = () => {
+    loadChartData()
+  }
+
+  // Opciones para las métricas del gráfico
+  const metricOptions = [
+    { value: "empleados", label: "Empleados" },
+    { value: "clientes", label: "Clientes" },
+    { value: "vehiculos", label: "Vehículos" },
+    { value: "certificados", label: "Certificados" }
   ]
+
+  // Configuración del gráfico
+  const chartConfig = {
+    title: "Estadísticas por Sede",
+    description: `Distribución de ${metricOptions.find(m => m.value === selectedMetric)?.label.toLowerCase()} por sede`,
+    color: selectedMetric === "empleados" ? "#3b82f6" :
+      selectedMetric === "clientes" ? "#10b981" :
+        selectedMetric === "vehiculos" ? "#f59e0b" : "#8b5cf6"
+  }
+
+  // Handlers para los botones de acceso rápido
+  const handleNewEmployee = () => {
+    router.push('/dashboard/users?action=create')
+  }
+
+  const handleNewClient = () => {
+    router.push('/dashboard/clients?action=create')
+  }
+
+  const handleNewSede = () => {
+    router.push('/dashboard/sedes?action=create')
+  }
+
+  const handleConfiguration = () => {
+    router.push('/dashboard/parametrizations')
+  }
 
   return (
     <div className="space-y-6">
@@ -61,21 +189,66 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-full ${stat.bgColor}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {loading ? (
+          // Skeleton loading cards
+          Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="p-2 rounded-full bg-gray-100">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+              </CardContent>
+            </Card>
+          ))
+        ) : stats ? (
+          // Render statistics
+          Object.entries(stats).map(([key, stat]) => {
+            const config = statsConfig[key as keyof typeof statsConfig]
+            const IconComponent = config.icon
+
+            return (
+              <Card key={key}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <div className={`p-2 rounded-full ${config.bgColor}`}>
+                    <IconComponent className={`h-4 w-4 ${config.color}`} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </CardContent>
+              </Card>
+            )
+          })
+        ) : null}
       </div>
+
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                className="text-red-700 border-red-300 hover:bg-red-100"
+              >
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -117,29 +290,57 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
-                <Users className="h-6 w-6 text-blue-600 mb-2" />
+              <button
+                onClick={handleNewEmployee}
+                className="p-4 text-left border rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors group"
+              >
+                <Users className="h-6 w-6 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
                 <p className="font-medium">Nuevo Empleado</p>
                 <p className="text-xs text-gray-500">Registrar empleado</p>
               </button>
-              <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
-                <Building2 className="h-6 w-6 text-green-600 mb-2" />
+              <button
+                onClick={handleNewClient}
+                className="p-4 text-left border rounded-lg hover:bg-gray-50 hover:border-green-300 transition-colors group"
+              >
+                <Building2 className="h-6 w-6 text-green-600 mb-2 group-hover:scale-110 transition-transform" />
                 <p className="font-medium">Nuevo Cliente</p>
                 <p className="text-xs text-gray-500">Registrar cliente</p>
               </button>
-              <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
-                <MapPin className="h-6 w-6 text-purple-600 mb-2" />
+              <button
+                onClick={handleNewSede}
+                className="p-4 text-left border rounded-lg hover:bg-gray-50 hover:border-purple-300 transition-colors group"
+              >
+                <MapPin className="h-6 w-6 text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
                 <p className="font-medium">Nueva Sede</p>
                 <p className="text-xs text-gray-500">Crear sede</p>
               </button>
-              <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
-                <Settings className="h-6 w-6 text-orange-600 mb-2" />
+              <button
+                onClick={handleConfiguration}
+                className="p-4 text-left border rounded-lg hover:bg-gray-50 hover:border-orange-300 transition-colors group"
+              >
+                <Settings className="h-6 w-6 text-orange-600 mb-2 group-hover:scale-110 transition-transform" />
                 <p className="font-medium">Configuración</p>
                 <p className="text-xs text-gray-500">Ajustes del sistema</p>
               </button>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Gráfico de estadísticas por sede */}
+      <div className="w-full">
+        <DashboardBarChart
+          data={chartData}
+          sedes={sedesData}
+          config={chartConfig}
+          loading={chartLoading}
+          error={chartError}
+          onRefresh={handleChartRetry}
+          metricOptions={metricOptions}
+          selectedMetric={selectedMetric}
+          onMetricChange={setSelectedMetric}
+          height={400}
+        />
       </div>
     </div>
   )

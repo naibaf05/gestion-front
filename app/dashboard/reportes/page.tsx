@@ -89,6 +89,10 @@ export default function ReportesPage() {
             header: "Tipo Residuo",
         },
         {
+            accessorKey: "unidad",
+            header: "Unidad de Medida",
+        },
+        {
             accessorKey: "cantidad",
             header: "Cantidad",
         },

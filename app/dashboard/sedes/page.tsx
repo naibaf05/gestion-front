@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -52,6 +53,7 @@ export default function SedesPage() {
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
+  const searchParams = useSearchParams();
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -66,6 +68,16 @@ export default function SedesPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Efecto para detectar si se debe abrir el diálogo automáticamente
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action === 'create' && clientes.length > 0 && poblados.length > 0 && oficinas.length > 0 && generadores.length > 0 && periodos.length > 0) {
+      handleCreate()
+      // Limpiar el parámetro de la URL sin recargar la página
+      window.history.replaceState({}, '', '/dashboard/sedes')
+    }
+  }, [searchParams, clientes, poblados, oficinas, generadores, periodos]);
 
   const loadData = async () => {
     try {

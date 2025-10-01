@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,10 +26,21 @@ export default function ClientsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Efecto para detectar si se debe abrir el diálogo automáticamente
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action === 'create' && poblados.length > 0 && comerciales.length > 0 && tClientes.length > 0) {
+      handleCreate()
+      // Limpiar el parámetro de la URL sin recargar la página
+      window.history.replaceState({}, '', '/dashboard/clients')
+    }
+  }, [searchParams, poblados, comerciales, tClientes]);
 
   const loadData = async () => {
     try {

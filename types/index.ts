@@ -294,3 +294,72 @@ export interface Salida {
   conductor?: User
   producto?: Parametrizacion
 }
+
+// Tipos para Dashboard Stats
+export interface DashboardStatItem {
+  title: string
+  value: string | number
+  description: string
+}
+
+export interface DashboardStats {
+  empleados: DashboardStatItem
+  clientes: DashboardStatItem
+  sedes: DashboardStatItem
+  parametrizaciones: DashboardStatItem
+}
+
+// Tipo para la respuesta del backend (números directos)
+export interface DashboardStatsResponse {
+  empleados: number
+  clientes: number
+  sedes: number
+  parametrizaciones: number
+}
+
+// Tipos para gráficos
+export interface ChartDataPoint {
+  name: string
+  value: number
+  [key: string]: string | number
+}
+
+export interface ChartConfig {
+  xAxisKey: string
+  yAxisKey: string
+  title: string
+  xAxisLabel?: string
+  yAxisLabel?: string
+  color?: string
+}
+
+export interface SedeChartData {
+  sede: string
+  empleados: number
+  clientes: number
+  vehiculos: number
+  certificados: number
+}
+
+export interface ChartResponse {
+  data: ChartDataPoint[]
+  total: number
+}
+
+// Tipos para gráficos agrupados por mes y sede
+export interface MonthlySedeData {
+  month: string // Ej: "Enero", "Febrero", etc.
+  [sedeName: string]: number | string // Cada sede será una propiedad con su valor
+}
+
+export interface SedeInfo {
+  id: string
+  name: string
+  color: string
+}
+
+export interface GroupedChartResponse {
+  data: MonthlySedeData[]
+  sedes: SedeInfo[]
+  months: string[]
+}

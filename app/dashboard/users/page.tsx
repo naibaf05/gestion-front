@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
@@ -19,10 +20,21 @@ export default function UsersPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const { toast } = useToast()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     loadData()
   }, [])
+
+  // Efecto para detectar si se debe abrir el diálogo automáticamente
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action === 'create' && profiles.length > 0) {
+      handleCreate()
+      // Limpiar el parámetro de la URL sin recargar la página
+      window.history.replaceState({}, '', '/dashboard/users')
+    }
+  }, [searchParams, profiles])
 
   const loadData = async () => {
     try {
