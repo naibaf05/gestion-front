@@ -135,7 +135,7 @@ export function CertificadoDialog({
               base64 = null;
               break;
           case "2":
-              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin);
+              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin, "");
               break;
           case "3":   
               base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin);

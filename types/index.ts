@@ -274,6 +274,7 @@ export interface Certificados {
   inicio: string
   fin: string
   activo: boolean
+  num: string
 }
 
 // Tipos para salidas

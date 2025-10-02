@@ -102,7 +102,7 @@ export default function CertificadosPage() {
                 base64 = null;
                 break;
             case "2":
-                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId, obj.inicio, obj.fin);
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId, obj.inicio, obj.fin, obj.num);
                 break;
             case "3":   
                 base64 = await certificatesService.getCertificadoProformaPDF(obj.sedeId, obj.inicio, obj.fin);
