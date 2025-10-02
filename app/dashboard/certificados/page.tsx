@@ -36,8 +36,6 @@ export default function CertificadosPage() {
     const [tipo, setTipo] = useState<"1" | "2" | "3">("1");
     const { toast } = useToast();
 
-    console.log("User in CertificadosPage:", user);
-
     useEffect(() => {
         loadData();
     }, []);
@@ -92,7 +90,36 @@ export default function CertificadosPage() {
     };
 
     const handlePdf = async (obj: Certificados) => {
-        const base64 = await certificatesService.getCertificadoProformaPDF(obj.sedeId, obj.inicio, obj.fin);
+        console.log("Generating PDF for:", obj);
+        console.log("Tipo value:", obj.tipo, "Type:", typeof obj.tipo);
+        let base64;
+
+        // Convertir tipo a string para asegurar compatibilidad
+        const tipoString = String(obj.tipo);
+
+        switch (tipoString) {
+            case "1":
+                base64 = null;
+                break;
+            case "2":
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId, obj.inicio, obj.fin);
+                break;
+            case "3":   
+                base64 = await certificatesService.getCertificadoProformaPDF(obj.sedeId, obj.inicio, obj.fin);
+                break;
+            default:
+                base64 = null;
+                break;
+        }
+        console.log("Received base64:", base64);
+        if (!base64) {
+            toast({
+                title: "Error",
+                description: "No se pudo generar el PDF",
+                variant: "error",
+            });
+            return;
+        }
         setBase64(base64);
         setDialogPdfOpen(true);
     }
@@ -189,7 +216,7 @@ export default function CertificadosPage() {
                     <Tabs value={tab} onValueChange={setTab} className="w-full">
                         <TabsList className="mb-4">
                             <TabsTrigger value="llantas">Llantas</TabsTrigger>
-                            <TabsTrigger value="otros">Otros</TabsTrigger>
+                            <TabsTrigger value="otros">Residuos</TabsTrigger>
                             <TabsTrigger value="proforma">Proforma</TabsTrigger>
                         </TabsList>
 

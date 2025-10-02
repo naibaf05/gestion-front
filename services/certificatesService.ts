@@ -8,8 +8,8 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoRecoleccionPDF(): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion`);
+    async getCertificadoRecoleccionPDF(sedeId: string, inicio: string, fin: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}`);
         return response.data;
     }
 

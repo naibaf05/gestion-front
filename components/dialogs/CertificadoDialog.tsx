@@ -126,7 +126,24 @@ export function CertificadoDialog({
 
   const handlePdf = async () => {
     try {
-      const base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin);
+
+      let base64;
+      const tipoString = String(formData.tipo);
+      
+      switch (tipoString) {
+          case "1":
+              base64 = null;
+              break;
+          case "2":
+              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin);
+              break;
+          case "3":   
+              base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin);
+              break;
+          default:
+              base64 = null;
+              break;
+      }
       setBase64(base64);
       setDialogPdfOpen(true);
     } catch (error: any) {
