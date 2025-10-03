@@ -271,10 +271,12 @@ export interface Certificados {
   sedeId: string
   sedeNombre?: string
   tipo: string
+  fecha: string
   inicio: string
   fin: string
   activo: boolean
   num: string
+  notas?: string
 }
 
 // Tipos para salidas

@@ -8,13 +8,13 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoRecoleccionPDF(sedeId: string, inicio: string, fin: string, num: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}`);
+    async getCertificadoRecoleccionPDF(sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
         return response.data;
     }
 
-    async getCertificadoProformaPDF(sedeId: string, inicio: string, fin: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}`);
+    async getCertificadoProformaPDF(sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 

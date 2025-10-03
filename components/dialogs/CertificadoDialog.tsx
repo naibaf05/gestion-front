@@ -42,9 +42,11 @@ export function CertificadoDialog({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     sedeId: "",
+    fecha: "",
     inicio: "",
     fin: "",
     tipo: "",
+    notas: "",
     activo: true,
   });
   const { toast } = useToast();
@@ -53,18 +55,22 @@ export function CertificadoDialog({
     if (certificado) {
       setFormData({
         sedeId: certificado.sedeId,
+        fecha: certificado.fecha.split('T')[0],
         inicio: certificado.inicio.split('T')[0],
         fin: certificado.fin.split('T')[0],
         tipo: tipo,
         activo: certificado.activo,
+        notas: certificado.notas || "",
       });
     } else {
       setFormData({
         sedeId: "",
+        fecha: "",
         inicio: "",
         fin: "",
         tipo: tipo,
         activo: true,
+        notas: "",
       });
     }
   }, [certificado, open]);
@@ -135,10 +141,10 @@ export function CertificadoDialog({
               base64 = null;
               break;
           case "2":
-              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin, "");
+              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
               break;
-          case "3":   
-              base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin);
+          case "3":
+              base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
               break;
           default:
               base64 = null;
@@ -197,6 +203,16 @@ export function CertificadoDialog({
               value={formData.fin}
               onChange={(e) => handleInputChange("fin", e.target.value)}
               required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="notas">Notas</Label>
+            <Input
+              id="notas"
+              type="text"
+              value={formData.notas}
+              onChange={(e) => handleInputChange("notas", e.target.value)}
             />
           </div>
 
