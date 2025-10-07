@@ -51,6 +51,18 @@ export interface Parametrizacion {
   activo: boolean
 }
 
+export interface TipoResiduo {
+  id: string
+  nombre: string
+  nombreMostrar: string
+  codigo?: string
+  descripcion?: string
+  datosJson?: any
+  activo: boolean
+  tarifa: string
+  tarifaNombre: string
+}
+
 // Tipos de clientes y sedes
 export interface Cliente {
   id: string

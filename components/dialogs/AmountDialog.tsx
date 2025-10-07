@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { Rate, Parametrizacion, VisitaCantidad, VisitaRecol } from "@/types";
+import type { Rate, Parametrizacion, VisitaCantidad, VisitaRecol, TipoResiduo } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
@@ -29,7 +29,7 @@ interface AmountDialogProps {
   cantidad?: VisitaCantidad | null;
   visitaRecol: VisitaRecol;
   contenedores: Parametrizacion[];
-  tiposResiduos: Parametrizacion[];
+  tiposResiduos: TipoResiduo[];
   onSuccess: () => void;
 }
 
@@ -44,11 +44,11 @@ export function AmountDialog({
   onSuccess,
 }: AmountDialogProps) {
   const { user, logout } = useAuth()
-  const [tarifas, setTarifas] = useState<Rate[]>([]);
   const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     cantidad: "",
+    id: "",
     tResiduoId: "",
     contenedorId: "",
     numContenedor: "",
@@ -72,6 +72,7 @@ export function AmountDialog({
     if (cantidad) {
       setFormData({
         cantidad: cantidad.cantidad,
+        id: cantidad.tResiduoId,
         tResiduoId: cantidad.tResiduoId,
         contenedorId: cantidad.contenedorId,
         numContenedor: cantidad.numContenedor,
@@ -82,6 +83,7 @@ export function AmountDialog({
     } else {
       setFormData({
         cantidad: "",
+        id: "",
         tResiduoId: "",
         contenedorId: "",
         numContenedor: "",
@@ -105,6 +107,7 @@ export function AmountDialog({
           variant: "success",
         });
       } else {
+        formData.id = "";
         await visitService.createCantidad(formData);
         toast({
           title: "Cantidad creada",
@@ -130,33 +133,20 @@ export function AmountDialog({
   };
 
   const handleTResiduoChange = async (v: string) => {
-    formData.tResiduoId = v;
-
-    const residuoEncontrado = tiposResiduos.find(tr => parseInt(tr.id) === parseInt(v));
+    formData.id = v;
+    const residuoEncontrado = tiposResiduos.find(tr => tr.id === v);
     if (residuoEncontrado) {
+      formData.tResiduoId = residuoEncontrado.id.split('-')[0];
       formData.cantidad = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
+      formData.tarifaId = residuoEncontrado.id.split('-')[1];
+      formData.tarifaNombre = residuoEncontrado.tarifaNombre;
       setSelectedTResiduo(residuoEncontrado);
     } else {
+      formData.tResiduoId = '';
       formData.cantidad = '';
-      setSelectedTResiduo(null);
-    }
-
-    const list_tarifas = await rateService.getDataActivos(visitaRecol.sedeId, v);
-    if (list_tarifas && list_tarifas.length > 0) {
-      setTarifas(list_tarifas);
-      list_tarifas.forEach(element => {
-        if (element.puestoPlanta && progVisitaRecolId) {
-          formData.tarifaId = element.id;
-          formData.tarifaNombre = element.tarifaNombre || '';
-        } else {
-          formData.tarifaId = element.id;
-          formData.tarifaNombre = element.tarifaNombre || '';
-        }
-      });
-    } else {
-      setTarifas([]);
       formData.tarifaId = '';
       formData.tarifaNombre = '';
+      setSelectedTResiduo(null);
     }
     setFormData(formData);
   };
@@ -181,12 +171,12 @@ export function AmountDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tResiduoId" required>Tipo de Residuo</Label>
+                <Label htmlFor="id" required>Tipo de Residuo</Label>
                 <SelectSingle
-                  id="tResiduoId"
+                  id="id"
                   placeholder="Selecciona un tipo de residuo"
                   options={tiposResiduos}
-                  value={formData.tResiduoId}
+                  value={formData.id}
                   onChange={handleTResiduoChange}
                   valueKey="id"
                   labelKey="nombreMostrar"

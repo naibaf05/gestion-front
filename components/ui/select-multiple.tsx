@@ -25,7 +25,7 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
         <ReactSelect
             isMulti
             options={options}
-            value={options.filter(opt => value.includes(opt.value))}
+            value={options.filter(opt => (value ? value.includes(opt.value) : false))}
             onChange={(selected: MultiValue<OptionType>) => {
                 onChange(selected.map(opt => opt.value))
             }}

@@ -1,5 +1,5 @@
 import { apiService } from "./api";
-import type { ApiResponse, Parametrizacion } from "@/types";
+import type { ApiResponse, Parametrizacion, TipoResiduo } from "@/types";
 
 export class ParametrizationService {
   async getLista(type: string): Promise<Parametrizacion[]> {
@@ -29,9 +29,9 @@ export class ParametrizationService {
     return response.data;
   }
 
-  async getListaTResiduosActivos(clienteId: string): Promise<Parametrizacion[]> {
-    const response = await apiService.get<ApiResponse<Parametrizacion[]>>(
-      `/parametrizaciones/t_residuo/activas/${clienteId}`
+  async getListaTResiduosActivos(sedeId: string, fecha: string): Promise<TipoResiduo[]> {
+    const response = await apiService.get<ApiResponse<TipoResiduo[]>>(
+      `/parametrizaciones/t_residuo/activas?sedeId=${sedeId}&fecha=${fecha}`
     );
 
     response.data.forEach((element) => {

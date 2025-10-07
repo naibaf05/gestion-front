@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Edit, Plus, TableProperties, Trash2 } from "lucide-react"
-import { Parametrizacion, VisitaCantidad, VisitaRecol } from "@/types"
+import { Parametrizacion, TipoResiduo, VisitaCantidad, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { parametrizationService } from "@/services/parametrizationService"
 import { visitService } from "@/services/visitService";
@@ -32,7 +32,7 @@ export function AmountsDialog({
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
-  const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
+  const [tiposResiduos, setTiposResiduos] = useState<TipoResiduo[]>([])
   const [selectedAmount, setSelectedAmount] = useState<VisitaCantidad | null>(null)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [amountToDelete, setAmountToDelete] = useState<string | null>(null)
@@ -63,7 +63,7 @@ export function AmountsDialog({
         const [amountsData, contenedoresData, tiposResiduosData] = await Promise.all([
           visitService.getCantidades(visitaRecol.id),
           parametrizationService.getListaActivos("contenedor"),
-          parametrizationService.getListaTResiduosActivos(visitaRecol.clienteId),
+          parametrizationService.getListaTResiduosActivos(visitaRecol.sedeId, visitaRecol.fecha),
         ])
         setAmounts(amountsData);
         setContenedores(contenedoresData);
