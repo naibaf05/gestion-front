@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarSign } from "lucide-react";
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarSign, Trash2 } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { pathService } from "@/services/pathService";
 import { parametrizationService } from "@/services/parametrizationService";
@@ -21,6 +21,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { RatesDialog } from "@/components/dialogs/RatesDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function SedesPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -54,6 +55,8 @@ export default function SedesPage() {
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
   const searchParams = useSearchParams();
+
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -259,6 +262,10 @@ export default function SedesPage() {
                     tooltipContent={sede.activo ? "Desactivar" : "Activar"} className={sede.activo ? "new-text-green-600" : "new-text-red-600"}>
                     <PowerSquare className="h-4 w-4" />
                   </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(sede)}
+                    tooltipContent="Eliminar" className="new-text-red-600">
+                    <Trash2 className="h-4 w-4" />
+                  </ButtonTooltip>
                 </>
               )}
               <DropdownMenu>
@@ -306,6 +313,37 @@ export default function SedesPage() {
       },
     },
   ];
+
+  const handleDelete = (sede: Sede) => {
+    setSelectedSede(sede)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedSede) return
+
+    try {
+      await clientService.deleteSede(selectedSede.id);
+      toast({
+        title: "Sede eliminada",
+        description: "La sede ha sido eliminada exitosamente",
+        variant: "success",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: (error && error.message ? error.message : "No se pudo eliminar la sede"),
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedSede(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setSelectedSede(null)
+  }
 
   if (loading) {
     return (
@@ -381,6 +419,15 @@ export default function SedesPage() {
         open={ratesDialogOpen}
         onOpenChange={setRatesDialogOpen}
         sede={selectedSede}
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Eliminar"
+        description="¿Estás seguro de que deseas eliminar esta sede?"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
       />
     </div>
   );

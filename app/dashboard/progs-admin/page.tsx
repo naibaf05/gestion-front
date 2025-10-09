@@ -196,7 +196,7 @@ export default function ProgsAdminPage() {
   }
 
   const handlePdf = async (obj: ProgVisitaRecol) => {
-    const base64 = await certificatesService.getCertificadoRecoleccionPDF();
+    const base64 = await certificatesService.getCertificadoVisitaPDF(obj.visitaRecolId);
     setBase64(base64);
     setSelected(obj);
     setDialogPdfOpen(true);

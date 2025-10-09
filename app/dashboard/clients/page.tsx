@@ -9,13 +9,16 @@ import {
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare } from "lucide-react";
+import { Plus, Edit, PowerSquare, Trash2 } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import type { Cliente, Parametrizacion } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ClientDialog } from "@/components/dialogs/ClientDialog";
 import type { ColumnDef } from "@tanstack/react-table";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { ButtonTooltip } from "@/components/ui/button-tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Cliente[]>([]);
@@ -27,6 +30,8 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const { toast } = useToast();
   const searchParams = useSearchParams();
+
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -160,27 +165,63 @@ export default function ClientsPage() {
       cell: ({ row }) => {
         const client = row.original;
         return (
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(client)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(client.id)}
-              className={client.activo ? "new-text-green-600" : "new-text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(client)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleToggleStatus(client.id)}
+                className={client.activo ? "new-text-green-600" : "new-text-red-600"}
+              >
+                <PowerSquare className="h-4 w-4" />
+              </Button>
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(client)} className="new-text-red-600" tooltipContent="Eliminar">
+                <Trash2 className="h-4 w-4" />
+              </ButtonTooltip>
+            </div>
+          </TooltipProvider>
         );
       },
     },
   ];
+
+  const handleDelete = (client: Cliente) => {
+    setSelectedClient(client)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedClient) return
+
+    try {
+      await clientService.deleteCliente(selectedClient.id);
+      toast({
+        title: "Cliente eliminado",
+        description: "El cliente ha sido eliminado exitosamente",
+        variant: "success",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: (error && error.message ? error.message : "No se pudo eliminar el cliente"),
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedClient(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setSelectedClient(null)
+  }
 
   if (loading) {
     return (
@@ -228,6 +269,15 @@ export default function ClientsPage() {
         comerciales={comerciales}
         tClientes={tClientes}
         onSuccess={loadData}
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Eliminar"
+        description="¿Estás seguro de que deseas eliminar este cliente?"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
       />
     </div>
   );

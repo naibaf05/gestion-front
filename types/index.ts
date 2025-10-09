@@ -61,6 +61,7 @@ export interface TipoResiduo {
   activo: boolean
   tarifa: string
   tarifaNombre: string
+  codigoUnidad: string
 }
 
 // Tipos de clientes y sedes
@@ -160,6 +161,7 @@ export interface Rate {
   undMedidaId: string
   undMedidaNombre?: string
   tipoResiduoId: string
+  tipoResiduoCodigo?: string
   tipoResiduoNombre?: string
   tarifa: string
   tarifaNombre?: string
@@ -247,6 +249,7 @@ export interface VisitaRecol {
 export interface VisitaCantidad {
   id: string;
   cantidad: string;
+  cantidadKg?: string;
   tResiduoId: string;
   tResiduoNombre?: string;
   contenedorId: string;

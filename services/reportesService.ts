@@ -40,6 +40,11 @@ export class ReportesService {
     return response.data;
   }
 
+  async asignarFactura(data: any): Promise<any[]> {
+    const response = await apiService.post<ApiResponse<any[]>>('/reportes/asignarFactura', data);
+    return response.data;
+  }
+
   async getSedeChartData(): Promise<SedeChartData[]> {
     // Simulamos datos para el gráfico por ahora
     // En producción, esto haría una llamada al backend

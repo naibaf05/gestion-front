@@ -46,8 +46,10 @@ export function AmountDialog({
   const { user, logout } = useAuth()
   const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
   const [loading, setLoading] = useState(false);
+  const [viewCantidadKg, setViewCantidadKg] = useState(false);
   const [formData, setFormData] = useState({
     cantidad: "",
+    cantidadKg: "",
     id: "",
     tResiduoId: "",
     contenedorId: "",
@@ -72,6 +74,7 @@ export function AmountDialog({
     if (cantidad) {
       setFormData({
         cantidad: cantidad.cantidad,
+        cantidadKg: cantidad.cantidadKg || "",
         id: cantidad.tResiduoId,
         tResiduoId: cantidad.tResiduoId,
         contenedorId: cantidad.contenedorId,
@@ -83,6 +86,7 @@ export function AmountDialog({
     } else {
       setFormData({
         cantidad: "",
+        cantidadKg: "",
         id: "",
         tResiduoId: "",
         contenedorId: "",
@@ -135,18 +139,21 @@ export function AmountDialog({
   const handleTResiduoChange = async (v: string) => {
     formData.id = v;
     const residuoEncontrado = tiposResiduos.find(tr => tr.id === v);
+    console.log(residuoEncontrado);
     if (residuoEncontrado) {
       formData.tResiduoId = residuoEncontrado.id.split('-')[0];
       formData.cantidad = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
       formData.tarifaId = residuoEncontrado.id.split('-')[1];
       formData.tarifaNombre = residuoEncontrado.tarifaNombre;
       setSelectedTResiduo(residuoEncontrado);
+      setViewCantidadKg(residuoEncontrado.codigoUnidad === 'M3');
     } else {
       formData.tResiduoId = '';
       formData.cantidad = '';
       formData.tarifaId = '';
       formData.tarifaNombre = '';
       setSelectedTResiduo(null);
+      setViewCantidadKg(false);
     }
     setFormData(formData);
   };
@@ -222,6 +229,18 @@ export function AmountDialog({
                   placeholder="Ingrese una cantidad"
                 />
               </div>
+              {viewCantidadKg && (
+                <div className="space-y-2">
+                  <Label htmlFor="cantidadKg" required>Cantidad KG</Label>
+                  <InputDecimal
+                    id="cantidadKg"
+                    value={formData.cantidadKg}
+                    onChange={(e) => setFormData({ ...formData, cantidadKg: e.target.value })}
+                    decimalPlaces={4}
+                    placeholder="Ingrese una cantidad KG"
+                  />
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

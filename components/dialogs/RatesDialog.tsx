@@ -107,6 +107,10 @@ export function RatesDialog({
       header: "Unidad de Medida",
     },
     {
+      accessorKey: "tipoResiduoCodigo",
+      header: "Cod. Tipo de Residuo",
+    },
+    {
       accessorKey: "tipoResiduoNombre",
       header: "Tipo de Residuo",
     },
@@ -201,7 +205,8 @@ export function RatesDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[1050px] max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-h-[95vh] overflow-y-auto"
+                style={{ maxWidth: '80%' }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CircleDollarSign className="h-5 w-5" />
@@ -217,7 +222,7 @@ export function RatesDialog({
             </Button>
           </div>
 
-          <DataTable columns={columns} data={rates} searchKey={["undMedidaNombre", "tipoResiduoNombre", "tarifaNombre"]} searchPlaceholder="Buscar por unidad de medida..." />
+          <DataTable columns={columns} data={rates} searchKey={["undMedidaNombre", "tipoResiduoCodigo", "tipoResiduoNombre", "tarifaNombre"]} searchPlaceholder="Buscar por unidad de medida..." />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>

@@ -241,9 +241,9 @@ export function VisitDialog({
                   labelKey="nombre"
                 />
               </div>
-              {progVisitaRecol && progVisitaRecol.id ?
+              {formData.tipo !== 'puesto' ?
                 <div className="space-y-2">
-                  <Label htmlFor="vehiculo" required>Vehículo</Label>
+                  <Label htmlFor="vehiculo">Vehículo</Label>
                   <SelectSingle
                     id="vehiculo"
                     placeholder="Seleccione un vehículo"

@@ -18,6 +18,7 @@ import { reportesService, type TipoReporte } from "@/services/reportesService";
 import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 import { ColumnDef } from "@tanstack/react-table";
 import { set } from "date-fns";
+import { ReportDialog } from "@/components/dialogs/ReportDialog";
 
 export default function ReportesPage() {
     const [tipoReporte, setTipoReporte] = useState<TipoReporte | "">("");
@@ -89,18 +90,60 @@ export default function ReportesPage() {
             header: "Tipo Residuo",
         },
         {
-            accessorKey: "unidad",
-            header: "Unidad de Medida",
+            accessorKey: "cantidadKg",
+            header: "KG",
         },
         {
-            accessorKey: "cantidad",
-            header: "Cantidad",
+            accessorKey: "cantidadM3",
+            header: "M3",
         },
         {
             accessorKey: "recolNombre",
             header: "Recolección",
         },
+        {
+            accessorKey: "numFactura",
+            header: "Número de Factura",
+        },
+        {
+            accessorKey: "valor",
+            header: "Valor Facturado",
+        },
+        {
+            accessorKey: "tarifa",
+            header: "Tarifa",
+        },
     ];
+
+    const asignarFactura = async (selectedRows: any[], invoiceNumber: string) => {
+        console.log("Filas seleccionadas:", selectedRows);
+        console.log("Número de factura:", invoiceNumber);
+        setLoading(true);
+        try {
+            const ids = selectedRows.map(row => row.id);
+
+            const data = {
+                ids: ids,
+                numeroFactura: invoiceNumber
+            }
+            const resp = await reportesService.asignarFactura(data);
+
+            toast({
+                title: "Factura asignada",
+                description: "La factura ha sido asignada exitosamente",
+                variant: "success",
+            });
+            handleGenerar();
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error?.message || "No se pudo asignar factura",
+                variant: "error",
+            });
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const handleGenerar = async () => {
         if (!tipoReporte) {
@@ -144,16 +187,16 @@ export default function ReportesPage() {
             switch (tipoReporte) {
                 case "reporte1":
                     dataP = await reportesService.generarReporte1(fechaInicio, fechaFin);
-                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
-                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad", "Recolección"];
-                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
+                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
+                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad KG", "Cantidad M3", "Recolección", "Valor Facturado", "Número de Factura", "Tarifa"];
+                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
                     setColumns_table(tableR1);
                     break;
                 case "reporte2":
                     dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
-                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
-                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad", "Recolección"];
-                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidad", "recolNombre"];
+                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
+                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad KG", "Cantidad M3", "Recolección", "Valor Facturado", "Número de Factura", "Tarifa"];
+                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
                     setColumns_table(tableR1);
                     break;
                 case "reporte3":
@@ -171,7 +214,7 @@ export default function ReportesPage() {
             setExportColumns(exportCols);
             setExportHeaders(exportHeads);
             setSearchKey(searchKey);
-            setDialogTableOpen(true);            
+            setDialogTableOpen(true);
 
         } catch (error: any) {
             toast({
@@ -281,7 +324,7 @@ export default function ReportesPage() {
                 </CardContent>
             </Card>
 
-            <GenericTableDialog
+            <ReportDialog
                 open={dialogTableOpen}
                 onOpenChange={setDialogTableOpen}
                 columns={columns_table}
@@ -290,6 +333,12 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
+                showCheckboxes={true}
+                showAssignInvoice={true}
+                rowIdField="id"
+                onAssignInvoice={(selectedRows, invoiceNumber) => {
+                    asignarFactura(selectedRows, invoiceNumber);
+                }}
             />
         </div>
     );
