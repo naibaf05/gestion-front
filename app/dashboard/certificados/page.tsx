@@ -157,12 +157,10 @@ export default function CertificadosPage() {
         {
             accessorKey: "inicio",
             header: "Fecha Inicio",
-            cell: ({ row }) => formatDate(row.original.inicio),
         },
         {
             accessorKey: "fin",
             header: "Fecha Fin",
-            cell: ({ row }) => formatDate(row.original.fin),
         },
         {
             accessorKey: "activo",
