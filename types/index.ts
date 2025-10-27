@@ -267,23 +267,25 @@ export interface InfoAdicional {
 }
 
 export interface Permission {
-    id: string
-    name: string
-    category: string
-    icon?: any
+  id: string
+  name: string
+  category: string
+  icon?: any
 }
 
 export interface PermissionCategory {
-    id: string
-    name: string
-    icon: any
-    permissions: Permission[]
+  id: string
+  name: string
+  icon: any
+  permissions: Permission[]
 }
 
 // Tipos para certificados
 export interface Certificados {
   id: string
-  sedeId: string
+  clienteId?: string
+  clienteNombre?: string
+  sedeId?: string
   sedeNombre?: string
   tipo: string
   fecha: string
@@ -380,4 +382,24 @@ export interface GroupedChartResponse {
   data: MonthlySedeData[]
   sedes: SedeInfo[]
   months: string[]
+}
+
+export interface Cartera {
+  id: string
+  clienteId: string
+  clienteNombre: string
+  clienteNit: string
+  documento: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface Adjunto {
+  id: string
+  nombre: string
+  tipo: string // Tipo de entidad (ej: "progs", "clientes", etc.)
+  relacionId: string // ID de la entidad relacionada
+  ruta: string
+  base64?: string
+  tipoArchivo?: string
 }

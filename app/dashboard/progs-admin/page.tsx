@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, PlusCircle, TableProperties, FileText, Trash2 } from "lucide-react"
+import { Plus, Edit, Check, PlusCircle, TableProperties, FileText, Trash2, Paperclip } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -18,11 +18,13 @@ import { parametrizationService } from "@/services/parametrizationService"
 import { visitService } from "@/services/visitService"
 import { AmountsDialog } from "@/components/dialogs/AmountsDialog"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { PdfDialog } from "@/components/dialogs/PdfDialog"
 import { certificatesService } from "@/services/certificatesService"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
 
 export default function ProgsAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -73,6 +75,9 @@ export default function ProgsAdminPage() {
   const [tipoConfirm, setTipoConfirm] = useState<string | null>(null)
   const [titleConfirm, setTitleConfirm] = useState<string | null>(null)
   const [descripcionConfirm, setDescripcionConfirm] = useState<string | null>(null)
+
+  const [adjuntosOpen, setAdjuntosOpen] = useState(false)
+  const [entidadId, setEntidadId] = useState<string | null>(null)
 
   useEffect(() => {
     // Limpiar timeout anterior si existe
@@ -210,6 +215,12 @@ export default function ProgsAdminPage() {
     setConfirmDialogOpen(true)
   }
 
+
+  const handleAdjuntos = async (id: string) => {
+    setEntidadId(id)
+    setAdjuntosOpen(true)
+  }
+
   const confirm = async () => {
     if (!idToConfirm) return
 
@@ -318,15 +329,37 @@ export default function ProgsAdminPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
                     <FileText className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(obj.visitaRecolId)} tooltipContent="Eliminar" className="new-text-red-600" >
-                    <Trash2 className="h-4 w-4" />
-                  </ButtonTooltip>
                 </>
                 :
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
                   <PlusCircle className="h-4 w-4" />
                 </ButtonTooltip>
               }
+              <DropdownMenu>
+                <Tooltip>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <span className="sr-only">Más acciones</span>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="2" fill="currentColor" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <circle cx="19" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <TooltipContent>Más acciones</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Eliminar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAdjuntos(obj.visitaRecolId)}>
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Adjuntos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </TooltipProvider>
         )
@@ -423,6 +456,14 @@ export default function ProgsAdminPage() {
         description={descripcionConfirm || "¿Estás seguro de que deseas eliminar este elemento?"}
         onConfirm={confirm}
         onCancel={cancel}
+      />
+
+      <AdjuntosDialog
+        open={adjuntosOpen}
+        onOpenChange={setAdjuntosOpen}
+        tipo="progs"
+        entityId={entidadId || ""}
+        title="Adjuntos"
       />
     </div>
   )

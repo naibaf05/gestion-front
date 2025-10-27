@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Trash2 } from "lucide-react";
+import { Plus, Edit, PowerSquare, Trash2, Key } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import type { Cliente, Parametrizacion } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ClientDialog } from "@/components/dialogs/ClientDialog";
+import { PasswordDialog } from "@/components/dialogs/PasswordDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
@@ -32,6 +33,7 @@ export default function ClientsPage() {
   const searchParams = useSearchParams();
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -182,6 +184,9 @@ export default function ClientsPage() {
               >
                 <PowerSquare className="h-4 w-4" />
               </Button>
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleChangePassword(client)} className="text-blue-600" tooltipContent="Cambiar Contraseña">
+                <Key className="h-4 w-4" />
+              </ButtonTooltip>
               <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(client)} className="new-text-red-600" tooltipContent="Eliminar">
                 <Trash2 className="h-4 w-4" />
               </ButtonTooltip>
@@ -195,6 +200,11 @@ export default function ClientsPage() {
   const handleDelete = (client: Cliente) => {
     setSelectedClient(client)
     setConfirmDialogOpen(true)
+  }
+
+  const handleChangePassword = (client: Cliente) => {
+    setSelectedClient(client)
+    setPasswordDialogOpen(true)
   }
 
   const confirmDelete = async () => {
@@ -278,6 +288,14 @@ export default function ClientsPage() {
         description="¿Estás seguro de que deseas eliminar este cliente?"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <PasswordDialog
+        open={passwordDialogOpen}
+        onOpenChange={setPasswordDialogOpen}
+        clientName={selectedClient?.nombre || ""}
+        clientId={selectedClient?.id || ""}
+        onSuccess={loadData}
       />
     </div>
   );

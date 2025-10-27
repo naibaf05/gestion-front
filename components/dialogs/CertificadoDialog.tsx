@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { certificatesService } from "@/services/certificatesService";
-import type { Certificados, Sede } from "@/types";
+import type { Certificados, Cliente, Sede } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
@@ -24,6 +24,7 @@ interface CertificadoDialogProps {
   onOpenChange: (open: boolean) => void;
   certificado?: Certificados | null;
   sedes: Sede[];
+  clientes: Cliente[];
   tipo: string;
   onSuccess: () => void;
 }
@@ -33,6 +34,7 @@ export function CertificadoDialog({
   onOpenChange,
   certificado,
   sedes,
+  clientes,
   tipo,
   onSuccess,
 }: CertificadoDialogProps) {
@@ -41,6 +43,7 @@ export function CertificadoDialog({
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    clienteId: "",
     sedeId: "",
     fecha: "",
     inicio: "",
@@ -54,7 +57,8 @@ export function CertificadoDialog({
   useEffect(() => {
     if (certificado) {
       setFormData({
-        sedeId: certificado.sedeId,
+        clienteId: certificado.clienteId || "",
+        sedeId: certificado.sedeId || "",
         fecha: certificado.fecha.split('T')[0],
         inicio: certificado.inicio.split('T')[0],
         fin: certificado.fin.split('T')[0],
@@ -64,6 +68,7 @@ export function CertificadoDialog({
       });
     } else {
       setFormData({
+        clienteId: "",
         sedeId: "",
         fecha: "",
         inicio: "",
@@ -80,14 +85,6 @@ export function CertificadoDialog({
     setLoading(true);
 
     try {
-      /*await certificatesService.createCertificado(formData);
-      toast({
-        title: "Creado",
-        description: "El certificado ha sido creado correctamente",
-        variant: "success",
-      });
-      onSuccess();
-      onOpenChange(false);*/
       handlePdf();
     } catch (error: any) {
       toast({
@@ -104,12 +101,21 @@ export function CertificadoDialog({
     setLoading(true);
 
     try {
-      await certificatesService.createCertificado(formData);
-      toast({
-        title: "Creado",
-        description: "El certificado ha sido creado correctamente",
-        variant: "success",
-      });
+      if (certificado) {
+        await certificatesService.updateCertificado(certificado.id, formData);
+        toast({
+          title: "Actualizado",
+          description: "El certificado ha sido actualizado correctamente",
+          variant: "success",
+        });
+      } else {
+        await certificatesService.createCertificado(formData);
+        toast({
+          title: "Creado",
+          description: "El certificado ha sido creado correctamente",
+          variant: "success",
+        });
+      }
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -135,20 +141,20 @@ export function CertificadoDialog({
 
       let base64;
       const tipoString = String(formData.tipo);
-      
+
       switch (tipoString) {
-          case "1":
-              base64 = null;
-              break;
-          case "2":
-              base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
-              break;
-          case "3":
-              base64 = await certificatesService.getCertificadoProformaPDF(formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
-              break;
-          default:
-              base64 = null;
-              break;
+        case "1":
+          base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          break;
+        case "2":
+          base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          break;
+        case "3":
+          base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
+          break;
+        default:
+          base64 = null;
+          break;
       }
       setBase64(base64);
       setDialogPdfOpen(true);
@@ -171,6 +177,20 @@ export function CertificadoDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {tipo === '3' && (
+            <div>
+              <Label htmlFor="clienteId">Cliente</Label>
+              <SelectSingle
+                id="cliente"
+                placeholder="Seleccione un cliente"
+                options={clientes}
+                value={formData.clienteId}
+                onChange={v => setFormData({ ...formData, clienteId: v, sedeId: "" })}
+                valueKey="id"
+                labelKey="nombre"
+              />
+            </div>
+          )}
           <div>
             <Label htmlFor="sedeId">Sede</Label>
             <SelectSingle
@@ -178,7 +198,7 @@ export function CertificadoDialog({
               placeholder="Seleccione una sede"
               options={sedes}
               value={formData.sedeId}
-              onChange={v => setFormData({ ...formData, sedeId: v })}
+              onChange={v => setFormData({ ...formData, sedeId: v, clienteId: "" })}
               valueKey="id"
               labelKey="nombre"
             />

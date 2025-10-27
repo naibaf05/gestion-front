@@ -4,19 +4,18 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, FileText, Plus, PowerSquare, Trash2 } from "lucide-react";
+import { Edit, FileText, Plus, PowerSquare, Table, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { certificatesService } from "@/services/certificatesService";
 import { clientService } from "@/services/clientService";
-import type { Certificados, Sede } from "@/types";
+import type { Certificados, Cliente, Sede } from "@/types";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
-import { es } from "date-fns/locale";
 
 export default function CertificadosPage() {
     const { user, logout } = useAuth()
@@ -29,11 +28,12 @@ export default function CertificadosPage() {
     const [certificadosOtros, setCertificadosOtros] = useState<Certificados[]>([]);
     const [certificadosProforma, setCertificadosProforma] = useState<Certificados[]>([]);
     const [sedes, setSedes] = useState<Sede[]>([]);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedCertificado, setSelectedCertificado] = useState<Certificados | null>(null);
-    const [tipo, setTipo] = useState<"1" | "2" | "3">("1");
+    const [tipo, setTipo] = useState("1");
     const { toast } = useToast();
 
     useEffect(() => {
@@ -44,27 +44,31 @@ export default function CertificadosPage() {
         try {
             setLoading(true);
             if (user && user.rolNombre === "CLIENTE") {
-                const [llantasData, otrosData, proformaData, sedesData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
                     certificatesService.getCertificadosCliente("1", "11"),
                     certificatesService.getCertificadosCliente("2", "11"),
                     certificatesService.getCertificadosCliente("3", "11"),
-                    clientService.getSedesActivas()
+                    clientService.getSedesActivas(),
+                    clientService.getClientesActivos()
                 ]);
                 setCertificadosLlantas(llantasData);
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
                 setSedes(sedesData);
+                setClientes(clientesData);
             } else {
-                const [llantasData, otrosData, proformaData, sedesData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
                     certificatesService.getCertificados("1"),
                     certificatesService.getCertificados("2"),
                     certificatesService.getCertificados("3"),
-                    clientService.getSedesActivas()
+                    clientService.getSedesActivas(),
+                    clientService.getClientesActivos()
                 ]);
                 setCertificadosLlantas(llantasData);
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
                 setSedes(sedesData);
+                setClientes(clientesData);
             }
         } catch (error) {
             toast({
@@ -77,15 +81,15 @@ export default function CertificadosPage() {
         }
     };
 
-    const handleCreate = (tipo: "1" | "2" | "3") => {
+    const handleCreate = (tipo: string) => {
         setSelectedCertificado(null);
         setTipo(tipo);
         setDialogOpen(true);
     };
 
-    const handleEdit = (item: Certificados, tipo: "1" | "2" | "3") => {
+    const handleEdit = (item: Certificados) => {
         setSelectedCertificado(item);
-        setTipo(tipo);
+        setTipo(String(item.tipo));
         setDialogOpen(true);
     };
 
@@ -99,13 +103,13 @@ export default function CertificadosPage() {
 
         switch (tipoString) {
             case "1":
-                base64 = null;
+                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "2":
-                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId, obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "3":
-                base64 = await certificatesService.getCertificadoProformaPDF(obj.sedeId, obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                base64 = await certificatesService.getCertificadoProformaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             default:
                 base64 = null;
@@ -122,6 +126,69 @@ export default function CertificadosPage() {
         }
         setBase64(base64);
         setDialogPdfOpen(true);
+    }
+
+    const handleExcel = async (obj: Certificados) => {
+        console.log("Generating Excel for:", obj);
+        console.log("Tipo value:", obj.tipo, "Type:", typeof obj.tipo);
+        let base64;
+
+        // Convertir tipo a string para asegurar compatibilidad
+        const tipoString = String(obj.tipo);
+
+        switch (tipoString) {
+            case "1":
+                base64 = null;
+                break;
+            case "2":
+                base64 = null;
+                break;
+            case "3":
+                base64 = await certificatesService.getCertificadoProformaExcel(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                break;
+            default:
+                base64 = null;
+                break;
+        }
+        console.log("Received base64:", base64);
+        if (!base64) {
+            toast({
+                title: "Error",
+                description: "No se pudo generar el Excel",
+                variant: "error",
+            });
+            return;
+        }
+
+        // Convertir base64 a Blob y descargar automáticamente
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+
+        // Crear nombre del archivo con información del certificado
+        const fileName = `Certificado_Proforma_${obj.sedeNombre || 'Sede'}_${obj.inicio}_${obj.fin}.xlsx`;
+
+        // Crear enlace de descarga y activarlo
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+            title: "Descarga iniciada",
+            description: `El archivo ${fileName} se está descargando`,
+            variant: "success",
+        });
     }
 
     const handleToggleStatus = async (id: string) => {
@@ -201,6 +268,68 @@ export default function CertificadosPage() {
         },
     ];
 
+    const columnsProforma: ColumnDef<Certificados>[] = [
+        {
+            accessorKey: "clienteNombre",
+            header: "Cliente",
+        },
+        {
+            accessorKey: "sedeNombre",
+            header: "Sede",
+        },
+        {
+            accessorKey: "inicio",
+            header: "Fecha Inicio",
+        },
+        {
+            accessorKey: "fin",
+            header: "Fecha Fin",
+        },
+        {
+            accessorKey: "activo",
+            header: "Estado",
+            cell: ({ row }) => (
+                <span className={`px-2 py-1 rounded text-xs ${row.original.activo
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
+                    {row.original.activo ? 'Activo' : 'Inactivo'}
+                </span>
+            ),
+        },
+        {
+            id: "actions",
+            header: "Acciones",
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <TooltipProvider>
+                        <div className="flex items-center space-x-2">
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(item)} tooltipContent="Editar">
+                                <Edit className="h-4 w-4" />
+                            </ButtonTooltip>
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
+                                <FileText className="h-4 w-4" />
+                            </ButtonTooltip>
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleExcel(item)} tooltipContent="Excel">
+                                <Table className="h-4 w-4" />
+                            </ButtonTooltip>
+                            <ButtonTooltip
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleStatus(item.id)}
+                                className={item.activo ? "new-text-green-600" : "new-text-red-600"}
+                                tooltipContent={item.activo ? "Desactivar" : "Activar"}
+                            >
+                                <PowerSquare className="h-4 w-4" />
+                            </ButtonTooltip>
+                        </div>
+                    </TooltipProvider>
+                );
+            },
+        },
+    ];
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -259,9 +388,9 @@ export default function CertificadosPage() {
                                 </Button>
                             </div>
                             <DataTable
-                                columns={columns}
+                                columns={columnsProforma}
                                 data={certificadosProforma}
-                                searchKey="sedeNombre"
+                                searchKey={["sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar por sede..."
                             />
                         </TabsContent>
@@ -274,6 +403,7 @@ export default function CertificadosPage() {
                 onOpenChange={setDialogOpen}
                 certificado={selectedCertificado}
                 sedes={sedes}
+                clientes={clientes}
                 onSuccess={loadData}
                 tipo={tipo}
             />

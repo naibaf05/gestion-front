@@ -18,8 +18,18 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoProformaPDF(sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+    async getCertificadoRecoleccionLlantasPDF(sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
+        return response.data;
+    }
+
+    async getCertificadoProformaPDF(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+        return response.data;
+    }
+
+    async getCertificadoProformaExcel(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma/excel?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
@@ -36,6 +46,11 @@ export class CertificatesService {
 
     async createCertificado(data: Partial<Certificados>): Promise<Certificados> {
         const response = await apiService.post<ApiResponse<Certificados>>('/certificado', data);
+        return response.data;
+    }
+
+    async updateCertificado(id: string, data: Partial<Certificados>): Promise<Certificados> {
+        const response = await apiService.put<ApiResponse<Certificados>>(`/certificado/${id}`, data);
         return response.data;
     }
 

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Users, Building2, Settings, Home, UserCheck, MapPin, LogOut, Menu, X, ChevronDown, ChevronRight, Route, FolderCog, Car, CalendarSearch, CalendarRange, ShieldCheck, FolderDown, FileCode } from "lucide-react"
+import { Users, Building2, Settings, Home, UserCheck, MapPin, LogOut, Menu, X, ChevronDown, ChevronRight, Route, FolderCog, Car, CalendarSearch, CalendarRange, ShieldCheck, FolderDown, FileCode, CircleDollarSign } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -70,6 +70,12 @@ const menuItems: MenuItem[] = [
         href: "/dashboard/sedes",
         icon: MapPin,
         requiredPermission: "sedes.view"
+      },
+      {
+        title: "Cartera",
+        href: "/dashboard/cartera",
+        icon: CircleDollarSign,
+        requiredPermission: "clients.view"
       },
     ],
   },
