@@ -53,6 +53,7 @@ export function ReportDialog<TData, TValue>({
     // Estados para los checkboxes
     const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
     const [selectAll, setSelectAll] = React.useState(false);
+    const [tableInstance, setTableInstance] = React.useState<any>(null);
     
     // Estados para el diálogo de asignar factura
     const [invoiceDialogOpen, setInvoiceDialogOpen] = React.useState(false);
@@ -68,7 +69,7 @@ export function ReportDialog<TData, TValue>({
     }, [open]);
 
     // Manejar selección individual de filas
-    const handleRowSelect = (rowId: string, checked: boolean) => {
+    const handleRowSelect = (rowId: string, checked: boolean, table?: any) => {
         const newSelectedRows = new Set(selectedRows);
         if (checked) {
             newSelectedRows.add(rowId);
@@ -77,17 +78,32 @@ export function ReportDialog<TData, TValue>({
         }
         setSelectedRows(newSelectedRows);
         
-        // Actualizar estado de "select all"
-        setSelectAll(newSelectedRows.size === data.length && data.length > 0);
+        // Actualizar estado de "select all" basado en filas visibles/filtradas
+        if (table) {
+            const filteredRows = table.getFilteredRowModel().rows;
+            const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
+            const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id: string) => newSelectedRows.has(id));
+            setSelectAll(allFilteredSelected);
+        }
     };
 
-    // Manejar selección de todas las filas
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            const allIds = data.map((row: any) => String(row[rowIdField]));
-            setSelectedRows(new Set(allIds));
-        } else {
-            setSelectedRows(new Set());
+    // Manejar selección de todas las filas (solo las visibles/filtradas)
+    const handleSelectAll = (checked: boolean, table?: any) => {
+        if (table) {
+            const filteredRows = table.getFilteredRowModel().rows;
+            const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
+            
+            const newSelectedRows = new Set(selectedRows);
+            
+            if (checked) {
+                // Agregar todas las filas filtradas a la selección
+                filteredIds.forEach((id: string) => newSelectedRows.add(id));
+            } else {
+                // Remover todas las filas filtradas de la selección
+                filteredIds.forEach((id: string) => newSelectedRows.delete(id));
+            }
+            
+            setSelectedRows(newSelectedRows);
         }
         setSelectAll(checked);
     };
@@ -98,19 +114,35 @@ export function ReportDialog<TData, TValue>({
 
         const checkboxColumn = {
             id: "select",
-            header: ({ table }: any) => (
-                <Checkbox
-                    checked={selectAll}
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Seleccionar todas las filas"
-                />
-            ),
-            cell: ({ row }: any) => {
+            header: ({ table }: any) => {
+                // Calcular el estado del checkbox basado en filas filtradas
+                const filteredRows = table.getFilteredRowModel().rows;
+                const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
+                const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id: string) => selectedRows.has(id));
+                const someFilteredSelected = filteredIds.some((id: string) => selectedRows.has(id));
+                
+                return (
+                    <div className="flex items-center">
+                        <Checkbox
+                            checked={allFilteredSelected}
+                            onCheckedChange={(checked) => handleSelectAll(checked as boolean, table)}
+                            aria-label="Seleccionar todas las filas visibles"
+                            className={someFilteredSelected && !allFilteredSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                        />
+                        {someFilteredSelected && !allFilteredSelected && (
+                            <span className="ml-1 text-xs text-gray-500">
+                                ({filteredIds.filter((id: string) => selectedRows.has(id)).length}/{filteredIds.length})
+                            </span>
+                        )}
+                    </div>
+                );
+            },
+            cell: ({ row, table }: any) => {
                 const rowId = String(row.original[rowIdField]);
                 return (
                     <Checkbox
                         checked={selectedRows.has(rowId)}
-                        onCheckedChange={(checked) => handleRowSelect(rowId, checked as boolean)}
+                        onCheckedChange={(checked) => handleRowSelect(rowId, checked as boolean, table)}
                         aria-label={`Seleccionar fila ${rowId}`}
                     />
                 );
@@ -179,6 +211,24 @@ export function ReportDialog<TData, TValue>({
         setSelectAll(false);
     };
 
+    // Calcular estadísticas de selección para filas filtradas
+    const getSelectionStats = () => {
+        if (!tableInstance) {
+            return { selected: selectedRows.size, total: data.length, filteredSelected: selectedRows.size, filteredTotal: data.length };
+        }
+        
+        const filteredRows = tableInstance.getFilteredRowModel().rows;
+        const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
+        const filteredSelected = filteredIds.filter((id: string) => selectedRows.has(id)).length;
+        
+        return {
+            selected: selectedRows.size,
+            total: data.length,
+            filteredSelected,
+            filteredTotal: filteredIds.length
+        };
+    };
+
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,7 +243,14 @@ export function ReportDialog<TData, TValue>({
                     <div className="flex justify-between items-center mb-2">
                         {showCheckboxes && (
                             <div className="text-sm text-gray-600">
-                                {selectedRows.size} de {data.length} filas seleccionadas
+                                {(() => {
+                                    const stats = getSelectionStats();
+                                    if (stats.filteredTotal === stats.total) {
+                                        return `${stats.selected} de ${stats.total} filas seleccionadas`;
+                                    } else {
+                                        return `${stats.filteredSelected} de ${stats.filteredTotal} filas visibles seleccionadas (${stats.selected} total)`;
+                                    }
+                                })()}
                             </div>
                         )}
                         
@@ -227,6 +284,7 @@ export function ReportDialog<TData, TValue>({
                             data={data}
                             searchKey={searchKey}
                             searchPlaceholder={searchPlaceholder}
+                            onTableInstanceChange={setTableInstance}
                         />
                     </div>
                     

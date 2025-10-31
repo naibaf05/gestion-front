@@ -13,12 +13,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Loader2, Download } from "lucide-react";
+import { FileText, Loader2, Download, Settings } from "lucide-react";
 import { reportesService, type TipoReporte } from "@/services/reportesService";
 import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 import { ColumnDef } from "@tanstack/react-table";
 import { set } from "date-fns";
 import { ReportDialog } from "@/components/dialogs/ReportDialog";
+import { ColumnConfigDialog } from "@/components/dialogs/ColumnConfigDialog";
 
 export default function ReportesPage() {
     const [tipoReporte, setTipoReporte] = useState<TipoReporte | "">("");
@@ -48,6 +49,28 @@ export default function ReportesPage() {
 
     const [dialogTableOpen, setDialogTableOpen] = useState(false);
     const [data, setData] = useState<any[]>([]);
+    const [columnConfigOpen, setColumnConfigOpen] = useState(false);
+    const [availableColumns, setAvailableColumns] = useState<any[]>([]);
+
+    // Configuración de columnas por tipo de reporte
+    const getColumnConfig = (tipoReporte: TipoReporte) => {
+        const baseColumns = [
+            { key: "fecha", label: "Fecha", category: "cliente", enabled: true },
+            { key: "nit", label: "NIT", category: "cliente", enabled: true },
+            { key: "ciudad", label: "Ciudad", category: "cliente", enabled: true },
+            { key: "numFactura", label: "Número de Factura", category: "cliente", enabled: true },
+            { key: "valor", label: "Valor Facturado", category: "cliente", enabled: true },
+            { key: "planta", label: "Planta", category: "sede", enabled: true },
+            { key: "sede", label: "Sede", category: "sede", enabled: true },
+            { key: "direccion", label: "Dirección", category: "sede", enabled: true },
+            { key: "tipoResiduo", label: "Tipo Residuo", category: "residuo", enabled: true },
+            { key: "cantidadKg", label: "Cantidad KG", category: "residuo", enabled: true },
+            { key: "cantidadM3", label: "Cantidad M3", category: "residuo", enabled: true },
+            { key: "recolNombre", label: "Recolección", category: "residuo", enabled: true },
+            { key: "tarifa", label: "Tarifa", category: "residuo", enabled: true },
+        ];
+        return baseColumns;
+    };
 
     const tiposReporte = [
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
@@ -227,6 +250,40 @@ export default function ReportesPage() {
         }
     };
 
+    const handleOpenColumnConfig = () => {
+        if (!tipoReporte) {
+            toast({
+                title: "Error",
+                description: "Debe seleccionar un tipo de reporte primero",
+                variant: "destructive",
+            });
+            return;
+        }
+        setAvailableColumns(getColumnConfig(tipoReporte));
+        setColumnConfigOpen(true);
+    };
+
+    const handleColumnConfigConfirm = (selectedColumns: any[]) => {
+        // Actualizar las columnas visibles en la tabla
+        const enabledColumns = selectedColumns.filter(col => col.enabled);
+        const newTableColumns = tableR1.filter(col => 
+            enabledColumns.some(enabledCol => enabledCol.key === (col as any).accessorKey)
+        );
+        setColumns_table(newTableColumns);
+        
+        // Actualizar configuración de exportación
+        const newExportCols = enabledColumns.map(col => col.key);
+        const newExportHeaders = enabledColumns.map(col => col.label);
+        setExportColumns(newExportCols);
+        setExportHeaders(newExportHeaders);
+        setSearchKey(newExportCols);
+        
+        toast({
+            title: "Configuración aplicada",
+            description: `Se configuraron ${enabledColumns.length} columnas para el reporte`,
+        });
+    };
+
     const resetForm = () => {
         setTipoReporte("");
         const today = new Date();
@@ -311,15 +368,28 @@ export default function ReportesPage() {
                             Limpiar
                         </Button>
 
-                        <Button
-                            onClick={handleGenerar}
-                            disabled={loading || !tipoReporte}
-                            className="bg-primary hover:bg-primary-hover"
-                        >
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {!loading && <Download className="mr-2 h-4 w-4" />}
-                            {loading ? "Generando..." : "Generar Reporte"}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleOpenColumnConfig}
+                                disabled={loading}
+                                className="flex items-center gap-2"
+                            >
+                                <Settings className="h-4 w-4" />
+                                Configurar Columnas
+                            </Button>
+
+                            <Button
+                                onClick={handleGenerar}
+                                disabled={loading || !tipoReporte}
+                                className="bg-primary hover:bg-primary-hover"
+                            >
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {!loading && <Download className="mr-2 h-4 w-4" />}
+                                {loading ? "Generando..." : "Generar Reporte"}
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -339,6 +409,13 @@ export default function ReportesPage() {
                 onAssignInvoice={(selectedRows, invoiceNumber) => {
                     asignarFactura(selectedRows, invoiceNumber);
                 }}
+            />
+
+            <ColumnConfigDialog
+                open={columnConfigOpen}
+                onOpenChange={setColumnConfigOpen}
+                columns={availableColumns}
+                onConfirm={handleColumnConfigConfirm}
             />
         </div>
     );

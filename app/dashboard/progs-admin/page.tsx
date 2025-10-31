@@ -331,9 +331,20 @@ export default function ProgsAdminPage() {
                   </ButtonTooltip>
                 </>
                 :
-                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
-                  <PlusCircle className="h-4 w-4" />
-                </ButtonTooltip>
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
+                    <TableProperties className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
+                    <FileText className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
+                    <PlusCircle className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
               }
               <DropdownMenu>
                 <Tooltip>

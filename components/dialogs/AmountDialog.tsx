@@ -75,7 +75,7 @@ export function AmountDialog({
       setFormData({
         cantidad: cantidad.cantidad,
         cantidadKg: cantidad.cantidadKg || "",
-        id: cantidad.tResiduoId,
+        id: cantidad.id,
         tResiduoId: cantidad.tResiduoId,
         contenedorId: cantidad.contenedorId,
         numContenedor: cantidad.numContenedor,
@@ -104,6 +104,7 @@ export function AmountDialog({
 
     try {
       if (cantidad) {
+        formData.id = "";
         await visitService.updateCantidad(cantidad.id, formData);
         toast({
           title: "Cantidad actualizada",

@@ -34,6 +34,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string | string[];
   searchPlaceholder?: string;
+  onTableInstanceChange?: (table: any) => void; // Callback para exponer la instancia de la tabla
 }
 
 export function DataTable<TData, TValue>({
@@ -41,6 +42,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = "Buscar...",
+  onTableInstanceChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pageSize, setPageSize] = React.useState(10);
@@ -96,6 +98,13 @@ export function DataTable<TData, TValue>({
   React.useEffect(() => {
     setPageIndex(0);
   }, [pageSize, sorting, data]);
+
+  // Exponer la instancia de la tabla al componente padre
+  React.useEffect(() => {
+    if (onTableInstanceChange) {
+      onTableInstanceChange(table);
+    }
+  }, [table, onTableInstanceChange]);
 
   return (
     <div className="space-y-4">

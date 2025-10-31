@@ -7,7 +7,7 @@ import {
     CardContent
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { carteraService } from "@/services/carteraService";
 import type { Cartera } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 export default function CarteraPage() {
     const [cartera, setCartera] = useState<Cartera[]>([]);
     const [loading, setLoading] = useState(true);
+    const [importing, setImporting] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -46,6 +47,7 @@ export default function CarteraPage() {
         input.onchange = async (e) => {
             const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
+                setImporting(true);
                 try {
                     await carteraService.importarCartera(file);
                     toast({
@@ -59,6 +61,8 @@ export default function CarteraPage() {
                         description: "No se pudo importar el archivo",
                         variant: "destructive",
                     });
+                } finally {
+                    setImporting(false);
                 }
             }
         };
@@ -100,10 +104,20 @@ export default function CarteraPage() {
                 </div>
                 <Button
                     onClick={handleImport}
+                    disabled={importing}
                     className="bg-primary hover:bg-primary-hover"
                 >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Importar
+                    {importing ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Importando...
+                        </>
+                    ) : (
+                        <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Importar
+                        </>
+                    )}
                 </Button>
             </div>
 
