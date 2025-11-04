@@ -299,8 +299,12 @@ export interface Certificados {
 // Tipos para salidas
 export interface Salida {
   id: string
-  sedeId: string
-  sedeNombre?: string
+  plantaId: string
+  plantaNombre?: string
+  clienteId: string
+  clienteNombre?: string
+  vehiculoId: string
+  vehiculoPlaca?: string
   conductorId: string
   conductorNombre?: string
   productoId: string

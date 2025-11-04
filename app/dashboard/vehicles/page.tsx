@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare } from "lucide-react";
+import { Plus, Edit, PowerSquare, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Parametrizacion, User, Vehicle } from "@/types";
@@ -13,6 +13,9 @@ import { vehicleService } from "@/services/vehicleService";
 import { VehicleDialog } from "@/components/dialogs/VehicleDialog";
 import { parametrizationService } from "@/services/parametrizationService";
 import { userService } from "@/services/userService";
+import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ButtonTooltip } from "@/components/ui/button-tooltip"
 
 export default function VehiclesPage() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -23,6 +26,9 @@ export default function VehiclesPage() {
     const [conductores, setConductores] = useState<User[]>([]);
     const [tiposVehiculo, setTiposVehiculo] = useState<Parametrizacion[]>([]);
     const { toast } = useToast();
+
+    const [adjuntosOpen, setAdjuntosOpen] = useState(false)
+    const [entidadId, setEntidadId] = useState<string | null>(null)
 
     useEffect(() => {
         loadData();
@@ -81,6 +87,11 @@ export default function VehiclesPage() {
         }
     };
 
+    const handleAdjuntos = async (id: string) => {
+        setEntidadId(id)
+        setAdjuntosOpen(true)
+    }
+
     const columns: ColumnDef<Vehicle>[] = [
         {
             accessorKey: "planta.nombre",
@@ -115,19 +126,25 @@ export default function VehiclesPage() {
             cell: ({ row }) => {
                 const veh = row.original;
                 return (
-                    <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(veh)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleStatus(veh.id)}
-                            className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
-                        >
-                            <PowerSquare className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    <TooltipProvider>
+                        <div className="flex items-center space-x-2">
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(veh)} tooltipContent="Editar">
+                                <Edit className="h-4 w-4" />
+                            </ButtonTooltip>
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(veh.id)} tooltipContent="Adjuntos">
+                                <Paperclip className="h-4 w-4" />
+                            </ButtonTooltip>
+                            <ButtonTooltip
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleStatus(veh.id)}
+                                className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
+                                tooltipContent={veh.activo ? "Desactivar" : "Activar"}
+                            >
+                                <PowerSquare className="h-4 w-4" />
+                            </ButtonTooltip>
+                        </div>
+                    </TooltipProvider>
                 );
             },
         },
@@ -171,6 +188,14 @@ export default function VehiclesPage() {
                 conductores={conductores}
                 tiposVehiculo={tiposVehiculo}
                 onSuccess={loadData}
+            />
+
+            <AdjuntosDialog
+                open={adjuntosOpen}
+                onOpenChange={setAdjuntosOpen}
+                tipo="vehiculos"
+                entityId={entidadId || ""}
+                title="Adjuntos"
             />
         </div>
     );

@@ -5,27 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Truck, Package } from "lucide-react";
+import { Plus, Edit, PowerSquare, Truck, Package, FileText } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { userService } from "@/services/userService";
 import { parametrizationService } from "@/services/parametrizationService";
 import { salidaService } from "@/services/salidaService";
-import type { Salida, Sede, User, Parametrizacion } from "@/types";
+import type { Salida, Sede, User, Parametrizacion, Cliente, Vehicle } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { SalidaDialog } from "@/components/dialogs/SalidaDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { certificatesService } from "@/services/certificatesService";
+import { PdfDialog } from "@/components/dialogs/PdfDialog";
+import { vehicleService } from "@/services/vehicleService";
 
 export default function SalidasPage() {
   const { user } = useAuth();
 
+  const [base64, setBase64] = useState<string | null>(null);
+  const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
+
   const [salidas, setSalidas] = useState<Salida[]>([]);
-  const [sedes, setSedes] = useState<Sede[]>([]);
-  const [conductores, setConductores] = useState<User[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
+  const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
   const [productos, setProductos] = useState<Parametrizacion[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSalida, setSelectedSalida] = useState<Salida | null>(null);
@@ -50,19 +57,22 @@ export default function SalidasPage() {
       setLoading(true);
       const [
         salidasData,
-        sedesData,
-        conductoresData,
+        clientesData,
+        vehiculosData,
         productosData,
+        plantasData
       ] = await Promise.all([
         salidaService.getSalidas(),
-        clientService.getSedes(),
-        userService.getUsers(),
-        parametrizationService.getListaActivos("t_residuos"),
+        clientService.getClientesActivos(),
+        vehicleService.getVehiclesActivos(),
+        parametrizationService.getListaActivos("t_residuo"),
+        parametrizationService.getListaActivos("oficina"),
       ]);
       setSalidas(salidasData);
-      setSedes(sedesData);
-      setConductores(conductoresData.filter(user => user.activo)); // Solo usuarios activos
+      setClientes(clientesData);
+      setVehiculos(vehiculosData);
       setProductos(productosData);
+      setPlantas(plantasData);
     } catch (error) {
       toast({
         title: "Error",
@@ -83,6 +93,13 @@ export default function SalidasPage() {
     setSelectedSalida(salida);
     setDialogOpen(true);
   };
+
+  const handlePdf = async (obj: Salida) => {
+    const base64 = await certificatesService.getCertificadoSalidaPDF(obj.id);
+    setBase64(base64);
+    setSelectedSalida(obj);
+    setDialogPdfOpen(true);
+  }
 
   const handleToggleStatus = async (id: string) => {
     if (confirm("¿Estás seguro de que deseas cambiar el estado de esta salida?")) {
@@ -124,32 +141,19 @@ export default function SalidasPage() {
   const columns: ColumnDef<Salida>[] = [
     {
       accessorKey: "fecha",
-      header: "Fecha",
-      cell: ({ row }) => formatDate(row.getValue("fecha")),
+      header: "Fecha"
     },
     {
-      accessorKey: "sedeNombre",
-      header: "Sede",
-      cell: ({ row }) => {
-        const sede = sedes.find((s) => s.id === row.original.sedeId);
-        return sede ? `${sede.nombre} - ${sede.clienteNombre}` : "N/A";
-      },
+      accessorKey: "clienteNombre",
+      header: "Cliente"
     },
     {
       accessorKey: "conductorNombre",
-      header: "Conductor",
-      cell: ({ row }) => {
-        const conductor = conductores.find((c) => c.id === row.original.conductorId);
-        return conductor ? conductor.nombreCompleto : "N/A";
-      },
+      header: "Conductor"
     },
     {
       accessorKey: "productoNombre",
-      header: "Producto",
-      cell: ({ row }) => {
-        const producto = productos.find((p) => p.id === row.original.productoId);
-        return producto?.nombre || "N/A";
-      },
+      header: "Producto"
     },
     {
       accessorKey: "peso",
@@ -180,11 +184,11 @@ export default function SalidasPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(salida)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleToggleStatus(salida.id)}
-                    tooltipContent={salida.activo ? "Desactivar" : "Activar"} 
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(salida)} tooltipContent="PDF">
+                    <FileText className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(salida.id)}
+                    tooltipContent={salida.activo ? "Desactivar" : "Activar"}
                     className={salida.activo ? "new-text-green-600" : "new-text-red-600"}
                   >
                     <PowerSquare className="h-4 w-4" />
@@ -238,11 +242,20 @@ export default function SalidasPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         salida={selectedSalida}
-        sedes={sedes.filter(sede => sede.activo)} // Solo sedes activas
-        conductores={conductores}
+        clientes={clientes}
+        vehiculos={vehiculos}
         productos={productos}
+        plantas={plantas}
         onSuccess={loadData}
       />
+
+      {base64 && (
+        <PdfDialog
+          open={dialogPdfOpen}
+          onOpenChange={setDialogPdfOpen}
+          base64={base64}
+        />
+      )}
     </div>
   );
 }

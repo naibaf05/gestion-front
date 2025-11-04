@@ -12,20 +12,21 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { salidaService } from "@/services/salidaService"
-import type { Salida, Sede, User, Parametrizacion } from "@/types"
+import type { Salida, Parametrizacion, Cliente, Vehicle } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import { InputDecimal } from "@/components/ui/input-decimal"
+import { SelectSingle } from "../ui/select-single"
 
 interface SalidaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   salida?: Salida | null
-  sedes: Sede[]
-  conductores: User[]
+  clientes: Cliente[]
+  vehiculos: Vehicle[]
   productos: Parametrizacion[]
+  plantas: Parametrizacion[]
   onSuccess: () => void
 }
 
@@ -33,15 +34,17 @@ export function SalidaDialog({
   open,
   onOpenChange,
   salida,
-  sedes,
-  conductores,
+  clientes,
+  vehiculos,
   productos,
+  plantas,
   onSuccess,
 }: SalidaDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    sedeId: "",
-    conductorId: "",
+    plantaId: "",
+    clienteId: "",
+    vehiculoId: "",
     productoId: "",
     peso: 0,
     fecha: "",
@@ -51,8 +54,9 @@ export function SalidaDialog({
   useEffect(() => {
     if (salida) {
       setFormData({
-        sedeId: salida.sedeId,
-        conductorId: salida.conductorId,
+        plantaId: salida.plantaId,
+        clienteId: salida.clienteId,
+        vehiculoId: salida.vehiculoId,
         productoId: salida.productoId,
         peso: salida.peso,
         fecha: salida.fecha ? salida.fecha.split('T')[0] : "",
@@ -61,8 +65,9 @@ export function SalidaDialog({
       // Fecha actual por defecto
       const today = new Date().toISOString().split('T')[0]
       setFormData({
-        sedeId: "",
-        conductorId: "",
+        plantaId: "",
+        clienteId: "",
+        vehiculoId: "",
         productoId: "",
         peso: 0,
         fecha: today,
@@ -110,63 +115,55 @@ export function SalidaDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="sede" required>Sede</Label>
-              <Select
-                required
-                value={formData.sedeId ? String(formData.sedeId) : ""}
-                onValueChange={(value) => setFormData({ ...formData, sedeId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una sede" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sedes.map((sede) => (
-                    <SelectItem key={sede.id} value={String(sede.id)}>
-                      {sede.nombre} - {sede.clienteNombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="planta" required>Planta</Label>
+              <SelectSingle
+                id="planta"
+                placeholder="Selecciona una planta"
+                options={plantas}
+                value={formData.plantaId}
+                onChange={(value) => setFormData({ ...formData, plantaId: value })}
+                valueKey="id"
+                labelKey="nombreMostrar"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="conductor" required>Conductor</Label>
-              <Select
-                required
-                value={formData.conductorId ? String(formData.conductorId) : ""}
-                onValueChange={(value) => setFormData({ ...formData, conductorId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un conductor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {conductores.map((conductor) => (
-                    <SelectItem key={conductor.id} value={String(conductor.id)}>
-                      {conductor.nombreCompleto} - {conductor.documento}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="cliente" required>Destino</Label>
+              <SelectSingle
+                id="cliente"
+                placeholder="Selecciona un cliente"
+                options={clientes}
+                value={formData.clienteId}
+                onChange={(value) => setFormData({ ...formData, clienteId: value })}
+                valueKey="id"
+                labelKey="nombre"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vehiculo" required>Vehículo</Label>
+              <SelectSingle
+                id="vehiculo"
+                placeholder="Selecciona un vehículo"
+                options={vehiculos}
+                value={formData.vehiculoId}
+                onChange={(value) => setFormData({ ...formData, vehiculoId: value })}
+                valueKey="id"
+                labelKey="placa"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="producto" required>Producto (Tipo de Residuo)</Label>
-              <Select
-                required
-                value={formData.productoId ? String(formData.productoId) : ""}
-                onValueChange={(value) => setFormData({ ...formData, productoId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un tipo de residuo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productos.map((producto) => (
-                    <SelectItem key={producto.id} value={String(producto.id)}>
-                      {producto.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectSingle
+                id="producto"
+                placeholder="Selecciona un tipo de residuo"
+                options={productos}
+                value={formData.productoId}
+                onChange={(value) => setFormData({ ...formData, productoId: value })}
+                valueKey="id"
+                labelKey="nombreMostrar"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -190,7 +187,6 @@ export function SalidaDialog({
                   type="date"
                   value={formData.fecha}
                   onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                  required
                 />
               </div>
             </div>

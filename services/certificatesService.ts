@@ -13,6 +13,11 @@ export class CertificatesService {
         return response.data;
     }
 
+    async getCertificadoSalidaPDF(id: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/salida?id=${id}`);
+        return response.data;
+    }
+
     async getCertificadoRecoleccionPDF(sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
         const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
         return response.data;

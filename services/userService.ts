@@ -10,7 +10,7 @@ export class UserService {
   async getUsersActivos(): Promise<User[]> {
     const response = await apiService.get<ApiResponse<User[]>>('/users/activos')
     response.data.forEach((element) => {
-      element.nombreCompleto = `${element.nombre} ${element.apellido}`;
+      element.nombreCompleto = `${element.nombre} ${element.apellido} - ${element.documento}`;
     });
     return response.data
   }

@@ -215,7 +215,6 @@ export default function ProgsAdminPage() {
     setConfirmDialogOpen(true)
   }
 
-
   const handleAdjuntos = async (id: string) => {
     setEntidadId(id)
     setAdjuntosOpen(true)
