@@ -1,17 +1,14 @@
-# Dockerfile para el Frontend React/Next.js
+# Dockerfile usando npm en lugar de pnpm
 FROM node:18-alpine AS base
-
-# Instalar pnpm globalmente
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Instalar dependencias solo cuando sea necesario
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copiar archivos de configuración de dependencias
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+# Copiar package.json y generar package-lock.json si no existe
+COPY package.json ./
+RUN npm install
 
 # Reconstruir el código fuente solo cuando sea necesario
 FROM base AS builder
@@ -24,7 +21,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Construir la aplicación
-RUN pnpm run build
+RUN npm run build
 
 # Verificar qué archivos se generaron
 RUN ls -la .next/
@@ -42,7 +39,7 @@ RUN adduser --system --uid 1001 nextjs
 # Copiar archivos públicos si existen
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Verificar si standalone existe, sino usar el método tradicional
+# Crear directorio .next
 RUN mkdir .next && chown nextjs:nodejs .next
 
 # Copiar archivos de build
