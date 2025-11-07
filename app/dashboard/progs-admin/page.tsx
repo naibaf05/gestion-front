@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
@@ -78,6 +78,15 @@ export default function ProgsAdminPage() {
 
   const [adjuntosOpen, setAdjuntosOpen] = useState(false)
   const [entidadId, setEntidadId] = useState<string | null>(null)
+
+  // Obtener tipos únicos para mostrar la leyenda
+  const tiposUnicos = progs.reduce((acc: {nombre: string, color: string}[], prog) => {
+    const existe = acc.find(tipo => tipo.nombre === prog.tipoNombre);
+    if (!existe) {
+      acc.push({nombre: prog.tipoNombre || '', color: prog.tipoColor || ''});
+    }
+    return acc;
+  }, []);
 
   useEffect(() => {
     // Limpiar timeout anterior si existe
@@ -248,24 +257,56 @@ export default function ProgsAdminPage() {
     setIdToConfirm(null)
   }
 
+  // Procesar datos para filtros personalizados
+  const processedProgs = useMemo(() => {
+    return progs.map(prog => ({
+      ...prog,
+      tipoNombreDisplay: prog.tipoNombre?.charAt(0)?.toUpperCase() || ''
+    }));
+  }, [progs]);
+
   const columns: ColumnDef<ProgVisitaRecol>[] = [
     {
-      accessorKey: "tipoNombre",
+      accessorKey: "tipoNombreDisplay",
       header: "Tipo",
-      width: "15%",
+      width: "5%",
       cell: ({ row }) => {
+        const primeraLetra = row.original.tipoNombre?.charAt(0)?.toUpperCase() || '';
         return (
           <Badge className={row.original.tipoColor}>
-            {row.original.tipoNombre}
+            {primeraLetra}
           </Badge>
         );
       },
+      enableColumnFilter: true,
+      filterFn: (row, id, value) => {
+        // Filtrar por el nombre completo del tipo
+        const tipoNombre = row.original.tipoNombre;
+        if (!tipoNombre) return false;
+        
+        if (Array.isArray(value)) {
+          return value.some(v => {
+            // Si el valor del filtro es una letra, comparar con la primera letra
+            if (v.length === 1) {
+              return tipoNombre.charAt(0).toUpperCase() === v.toUpperCase();
+            }
+            // Si no, comparar con el nombre completo
+            return tipoNombre.toLowerCase().includes(v.toLowerCase());
+          });
+        }
+        return tipoNombre.toLowerCase().includes(value.toLowerCase());
+      }
+    },
+    {
+      accessorKey: "clienteNombre",
+      header: "Cliente",
+      width: "20%",
       enableColumnFilter: true
     },
     {
       accessorKey: "sedeNombre",
       header: "Sede",
-      width: "25%",
+      width: "20%",
       enableColumnFilter: true
     },
     {
@@ -418,6 +459,23 @@ export default function ProgsAdminPage() {
 
       <Card>
         <CardContent>
+          {/* Leyenda de tipos */}
+          {tiposUnicos.length > 0 && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-semibold mb-2 text-gray-700">Leyenda de Tipos:</h3>
+              <div className="flex flex-wrap gap-2">
+                {tiposUnicos.map((tipo, index) => (
+                  <div key={index} className="flex items-center space-x-1">
+                    <Badge className={tipo.color}>
+                      {tipo.nombre.charAt(0).toUpperCase()}
+                    </Badge>
+                    <span className="text-sm text-gray-600">{tipo.nombre}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-between items-center">
             <div></div>
             <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
@@ -425,7 +483,7 @@ export default function ProgsAdminPage() {
               Nueva Visita
             </Button>
           </div>
-          <DataTable columns={columns} data={progs} searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]} searchPlaceholder="Buscar por nombre..." />
+          <DataTable columns={columns} data={processedProgs} searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]} searchPlaceholder="Buscar por nombre..." />
         </CardContent>
       </Card>
 

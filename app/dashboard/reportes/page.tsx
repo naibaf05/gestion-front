@@ -54,22 +54,120 @@ export default function ReportesPage() {
 
     // Configuración de columnas por tipo de reporte
     const getColumnConfig = (tipoReporte: TipoReporte) => {
-        const baseColumns = [
-            { key: "fecha", label: "Fecha", category: "cliente", enabled: true },
-            { key: "nit", label: "NIT", category: "cliente", enabled: true },
-            { key: "ciudad", label: "Ciudad", category: "cliente", enabled: true },
-            { key: "numFactura", label: "Número de Factura", category: "cliente", enabled: true },
-            { key: "valor", label: "Valor Facturado", category: "cliente", enabled: true },
-            { key: "planta", label: "Planta", category: "sede", enabled: true },
-            { key: "sede", label: "Sede", category: "sede", enabled: true },
-            { key: "direccion", label: "Dirección", category: "sede", enabled: true },
-            { key: "tipoResiduo", label: "Tipo Residuo", category: "residuo", enabled: true },
-            { key: "cantidadKg", label: "Cantidad KG", category: "residuo", enabled: true },
-            { key: "cantidadM3", label: "Cantidad M3", category: "residuo", enabled: true },
-            { key: "recolNombre", label: "Recolección", category: "residuo", enabled: true },
-            { key: "tarifa", label: "Tarifa", category: "residuo", enabled: true },
-        ];
-        return baseColumns;
+        switch (tipoReporte) {
+            case "reporte1":
+            case "reporte2":
+                return [
+                    // ======= SECCIÓN SEDE =======
+                    { key: "sedeId", label: "ID Sede", category: "sede", enabled: true },
+                    { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
+                    { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
+                    { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
+                    { key: "sedeMail", label: "Email Sede", category: "sede", enabled: true },
+                    { key: "sedeTelefono", label: "Teléfono Sede", category: "sede", enabled: true },
+                    { key: "sedeAtencion", label: "Atención Sede", category: "sede", enabled: true },
+                    { key: "sedeLat", label: "Latitud Sede", category: "sede", enabled: false },
+                    { key: "sedeLon", label: "Longitud Sede", category: "sede", enabled: false },
+                    { key: "ciudadSede", label: "Ciudad Sede", category: "sede", enabled: true },
+                    { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true },
+                    
+                    // ======= SECCIÓN CLIENTE =======
+                    { key: "clienteId", label: "ID Cliente", category: "cliente", enabled: true },
+                    { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
+                    { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
+                    { key: "clienteFechaRenovacion", label: "Fecha Renovación Cliente", category: "cliente", enabled: false },
+                    { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true },
+                    { key: "clienteTelefono", label: "Teléfono Cliente", category: "cliente", enabled: true },
+                    { key: "clienteDireccion", label: "Dirección Cliente", category: "cliente", enabled: true },
+                    { key: "clienteContacto", label: "Contacto Cliente", category: "cliente", enabled: true },
+                    { key: "correoCliente", label: "Correo Cliente", category: "cliente", enabled: true },
+                    { key: "correoFacCliente", label: "Correo Facturación Cliente", category: "cliente", enabled: false },
+                    { key: "fechaCierreFacCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false },
+                    { key: "nombreComCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false },
+                    
+                    // ======= SECCIÓN VISITA =======
+                    { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
+                    { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
+                    { key: "cantidad", label: "Cantidad", category: "visita", enabled: true },
+                    { key: "recolNombre", label: "Nombre Recolección", category: "visita", enabled: true },
+                    { key: "unidad", label: "Unidad", category: "visita", enabled: true },
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
+                    { key: "valor", label: "Valor", category: "visita", enabled: true },
+                    { key: "tarifa", label: "Tarifa", category: "visita", enabled: true },
+                    { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true },
+                    { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true },
+                ];
+            case "reporte3":
+                return [
+                    { key: "nombreSede", label: "Sede", category: "sede", enabled: true },
+                    { key: "direccionSede", label: "Dirección", category: "sede", enabled: true },
+                    { key: "emailSede", label: "Email", category: "sede", enabled: true },
+                    { key: "tipo_residuo", label: "Tipo de Residuo", category: "residuo", enabled: true },
+                    { key: "tarifa", label: "Tarifa", category: "residuo", enabled: true },
+                    { key: "fecha_inicio", label: "Fecha Inicio", category: "fecha", enabled: true },
+                    { key: "fecha_fin", label: "Fecha Fin", category: "fecha", enabled: true },
+                ];
+            default:
+                return [];
+        }
+    };
+
+    // Función helper para obtener la configuración de columnas a usar
+    const getEffectiveColumnConfig = (tipoReporte: TipoReporte) => {
+        if (userColumnConfig) {
+            // Si el usuario ha configurado columnas, usar esa configuración
+            return userColumnConfig.filter(col => col.enabled);
+        }
+        
+        // Si no hay configuración del usuario, usar la configuración por defecto
+        switch (tipoReporte) {
+            case "reporte1":
+            case "reporte2":
+                return [
+                    // === COLUMNAS POR DEFECTO ORGANIZADAS POR SECCIÓN ===
+                    
+                    // SEDE (4 columnas principales)
+                    { key: "plantaSede", label: "Planta Sede" },
+                    { key: "sedeNombre", label: "Nombre Sede" },
+                    { key: "ciudadSede", label: "Ciudad Sede" },
+                    { key: "sedeDireccion", label: "Dirección Sede" },
+                    
+                    // CLIENTE (3 columnas principales)
+                    { key: "clienteNit", label: "NIT Cliente" },
+                    { key: "clienteNombre", label: "Nombre Cliente" },
+                    { key: "clienteDireccion", label: "Dirección Cliente" },
+                    
+                    // VISITA (8 columnas principales)
+                    { key: "fechaVisita", label: "Fecha Visita" },
+                    { key: "tipoResiduo", label: "Tipo Residuo" },
+                    { key: "cantidadKg", label: "Cantidad KG" },
+                    { key: "cantidadM3", label: "Cantidad M3" },
+                    { key: "recolNombre", label: "Nombre Recolección" },
+                    { key: "numFactura", label: "Número Factura" },
+                    { key: "valor", label: "Valor" },
+                    { key: "tarifa", label: "Tarifa" },
+                ];
+            case "reporte3":
+                return [
+                    { key: "nombreSede", label: "Sede" },
+                    { key: "direccionSede", label: "Dirección" },
+                    { key: "emailSede", label: "Email" },
+                    { key: "tipo_residuo", label: "Tipo de Residuo" },
+                    { key: "tarifa", label: "Tarifa" },
+                    { key: "fecha_inicio", label: "Fecha Inicio" },
+                    { key: "fecha_fin", label: "Fecha Fin" },
+                ];
+            default:
+                return [];
+        }
+    };
+
+    // Función para generar columnas de tabla dinámicamente
+    const generateTableColumns = (effectiveColumns: any[]): ColumnDef<any>[] => {
+        return effectiveColumns.map(col => ({
+            accessorKey: col.key,
+            header: col.label,
+        }));
     };
 
     const tiposReporte = [
@@ -82,61 +180,9 @@ export default function ReportesPage() {
     const [exportHeaders, setExportHeaders] = useState<string[]>([]);
     const [searchKey, setSearchKey] = useState<string[]>([]);
     const [columns_table, setColumns_table] = useState<ColumnDef<any>[]>([]);
-
-    const tableR1: ColumnDef<any>[] = [
-        {
-            accessorKey: "fecha",
-            header: "Fecha",
-        },
-        {
-            accessorKey: "planta",
-            header: "Planta",
-        },
-        {
-            accessorKey: "sede",
-            header: "Sede",
-        },
-        {
-            accessorKey: "nit",
-            header: "NIT",
-        },
-        {
-            accessorKey: "ciudad",
-            header: "Ciudad",
-        },
-        {
-            accessorKey: "direccion",
-            header: "Dirección",
-        },
-        {
-            accessorKey: "tipoResiduo",
-            header: "Tipo Residuo",
-        },
-        {
-            accessorKey: "cantidadKg",
-            header: "KG",
-        },
-        {
-            accessorKey: "cantidadM3",
-            header: "M3",
-        },
-        {
-            accessorKey: "recolNombre",
-            header: "Recolección",
-        },
-        {
-            accessorKey: "numFactura",
-            header: "Número de Factura",
-        },
-        {
-            accessorKey: "valor",
-            header: "Valor Facturado",
-        },
-        {
-            accessorKey: "tarifa",
-            header: "Tarifa",
-        },
-    ];
+    
+    // Estado para almacenar la configuración de columnas del usuario
+    const [userColumnConfig, setUserColumnConfig] = useState<any[] | null>(null);
 
     const asignarFactura = async (selectedRows: any[], invoiceNumber: string) => {
         console.log("Filas seleccionadas:", selectedRows);
@@ -200,35 +246,35 @@ export default function ReportesPage() {
 
         try {
             let dataP: any[] = [];
-            let exportCols: string[] = [];
-            let exportHeads: string[] = [];
-            let searchKey: string[] = [];
             const nombre = tiposReporte.find(r => r.value === tipoReporte)?.label || tipoReporte;
             setReporteNombre(nombre);
+
+            // Obtener la configuración de columnas efectiva (usuario o por defecto)
+            const effectiveColumns = getEffectiveColumnConfig(tipoReporte);
+            const exportCols = effectiveColumns.map(col => col.key);
+            const exportHeads = effectiveColumns.map(col => col.label);
+            const searchKey = exportCols;
+
+            // Generar columnas de tabla dinámicamente
+            const dynamicTableColumns = generateTableColumns(effectiveColumns);
 
             // Llamar al servicio según el tipo de reporte
             switch (tipoReporte) {
                 case "reporte1":
                     dataP = await reportesService.generarReporte1(fechaInicio, fechaFin);
-                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
-                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad KG", "Cantidad M3", "Recolección", "Valor Facturado", "Número de Factura", "Tarifa"];
-                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
-                    setColumns_table(tableR1);
+                    setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte2":
                     dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
-                    exportCols = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
-                    exportHeads = ["Fecha", "Planta", "Sede", "NIT", "Ciudad", "Dirección", "Tipo Residuo", "Cantidad KG", "Cantidad M3", "Recolección", "Valor Facturado", "Número de Factura", "Tarifa"];
-                    searchKey = ["fecha", "planta", "sede", "nit", "ciudad", "direccion", "tipoResiduo", "cantidadKg", "cantidadM3", "recolNombre", "valor", "numFactura", "tarifa"];
-                    setColumns_table(tableR1);
+                    setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte3":
                     dataP = await reportesService.generarReporte3(fechaInicio, fechaFin);
-                    exportCols = ["nombreSede", "direccionSede", "emailSede", "tipo_residuo", "tarifa", "fecha_inicio", "fecha_fin"];
-                    exportHeads = ["Sede", "Dirección", "Email", "Tipo de Residuo", "Tarifa", "Fecha Inicio", "Fecha Fin"];
+                    setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte4":
                     dataP = await reportesService.generarReporte4(fechaInicio, fechaFin);
+                    setColumns_table(dynamicTableColumns);
                     break;
                 default:
                     throw new Error("Tipo de reporte no válido");
@@ -264,11 +310,12 @@ export default function ReportesPage() {
     };
 
     const handleColumnConfigConfirm = (selectedColumns: any[]) => {
+        // Guardar la configuración del usuario
+        setUserColumnConfig(selectedColumns);
+        
         // Actualizar las columnas visibles en la tabla
         const enabledColumns = selectedColumns.filter(col => col.enabled);
-        const newTableColumns = tableR1.filter(col => 
-            enabledColumns.some(enabledCol => enabledCol.key === (col as any).accessorKey)
-        );
+        const newTableColumns = generateTableColumns(enabledColumns);
         setColumns_table(newTableColumns);
         
         // Actualizar configuración de exportación
@@ -286,6 +333,7 @@ export default function ReportesPage() {
 
     const resetForm = () => {
         setTipoReporte("");
+        setUserColumnConfig(null); // Limpiar configuración de columnas del usuario
         const today = new Date();
         const formatter = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'America/Bogota',

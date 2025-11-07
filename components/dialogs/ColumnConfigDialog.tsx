@@ -16,7 +16,7 @@ import { Settings } from "lucide-react"
 interface ColumnConfig {
     key: string
     label: string
-    category: 'cliente' | 'sede' | 'residuo' | 'otros'
+    category: 'cliente' | 'sede' | 'residuo' | 'visita' | 'otros'
     enabled: boolean
 }
 
@@ -101,15 +101,17 @@ export function ColumnConfigDialog({
     }
 
     const groupedColumns = {
-        cliente: selectedColumns.filter(col => col.category === 'cliente'),
         sede: selectedColumns.filter(col => col.category === 'sede'),
+        cliente: selectedColumns.filter(col => col.category === 'cliente'),
+        visita: selectedColumns.filter(col => col.category === 'visita'),
         residuo: selectedColumns.filter(col => col.category === 'residuo'),
         otros: selectedColumns.filter(col => col.category === 'otros'),
     }
 
     const categoryLabels = {
-        cliente: "Información de Cliente",
         sede: "Información de Sede",
+        cliente: "Información de Cliente",
+        visita: "Información de Visita",
         residuo: "Información de Residuo",
         otros: "Otros"
     }

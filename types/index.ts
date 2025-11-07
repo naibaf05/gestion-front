@@ -221,6 +221,7 @@ export interface ProgVisitaRecol {
   tipoNombre?: string
   tipoColor?: string
   inicio: string
+  clienteNombre?: string
 }
 
 export interface VisitaRecol {
