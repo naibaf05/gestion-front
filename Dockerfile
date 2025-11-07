@@ -1,59 +1,59 @@
-# Dockerfile para el Frontend React/Next.js
+# Multi-stage build for production optimization
 FROM node:18-alpine AS base
 
-# Instalar pnpm globalmente
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Instalar dependencias solo cuando sea necesario
-FROM base AS deps
+# Install dependencies for better compatibility
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copiar archivos de configuración de dependencias
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+# Dependencies stage - Only install production dependencies
+FROM base AS deps
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Reconstruir el código fuente solo cuando sea necesario
+# Build stage - Install all dependencies and build
 FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json* ./
+RUN npm ci
 COPY . .
 
-# Variables de entorno para el build
+# Set build environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Construir la aplicación
-RUN pnpm run build
+# Build the application
+RUN npm run build
 
-# Verificar qué archivos se generaron
-RUN ls -la .next/
-
-# Imagen de producción
+# Production stage - Create final lightweight image
 FROM base AS runner
 WORKDIR /app
 
+# Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create system user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copiar archivos públicos si existen
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Copy only necessary files from builder stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
-# Verificar si standalone existe, sino usar el método tradicional
-RUN mkdir .next && chown nextjs:nodejs .next
+# Set proper ownership
+RUN chown -R nextjs:nodejs /app
 
-# Copiar archivos de build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+# Use non-root user
 USER nextjs
 
+# Expose port
 EXPOSE 3000
 
+# Set runtime environment variables
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start the application
+CMD ["npm", "start"]
