@@ -103,10 +103,10 @@ export default function CertificadosPage() {
 
         switch (tipoString) {
             case "1":
-                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.clienteId || "",obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "2":
-                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.clienteId || "",obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "3":
                 base64 = await certificatesService.getCertificadoProformaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
