@@ -177,20 +177,18 @@ export function CertificadoDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {tipo === '3' && (
-            <div>
-              <Label htmlFor="clienteId">Cliente</Label>
-              <SelectSingle
-                id="cliente"
-                placeholder="Seleccione un cliente"
-                options={clientes}
-                value={formData.clienteId}
-                onChange={v => setFormData({ ...formData, clienteId: v, sedeId: "" })}
-                valueKey="id"
-                labelKey="nombre"
-              />
-            </div>
-          )}
+          <div>
+            <Label htmlFor="clienteId">Cliente</Label>
+            <SelectSingle
+              id="cliente"
+              placeholder="Seleccione un cliente"
+              options={clientes}
+              value={formData.clienteId}
+              onChange={v => setFormData({ ...formData, clienteId: v, sedeId: "" })}
+              valueKey="id"
+              labelKey="nombre"
+            />
+          </div>
           <div>
             <Label htmlFor="sedeId">Sede</Label>
             <SelectSingle

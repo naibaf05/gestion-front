@@ -21,6 +21,7 @@ import { visitService } from "@/services/visitService";
 import { InputPositiveInteger } from "../ui/input-positive-integer";
 import { rateService } from "@/services/rateService";
 import { useAuth } from "@/contexts/AuthContext";
+import { set } from "date-fns";
 
 interface AmountDialogProps {
   open: boolean;
@@ -47,6 +48,7 @@ export function AmountDialog({
   const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
   const [loading, setLoading] = useState(false);
   const [viewCantidadKg, setViewCantidadKg] = useState(false);
+  const [disabledCantidad, setDisabledCantidad] = useState(false);
   const [formData, setFormData] = useState({
     cantidad: "",
     cantidadKg: "",
@@ -72,10 +74,18 @@ export function AmountDialog({
 
   useEffect(() => {
     if (cantidad) {
+      console.log(cantidad);
+      const residuoEncontrado = tiposResiduos.find(tr => tr.id === cantidad.tResiduoId);
+      if (residuoEncontrado) {
+        const cantidadT = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
+        setDisabledCantidad(cantidadT !== '');
+        setSelectedTResiduo(residuoEncontrado);
+        setViewCantidadKg(residuoEncontrado.codigoUnidad === 'M3');
+      }
       setFormData({
         cantidad: cantidad.cantidad,
         cantidadKg: cantidad.cantidadKg || "",
-        id: cantidad.id,
+        id: cantidad.tResiduoId,
         tResiduoId: cantidad.tResiduoId,
         contenedorId: cantidad.contenedorId,
         numContenedor: cantidad.numContenedor,
@@ -138,35 +148,38 @@ export function AmountDialog({
   };
 
   const handleTResiduoChange = async (v: string) => {
-    formData.id = v;
+    const newFormData = { ...formData };
+    newFormData.id = v;
     const residuoEncontrado = tiposResiduos.find(tr => tr.id === v);
     console.log(residuoEncontrado);
     if (residuoEncontrado) {
-      formData.tResiduoId = residuoEncontrado.id.split('-')[0];
-      formData.cantidad = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
-      formData.tarifaId = residuoEncontrado.id.split('-')[1];
-      formData.tarifaNombre = residuoEncontrado.tarifaNombre;
+      newFormData.tResiduoId = residuoEncontrado.id.split('-')[0];
+      newFormData.cantidad = (residuoEncontrado.datosJson?.cantidad ? residuoEncontrado.datosJson?.cantidad : '');
+      newFormData.tarifaId = residuoEncontrado.id.split('-')[1];
+      newFormData.tarifaNombre = residuoEncontrado.tarifaNombre;
+      setDisabledCantidad(newFormData.cantidad !== '');
       setSelectedTResiduo(residuoEncontrado);
       setViewCantidadKg(residuoEncontrado.codigoUnidad === 'M3');
     } else {
-      formData.tResiduoId = '';
-      formData.cantidad = '';
-      formData.tarifaId = '';
-      formData.tarifaNombre = '';
+      newFormData.tResiduoId = '';
+      newFormData.cantidad = '';
+      newFormData.tarifaId = '';
+      newFormData.tarifaNombre = '';
+      setDisabledCantidad(false);
       setSelectedTResiduo(null);
       setViewCantidadKg(false);
     }
-    setFormData(formData);
+    setFormData(newFormData);
   };
 
-  const handleUnidadChange = async (value: string) => {
-    formData.numContenedor = value;
-    if (selectedTResiduo?.datosJson?.cantidad) {
-      const cantidad = selectedTResiduo.datosJson?.cantidad;
-      const cantidadTotal = parseFloat(cantidad) * parseInt(value);
-      formData.cantidad = cantidadTotal.toString();
+  const handleUnidadesChange = async (v: string) => {
+    const newFormData = { ...formData };
+    newFormData.numContenedor = v;
+    if (selectedTResiduo?.datosJson?.cantidad && v) {
+      newFormData.cantidad = (parseFloat(selectedTResiduo.datosJson?.cantidad) * parseInt(v)) + '';
     }
-    setFormData(formData);
+    console.log(newFormData);
+    setFormData(newFormData);
   };
 
   return (
@@ -217,7 +230,7 @@ export function AmountDialog({
                 <Label htmlFor="numContenedor">Unidades</Label>
                 <InputPositiveInteger
                   value={formData.numContenedor}
-                  onChange={(e) => setFormData({ ...formData, numContenedor: e.target.value })}
+                  onChange={(e) => handleUnidadesChange(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -228,6 +241,7 @@ export function AmountDialog({
                   onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
                   decimalPlaces={4}
                   placeholder="Ingrese una cantidad"
+                  disabled={disabledCantidad}
                 />
               </div>
               {viewCantidadKg && (

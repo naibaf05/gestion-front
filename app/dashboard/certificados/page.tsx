@@ -218,6 +218,10 @@ export default function CertificadosPage() {
 
     const columns: ColumnDef<Certificados>[] = [
         {
+            accessorKey: "clienteNombre",
+            header: "Cliente",
+        },
+        {
             accessorKey: "sedeNombre",
             header: "Sede",
         },
