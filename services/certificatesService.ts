@@ -18,13 +18,13 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoRecoleccionPDF(sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
+    async getCertificadoRecoleccionPDF(clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
         return response.data;
     }
 
-    async getCertificadoRecoleccionLlantasPDF(sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
+    async getCertificadoRecoleccionLlantasPDF(clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
         return response.data;
     }
 
