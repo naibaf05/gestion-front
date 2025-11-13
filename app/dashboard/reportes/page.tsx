@@ -59,7 +59,6 @@ export default function ReportesPage() {
             case "reporte2":
                 return [
                     // ======= SECCIÓN SEDE =======
-                    { key: "sedeId", label: "ID Sede", category: "sede", enabled: true },
                     { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
                     { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
                     { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
@@ -72,7 +71,6 @@ export default function ReportesPage() {
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true },
                     
                     // ======= SECCIÓN CLIENTE =======
-                    { key: "clienteId", label: "ID Cliente", category: "cliente", enabled: true },
                     { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
                     { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
                     { key: "clienteFechaRenovacion", label: "Fecha Renovación Cliente", category: "cliente", enabled: false },
@@ -96,6 +94,9 @@ export default function ReportesPage() {
                     { key: "tarifa", label: "Tarifa", category: "visita", enabled: true },
                     { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true },
                     { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true },
+                    { key: "numCert", label: "Certificado", category: "visita", enabled: true },
+                    { key: "unidades", label: "Unidades", category: "visita", enabled: true },
+                    { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: true },
                 ];
             case "reporte3":
                 return [

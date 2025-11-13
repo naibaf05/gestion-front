@@ -75,15 +75,18 @@ export default function ProgsAdminPage() {
   const [tipoConfirm, setTipoConfirm] = useState<string | null>(null)
   const [titleConfirm, setTitleConfirm] = useState<string | null>(null)
   const [descripcionConfirm, setDescripcionConfirm] = useState<string | null>(null)
+  const [confirmText, setConfirmText] = useState<string | null>(null)
+  const [cancelText, setCancelText] = useState<string | null>(null)
+  const [hideCancelConfirm, setHideCancelConfirm] = useState<boolean>(false)
 
   const [adjuntosOpen, setAdjuntosOpen] = useState(false)
   const [entidadId, setEntidadId] = useState<string | null>(null)
 
   // Obtener tipos únicos para mostrar la leyenda
-  const tiposUnicos = progs.reduce((acc: {nombre: string, color: string}[], prog) => {
+  const tiposUnicos = progs.reduce((acc: { nombre: string, color: string }[], prog) => {
     const existe = acc.find(tipo => tipo.nombre === prog.tipoNombre);
     if (!existe) {
-      acc.push({nombre: prog.tipoNombre || '', color: prog.tipoColor || ''});
+      acc.push({ nombre: prog.tipoNombre || '', color: prog.tipoColor || '' });
     }
     return acc;
   }, []);
@@ -210,10 +213,46 @@ export default function ProgsAdminPage() {
   }
 
   const handlePdf = async (obj: ProgVisitaRecol) => {
-    const base64 = await certificatesService.getCertificadoVisitaPDF(obj.visitaRecolId);
-    setBase64(base64);
-    setSelected(obj);
-    setDialogPdfOpen(true);
+    setSelected(obj)
+    // Reglas de validación previas a la descarga/visualización del PDF
+    // 1) Si tiene cartera pendiente, bloquear descarga y mostrar mensaje informativo
+    if (obj.tieneCartera === 1) {
+      setSelected(obj)
+      setTipoConfirm("cartera")
+      setTitleConfirm("Descarga no disponible")
+      setDescripcionConfirm(
+        "Estimado usuario, para poder acceder al certificado solicitado, es necesario que se encuentre al día en su estado de cuenta. Por favor, regularice su cartera pendiente para habilitar la descarga."
+      )
+      setConfirmText("Entendido")
+      setCancelText("")
+      setHideCancelConfirm(true)
+      setConfirmDialogOpen(true)
+      return
+    }
+
+    // 2) Si aún no ha sido facturado, mostrar advertencia no bloqueante y continuar al aceptar
+    if (obj.noFactura === 1) {
+      setSelected(obj)
+      setTipoConfirm("pdf-no-facturado")
+      setTitleConfirm("Certificado no disponible")
+      setDescripcionConfirm(
+        "El servicio asociado a este certificado aún no ha sido facturado. Una vez se emita la factura correspondiente y realice el pago correspondiente, el sistema habilitará la descarga del documento."
+      )
+      setConfirmText("OK")
+      setCancelText("Cancelar")
+      setHideCancelConfirm(false)
+      setConfirmDialogOpen(true)
+      return
+    }
+
+    // 3) Caso normal: descargar/abrir directamente
+    handlePdfNoValidate(obj)
+  }
+
+  const handlePdfNoValidate = async (obj: ProgVisitaRecol) => {
+    const base64 = await certificatesService.getCertificadoVisitaPDF(obj.visitaRecolId)
+    setBase64(base64)
+    setDialogPdfOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -221,6 +260,9 @@ export default function ProgsAdminPage() {
     setTipoConfirm("1")
     setTitleConfirm("Eliminar")
     setDescripcionConfirm("¿Estás seguro de que deseas eliminar esta visita?")
+    setConfirmText("Eliminar")
+    setCancelText("Cancelar")
+    setHideCancelConfirm(false)
     setConfirmDialogOpen(true)
   }
 
@@ -230,16 +272,23 @@ export default function ProgsAdminPage() {
   }
 
   const confirm = async () => {
-    if (!idToConfirm) return
-
     try {
       if (tipoConfirm === "1") {
+        if (!idToConfirm) return
         await progService.deleteVisita(idToConfirm);
         toast({
           title: "Visita eliminada",
           description: "La visita ha sido eliminada exitosamente",
           variant: "success",
         });
+      } else if (tipoConfirm === "pdf-no-facturado") {
+        if (selected) {
+          handlePdfNoValidate(selected)
+        }
+      } else if (tipoConfirm === "cartera") {
+        if (selected) {
+          handlePdfNoValidate(selected)
+        }
       }
       loadData()
     } catch (error: any) {
@@ -250,6 +299,9 @@ export default function ProgsAdminPage() {
       });
     } finally {
       setIdToConfirm(null)
+      setConfirmText(null)
+      setCancelText(null)
+      setHideCancelConfirm(false)
     }
   }
 
@@ -283,7 +335,7 @@ export default function ProgsAdminPage() {
         // Filtrar por el nombre completo del tipo
         const tipoNombre = row.original.tipoNombre;
         if (!tipoNombre) return false;
-        
+
         if (Array.isArray(value)) {
           return value.some(v => {
             // Si el valor del filtro es una letra, comparar con la primera letra
@@ -475,7 +527,7 @@ export default function ProgsAdminPage() {
               </div>
             </div>
           )}
-          
+
           <div className="flex justify-between items-center">
             <div></div>
             <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
@@ -522,6 +574,9 @@ export default function ProgsAdminPage() {
         onOpenChange={setConfirmDialogOpen}
         title={titleConfirm || "Confirmar"}
         description={descripcionConfirm || "¿Estás seguro de que deseas eliminar este elemento?"}
+        confirmText={confirmText || undefined}
+        cancelText={cancelText || undefined}
+        hideCancel={hideCancelConfirm}
         onConfirm={confirm}
         onCancel={cancel}
       />

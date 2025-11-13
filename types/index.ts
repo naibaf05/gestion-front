@@ -222,6 +222,10 @@ export interface ProgVisitaRecol {
   tipoColor?: string
   inicio: string
   clienteNombre?: string
+  // Campos adicionales para soporte de certificados/validaciones
+  fecha?: string
+  noFactura?: number
+  tieneCartera?: number
 }
 
 export interface VisitaRecol {

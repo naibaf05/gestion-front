@@ -22,6 +22,7 @@ interface ConfirmationDialogProps {
   onConfirm: () => void
   onCancel?: () => void
   variant?: "default" | "destructive"
+  hideCancel?: boolean
 }
 
 export function ConfirmationDialog({
@@ -33,6 +34,7 @@ export function ConfirmationDialog({
   cancelText = "Cancelar",
   onConfirm,
   onCancel,
+  hideCancel = false,
 }: ConfirmationDialogProps) {
   const handleConfirm = () => {
     onConfirm()
@@ -59,9 +61,11 @@ export function ConfirmationDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>
-            {cancelText}
-          </AlertDialogCancel>
+          {!hideCancel && (
+            <AlertDialogCancel onClick={handleCancel}>
+              {cancelText}
+            </AlertDialogCancel>
+          )}
           <AlertDialogAction 
             onClick={handleConfirm}
           >
