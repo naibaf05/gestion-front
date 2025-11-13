@@ -362,7 +362,7 @@ export default function CertificadosPage() {
                             <DataTable
                                 columns={columns}
                                 data={certificadosLlantas}
-                                searchKey="sedeNombre"
+                                searchKey={["sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar por sede..."
                             />
                         </TabsContent>
@@ -378,7 +378,7 @@ export default function CertificadosPage() {
                             <DataTable
                                 columns={columns}
                                 data={certificadosOtros}
-                                searchKey="sedeNombre"
+                                searchKey={["sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar por sede..."
                             />
                         </TabsContent>

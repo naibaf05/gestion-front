@@ -219,7 +219,7 @@ export default function ProgsAdminPage() {
     if (obj.tieneCartera === 1) {
       setSelected(obj)
       setTipoConfirm("cartera")
-      setTitleConfirm("Descarga no disponible")
+      setTitleConfirm("Certificado no disponible")
       setDescripcionConfirm(
         "Estimado usuario, para poder acceder al certificado solicitado, es necesario que se encuentre al día en su estado de cuenta. Por favor, regularice su cartera pendiente para habilitar la descarga."
       )
@@ -238,8 +238,8 @@ export default function ProgsAdminPage() {
       setDescripcionConfirm(
         "El servicio asociado a este certificado aún no ha sido facturado. Una vez se emita la factura correspondiente y realice el pago correspondiente, el sistema habilitará la descarga del documento."
       )
-      setConfirmText("OK")
-      setCancelText("Cancelar")
+      setConfirmText("Entendido")
+      setCancelText("")
       setHideCancelConfirm(false)
       setConfirmDialogOpen(true)
       return
