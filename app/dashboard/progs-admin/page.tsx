@@ -63,6 +63,7 @@ export default function ProgsAdminPage() {
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([])
   const [recolectores, setRecolectores] = useState<User[]>([])
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
+  const [plantas, setPlantas] = useState<Parametrizacion[]>([])
   const [visitaRecol, setVisitaRecol] = useState<VisitaRecol | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<ProgVisitaRecol | null>(null)
@@ -163,18 +164,20 @@ export default function ProgsAdminPage() {
 
     try {
       setLoading(true)
-      const [progsData, sedesData, vehiclesData, recolData, comercialData] = await Promise.all([
+      const [progsData, sedesData, vehiclesData, recolData, comercialData, plantasData] = await Promise.all([
         progService.getDataProgsAdmin(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         userService.getUsersActivos(),
-        parametrizationService.getListaActivos("comercial")
+        parametrizationService.getListaActivos("comercial"),
+        parametrizationService.getListaActivos("oficina")
       ])
       setProgs(progsData);
       setSedes(sedesData);
       setVehiculos(vehiclesData);
       setRecolectores(recolData);
       setComerciales(comercialData);
+      setPlantas(plantasData);
     } catch (error) {
       toast({
         title: "Error",
@@ -321,7 +324,7 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "tipoNombreDisplay",
       header: "Tipo",
-      width: "5%",
+      width: "6%",
       cell: ({ row }) => {
         const primeraLetra = row.original.tipoNombre?.charAt(0)?.toUpperCase() || '';
         return (
@@ -352,19 +355,19 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "clienteNombre",
       header: "Cliente",
-      width: "20%",
+      width: "25%",
       enableColumnFilter: true
     },
     {
       accessorKey: "sedeNombre",
       header: "Sede",
-      width: "20%",
+      width: "25%",
       enableColumnFilter: true
     },
     {
       accessorKey: "recolNombre",
       header: "Recolector",
-      width: "20%",
+      width: "15%",
       cell: ({ row }) => {
         return `${row.original.recolNombre} ${row.original.recolApellido}`
       },
@@ -372,7 +375,7 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "vehInterno",
       header: "Vehículo",
-      width: "12%",
+      width: "10%",
     },
     {
       accessorKey: "fecha",
@@ -380,20 +383,9 @@ export default function ProgsAdminPage() {
       width: "10%",
     },
     {
-      accessorKey: "novs",
-      header: "Novedades",
-      width: "7%",
-      cell: ({ row }) => {
-        const obj = row.getValue("novs");
-        return (
-          obj ? <Check className="h-4 w-4" /> : null
-        );
-      },
-    },
-    {
       accessorKey: "visitaRecolId",
       header: "Visita",
-      width: "7%",
+      width: "5%",
       cell: ({ row }) => {
         const obj = row.getValue("visitaRecolId");
         return (
@@ -511,31 +503,36 @@ export default function ProgsAdminPage() {
 
       <Card>
         <CardContent>
-          {/* Leyenda de tipos */}
-          {tiposUnicos.length > 0 && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Leyenda de Tipos:</h3>
-              <div className="flex flex-wrap gap-2">
-                {tiposUnicos.map((tipo, index) => (
-                  <div key={index} className="flex items-center space-x-1">
-                    <Badge className={tipo.color}>
-                      {tipo.nombre.charAt(0).toUpperCase()}
-                    </Badge>
-                    <span className="text-sm text-gray-600">{tipo.nombre}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex justify-between items-center">
-            <div></div>
+            {tiposUnicos.length > 0 ? (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <h3 className="text-sm font-semibold mb-2 text-gray-700">Leyenda de Tipos:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {tiposUnicos.map((tipo, index) => (
+                    <div key={index} className="flex items-center space-x-1">
+                      <Badge className={tipo.color}>
+                        {tipo.nombre.charAt(0).toUpperCase()}
+                      </Badge>
+                      <span className="text-sm text-gray-600">{tipo.nombre}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div />
+            )}
             <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
               <Plus className="mr-2 h-4 w-4" />
               Nueva Visita
             </Button>
           </div>
-          <DataTable columns={columns} data={processedProgs} searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]} searchPlaceholder="Buscar por nombre..." />
+          <DataTable
+            columns={columns}
+            data={processedProgs}
+            layoutMode="fixed"
+            searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]}
+            searchPlaceholder="Buscar por nombre..."
+          />
         </CardContent>
       </Card>
 
@@ -550,6 +547,7 @@ export default function ProgsAdminPage() {
         vehiculos={vehiculos}
         recolectores={recolectores}
         comerciales={comerciales}
+        plantas={plantas}
         onSuccess={loadData}
       />
 

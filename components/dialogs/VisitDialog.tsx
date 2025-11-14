@@ -31,6 +31,7 @@ interface VisitDialogProps {
   vehiculos: Vehicle[]
   recolectores: User[]
   comerciales: Parametrizacion[]
+  plantas: Parametrizacion[]
   onSuccess: () => void
 }
 
@@ -45,9 +46,11 @@ export function VisitDialog({
   vehiculos,
   recolectores,
   comerciales,
+  plantas,
   onSuccess,
 }: VisitDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [selectedSede, setSelectedSede] = useState<Sede | null>(null)
   const [formData, setFormData] = useState({
     tipo: "",
     lat: "",
@@ -57,6 +60,7 @@ export function VisitDialog({
     fin: "",
     notas: "",
     sedeId: "",
+    plantaId: "",
     recolId: "",
     vehId: "",
     comercialId: "",
@@ -85,11 +89,17 @@ export function VisitDialog({
         fin: visita.fin,
         notas: visita.notas || "",
         sedeId: visita.sedeId,
+        plantaId: visita.plantaId || "",
         recolId: visita.recolId,
         vehId: visita.vehId,
         comercialId: visita.comercialId,
         progVisitaRecolId: ""
       });
+      // Establecer la sede seleccionada si existe
+      const sede = sedes.find(s => s.id === visita.sedeId);
+      if (sede) {
+        setSelectedSede(sede);
+      }
     } else {
       setFormData({
         tipo: "",
@@ -100,13 +110,36 @@ export function VisitDialog({
         fin: "",
         notas: "",
         sedeId: progVisitaRecol && progVisitaRecol.sedeId ? progVisitaRecol.sedeId : "",
+        plantaId: "",
         recolId: "",
         vehId: progVisitaRecol && progVisitaRecol.vehId ? progVisitaRecol.vehId : "",
         comercialId: "",
         progVisitaRecolId: ""
       })
+      // Establecer la sede seleccionada si viene de progVisitaRecol
+      if (progVisitaRecol && progVisitaRecol.sedeId) {
+        const sede = sedes.find(s => s.id === progVisitaRecol.sedeId);
+        if (sede) {
+          setSelectedSede(sede);
+        }
+      }
     }
   }, [visita, open]);
+
+  // Efecto para establecer automáticamente la planta si la sede solo tiene una oficina
+  useEffect(() => {
+    if (selectedSede && selectedSede.oficinaId && selectedSede.oficinaId.length === 1) {
+      setFormData(prev => ({
+        ...prev,
+        plantaId: selectedSede.oficinaId[0]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        plantaId: ""
+      }));
+    }
+  }, [selectedSede]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -236,7 +269,23 @@ export function VisitDialog({
                   placeholder="Seleccione una sede"
                   options={sedes}
                   value={formData.sedeId}
-                  onChange={v => setFormData({ ...formData, sedeId: v })}
+                  onChange={v => {
+                    setFormData({ ...formData, sedeId: v })
+                    const sede = sedes.find(s => parseInt(s.id) === parseInt(v))
+                    setSelectedSede(sede || null)
+                  }}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="planta">Planta</Label>
+                <SelectSingle
+                  id="planta"
+                  placeholder="Seleccione una planta"
+                  options={plantas}
+                  value={formData.plantaId}
+                  onChange={v => setFormData({ ...formData, plantaId: v })}
                   valueKey="id"
                   labelKey="nombre"
                 />

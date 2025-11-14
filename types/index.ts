@@ -240,6 +240,8 @@ export interface VisitaRecol {
   sedeId: string;
   sedeNombre?: string;
   clienteId: string;
+  plantaId?: string;
+  plantaNombre?: string;
   recolId: string;
   recolNombre?: string;
   recolApellido?: string;

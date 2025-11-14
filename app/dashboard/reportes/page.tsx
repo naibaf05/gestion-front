@@ -69,7 +69,7 @@ export default function ReportesPage() {
                     { key: "sedeLon", label: "Longitud Sede", category: "sede", enabled: false },
                     { key: "ciudadSede", label: "Ciudad Sede", category: "sede", enabled: true },
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true },
-                    
+
                     // ======= SECCIÓN CLIENTE =======
                     { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
                     { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
@@ -82,7 +82,7 @@ export default function ReportesPage() {
                     { key: "correoFacCliente", label: "Correo Facturación Cliente", category: "cliente", enabled: false },
                     { key: "fechaCierreFacCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false },
                     { key: "nombreComCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false },
-                    
+
                     // ======= SECCIÓN VISITA =======
                     { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
@@ -119,56 +119,69 @@ export default function ReportesPage() {
             // Si el usuario ha configurado columnas, usar esa configuración
             return userColumnConfig.filter(col => col.enabled);
         }
-        
+
         // Si no hay configuración del usuario, usar la configuración por defecto
         switch (tipoReporte) {
             case "reporte1":
             case "reporte2":
                 return [
                     // === COLUMNAS POR DEFECTO ORGANIZADAS POR SECCIÓN ===
-                    
+
                     // SEDE (4 columnas principales)
-                    { key: "plantaSede", label: "Planta Sede" },
-                    { key: "sedeNombre", label: "Nombre Sede" },
-                    { key: "ciudadSede", label: "Ciudad Sede" },
-                    { key: "sedeDireccion", label: "Dirección Sede" },
-                    
+                    { key: "plantaSede", label: "Planta Sede", width: "350px" },
+                    { key: "sedeNombre", label: "Nombre Sede", width: "250px" },
+                    { key: "ciudadSede", label: "Ciudad Sede", width: "150px" },
+                    { key: "sedeDireccion", label: "Dirección Sede", width: "350px" },
+
                     // CLIENTE (3 columnas principales)
-                    { key: "clienteNit", label: "NIT Cliente" },
-                    { key: "clienteNombre", label: "Nombre Cliente" },
-                    { key: "clienteDireccion", label: "Dirección Cliente" },
-                    
+                    { key: "clienteNit", label: "NIT Cliente", width: "200px" },
+                    { key: "clienteNombre", label: "Nombre Cliente", width: "250px" },
+                    { key: "clienteDireccion", label: "Dirección Cliente", width: "350px" },
+
                     // VISITA (8 columnas principales)
-                    { key: "fechaVisita", label: "Fecha Visita" },
-                    { key: "tipoResiduo", label: "Tipo Residuo" },
-                    { key: "cantidadKg", label: "Cantidad KG" },
-                    { key: "cantidadM3", label: "Cantidad M3" },
-                    { key: "recolNombre", label: "Nombre Recolección" },
-                    { key: "numFactura", label: "Número Factura" },
-                    { key: "valor", label: "Valor" },
-                    { key: "tarifa", label: "Tarifa" },
+                    { key: "fechaVisita", label: "Fecha Visita", width: "120px" },
+                    { key: "tipoResiduo", label: "Tipo Residuo", width: "180px" },
+                    { key: "cantidadKg", label: "Cantidad KG", width: "120px" },
+                    { key: "cantidadM3", label: "Cantidad M3", width: "120px" },
+                    { key: "recolNombre", label: "Nombre Recolección", width: "200px" },
+                    { key: "numFactura", label: "Número Factura", width: "150px" },
+                    { key: "valor", label: "Valor", width: "150px" },
+                    { key: "tarifa", label: "Tarifa", width: "150px" },
                 ];
             case "reporte3":
                 return [
-                    { key: "nombreSede", label: "Sede" },
-                    { key: "direccionSede", label: "Dirección" },
-                    { key: "emailSede", label: "Email" },
-                    { key: "tipo_residuo", label: "Tipo de Residuo" },
-                    { key: "tarifa", label: "Tarifa" },
-                    { key: "fecha_inicio", label: "Fecha Inicio" },
-                    { key: "fecha_fin", label: "Fecha Fin" },
+                    { key: "nombreSede", label: "Sede", width: "200px" },
+                    { key: "direccionSede", label: "Dirección", width: "350px" },
+                    { key: "emailSede", label: "Email", width: "250px" },
+                    { key: "tipo_residuo", label: "Tipo de Residuo", width: "150px" },
+                    { key: "tarifa", label: "Tarifa", width: "150px" },
+                    { key: "fecha_inicio", label: "Fecha Inicio", width: "120px" },
+                    { key: "fecha_fin", label: "Fecha Fin", width: "120px" },
                 ];
             default:
                 return [];
         }
     };
 
-    // Función para generar columnas de tabla dinámicamente
+    // Normalizar widths y añadir id estable
+    const normalizeWidth = (w: any): string => {
+        if (w == null) return 'auto';
+        if (typeof w === 'number') return `${w}px`;
+        if (typeof w === 'string' && w.trim() !== '') return w.trim();
+        return 'auto';
+    };
+
+    // Función para generar columnas de tabla dinámicamente con id y width seguro
     const generateTableColumns = (effectiveColumns: any[]): ColumnDef<any>[] => {
-        return effectiveColumns.map(col => ({
-            accessorKey: col.key,
-            header: col.label,
-        }));
+        return effectiveColumns.map(col => {
+            const width = normalizeWidth(col.width);
+            return {
+                id: col.key, // id estable para evitar conflictos al re-renderizar
+                accessorKey: col.key,
+                header: col.label,
+                width,
+            } as ColumnDef<any>;
+        });
     };
 
     const tiposReporte = [
@@ -181,7 +194,7 @@ export default function ReportesPage() {
     const [exportHeaders, setExportHeaders] = useState<string[]>([]);
     const [searchKey, setSearchKey] = useState<string[]>([]);
     const [columns_table, setColumns_table] = useState<ColumnDef<any>[]>([]);
-    
+
     // Estado para almacenar la configuración de columnas del usuario
     const [userColumnConfig, setUserColumnConfig] = useState<any[] | null>(null);
 
@@ -313,19 +326,19 @@ export default function ReportesPage() {
     const handleColumnConfigConfirm = (selectedColumns: any[]) => {
         // Guardar la configuración del usuario
         setUserColumnConfig(selectedColumns);
-        
+
         // Actualizar las columnas visibles en la tabla
         const enabledColumns = selectedColumns.filter(col => col.enabled);
         const newTableColumns = generateTableColumns(enabledColumns);
         setColumns_table(newTableColumns);
-        
+
         // Actualizar configuración de exportación
         const newExportCols = enabledColumns.map(col => col.key);
         const newExportHeaders = enabledColumns.map(col => col.label);
         setExportColumns(newExportCols);
         setExportHeaders(newExportHeaders);
         setSearchKey(newExportCols);
-        
+
         toast({
             title: "Configuración aplicada",
             description: `Se configuraron ${enabledColumns.length} columnas para el reporte`,

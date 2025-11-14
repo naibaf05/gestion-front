@@ -35,6 +35,9 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string | string[];
   searchPlaceholder?: string;
   onTableInstanceChange?: (table: any) => void; // Callback para exponer la instancia de la tabla
+  onFilteredDataChange?: (rows: TData[]) => void; // Nuevo callback para pasar filas filtradas (antes de paginación)
+  layoutMode?: 'auto' | 'fixed'; // modo de layout de la tabla
+  minColWidth?: number; // sobreescribir min col width
 }
 
 export function DataTable<TData, TValue>({
@@ -43,9 +46,12 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = "Buscar...",
   onTableInstanceChange,
+  onFilteredDataChange,
+  layoutMode = 'auto',
+  minColWidth,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pageSize, setPageSize] = React.useState(10);
+  const [pageSize, setPageSize] = React.useState(5);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [searchValue, setSearchValue] = React.useState("");
   const [columnFilters, setColumnFilters] = React.useState<{ [key: string]: string | string[] }>({});
@@ -106,6 +112,33 @@ export function DataTable<TData, TValue>({
     }
   }, [table, onTableInstanceChange]);
 
+  // Reportar filas filtradas al padre para cálculos (sumatorias, etc.)
+  React.useEffect(() => {
+    if (onFilteredDataChange) {
+      onFilteredDataChange(filteredData);
+    }
+  }, [filteredData, onFilteredDataChange]);
+  // Valor mínimo por defecto para columnas sin ancho explícito
+  const DEFAULT_MIN_COL_WIDTH = typeof minColWidth === 'number' ? minColWidth : 120; // px
+
+  // Preparar colgroup para widths explícitos (mejor soporte en layout auto y fixed)
+  const colGroupSpecs = React.useMemo(() => {
+    return columns.map((c: any) => {
+      const w = c.width as string | undefined;
+      if (!w) return { width: undefined };
+      const isPercent = /%$/.test(w);
+      const isPx = /px$/.test(w);
+      const isNumber = /^\d+$/.test(w);
+      if (!(isPercent || isPx || isNumber)) {
+        console.warn(`[DataTable] width inválido (${w}) en columna`, c);
+        return { width: undefined };
+      }
+      // Normalizar número sin unidad a px
+      const normalized = isNumber ? `${w}px` : w;
+      return { width: normalized };
+    });
+  }, [columns]);
+
   return (
     <div className="space-y-4">
       {searchKey && (
@@ -122,27 +155,44 @@ export function DataTable<TData, TValue>({
         </div>
       )}
       <div className="rounded-md border bg-white overflow-x-auto">
-        <Table>
+        <Table className={`w-full ${layoutMode === 'fixed' ? 'table-fixed' : ''}`}>
+          <colgroup>
+            {colGroupSpecs.map((spec, idx) => (
+              <col key={idx} style={spec.width ? { width: spec.width } : undefined} />
+            ))}
+          </colgroup>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup: any) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header: any) => {
                   const colKey = header.column.columnDef.accessorKey || header.column.id;
-                  const columnWidth = header.column.columnDef.width;
+                  const columnWidth = header.column.columnDef.width as string | undefined;
+                  const columnStyle: React.CSSProperties = {};
 
-                  const columnStyle = {
-                    width: columnWidth || "auto",
-                    maxWidth: columnWidth || "200px"
-                  };
+                  if (columnWidth) {
+                    if (/%$/.test(columnWidth)) {
+                      columnStyle.width = columnWidth;
+                      // En fixed layout el porcentaje ya se reparte; mantenemos minWidth sólo en auto
+                      if (layoutMode === 'auto') {
+                        columnStyle.minWidth = `${DEFAULT_MIN_COL_WIDTH}px`;
+                      }
+                    } else {
+                      columnStyle.width = columnWidth;
+                      columnStyle.minWidth = columnWidth;
+                      columnStyle.maxWidth = columnWidth; // evitar expansión por contenido (px)
+                    }
+                  } else {
+                    columnStyle.minWidth = `${DEFAULT_MIN_COL_WIDTH}px`;
+                  }
 
                   return (
                     <TableHead
                       key={header.id}
-                      className="bg-gray-50 text-gray-700 font-semibold"
+                      className="bg-gray-50 text-gray-700 font-semibold overflow-visible"
                       style={columnStyle}
                     >
                       <div className="flex flex-col gap-1">
-                        <span className="px-3">
+                        <span className="px-3 truncate" title={typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : undefined}>
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -152,7 +202,6 @@ export function DataTable<TData, TValue>({
                         </span>
                         {header.column.columnDef.enableColumnFilter && colKey !== "actions" && (
                           (() => {
-                            // Obtener valores únicos para la columna
                             const uniqueValues = Array.from(
                               new Set(data.map((row: any) => {
                                 const v = colKey.split('.').reduce((acc: any, k: string) => acc?.[k], row);
@@ -160,16 +209,17 @@ export function DataTable<TData, TValue>({
                               }))
                             ).filter(v => v !== "");
 
-                            // Si hay pocos valores únicos, usar select, si no, input
                             if (uniqueValues.length > 0 && uniqueValues.length <= 20) {
                               return (
-                                <SelectMultiple
-                                  options={uniqueValues.map((v) => ({ label: v, value: v }))}
-                                  value={Array.isArray(columnFilters[colKey]) ? columnFilters[colKey] : []}
-                                  onChange={(vals) => setColumnFilters(f => ({ ...f, [colKey]: vals }))}
-                                  placeholder="Filtrar..."
-                                  isFilter={true}
-                                />
+                                <div className="mt-1 w-full">
+                                  <SelectMultiple
+                                    options={uniqueValues.map((v) => ({ label: v, value: v }))}
+                                    value={Array.isArray(columnFilters[colKey]) ? columnFilters[colKey] : []}
+                                    onChange={(vals) => setColumnFilters(f => ({ ...f, [colKey]: vals }))}
+                                    placeholder="Filtrar..."
+                                    isFilter={true}
+                                  />
+                                </div>
                               );
                             }
                             return (
@@ -178,7 +228,7 @@ export function DataTable<TData, TValue>({
                                 value={columnFilters[colKey] || ""}
                                 onChange={e => setColumnFilters(f => ({ ...f, [colKey]: e.target.value }))}
                                 placeholder={`Filtrar...`}
-                                className="mt-1 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="mt-1 px-2 py-1 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary w-full"
                               />
                             );
                           })()
@@ -199,22 +249,37 @@ export function DataTable<TData, TValue>({
                   className="hover:bg-gray-50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell: any) => {
-                    const columnWidth = cell.column.columnDef.width;
-                    const cellStyle = {
-                      width: columnWidth || "auto",
-                      maxWidth: columnWidth || "200px"
-                    };
-
+                    const columnWidth = cell.column.columnDef.width as string | undefined;
+                    const cellStyle: React.CSSProperties = {};
+                    if (columnWidth) {
+                      if (/%$/.test(columnWidth)) {
+                        cellStyle.width = columnWidth;
+                        if (layoutMode === 'auto') {
+                          cellStyle.minWidth = `${DEFAULT_MIN_COL_WIDTH}px`;
+                        }
+                      } else {
+                        cellStyle.width = columnWidth;
+                        cellStyle.minWidth = columnWidth;
+                        cellStyle.maxWidth = columnWidth;
+                      }
+                    } else {
+                      cellStyle.minWidth = `${DEFAULT_MIN_COL_WIDTH}px`;
+                    }
                     return (
                       <TableCell
                         key={cell.id}
-                        className="align-middle"
+                        className="align-middle truncate"
                         style={cellStyle}
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        <div className="truncate" title={(() => {
+                          const rendered = flexRender(cell.column.columnDef.cell, cell.getContext());
+                          return typeof rendered === 'string' ? rendered : undefined;
+                        })()}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </div>
                       </TableCell>
                     );
                   })}

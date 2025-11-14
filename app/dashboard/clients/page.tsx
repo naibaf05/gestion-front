@@ -124,23 +124,28 @@ export default function ClientsPage() {
     {
       accessorKey: "nit",
       header: "NIT",
+      width: "10%",
     },
     {
       accessorKey: "nombre",
       header: "Nombre",
+      width: "25%",
     },
     {
       accessorKey: "datosJson.nombreComercial",
       header: "Nombre Comercial",
+      width: "25%",
     },
     {
       accessorKey: "tipoCliente",
       header: "Tipo de Cliente",
+      width: "15%",
       enableColumnFilter: true
     },
     {
       accessorKey: "contacto",
       header: "Contacto",
+      width: "15%",
     },
     {
       accessorKey: "poblado.nombre",
@@ -149,6 +154,7 @@ export default function ClientsPage() {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
       },
+      width: "10%",
     },
     {
       accessorKey: "activo",
@@ -160,10 +166,12 @@ export default function ClientsPage() {
           </Badge>
         );
       },
+      width: "8%",
     },
     {
       id: "actions",
       header: "Acciones",
+      width: "20%",
       cell: ({ row }) => {
         const client = row.original;
         return (
@@ -265,6 +273,7 @@ export default function ClientsPage() {
           <DataTable
             columns={columns}
             data={clients}
+            layoutMode="fixed"
             searchKey={["nombre", "nit", "datosJson.nombreComercial", "tipoCliente"]}
             searchPlaceholder="Buscar..."
           />

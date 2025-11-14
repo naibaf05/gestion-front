@@ -209,26 +209,32 @@ export default function SedesPage() {
     {
       accessorKey: "nombre",
       header: "Nombre",
+      width: "20%",
     },
     {
       accessorKey: "clienteNombre",
       header: "Cliente",
+      width: "20%",
     },
     {
       accessorKey: "direccion",
       header: "Dirección",
+      width: "20%",
     },
     {
       accessorKey: "telefono",
       header: "Teléfono",
+      width: "15%",
     },
     {
       accessorKey: "email",
       header: "Email",
+      width: "20%",
     },
     {
       accessorKey: "poblado",
       header: "Municipio",
+      width: "15%",
       cell: ({ row }) => {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
@@ -237,6 +243,7 @@ export default function SedesPage() {
     {
       accessorKey: "activo",
       header: "Estado",
+      width: "8%",
       cell: ({ row }) => {
         return (
           <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
@@ -248,6 +255,7 @@ export default function SedesPage() {
     {
       id: "actions",
       header: "Acciones",
+      width: "20%",
       cell: ({ row }) => {
         const sede = row.original;
         return (
@@ -375,6 +383,7 @@ export default function SedesPage() {
           <DataTable
             columns={columns}
             data={sedes}
+            layoutMode="fixed"
             searchKey={["nombre", "clienteNombre", "direccion"]}
             searchPlaceholder="Buscar por nombre..."
           />
