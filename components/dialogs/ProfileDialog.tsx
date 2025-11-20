@@ -23,6 +23,7 @@ interface ProfileDialogProps {
   onOpenChange: (open: boolean) => void;
   profile?: Profile | null;
   onSuccess: () => void;
+  readOnly?: boolean; // modo solo lectura
 }
 
 export function ProfileDialog({
@@ -30,6 +31,7 @@ export function ProfileDialog({
   onOpenChange,
   profile,
   onSuccess,
+  readOnly = false,
 }: ProfileDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -89,7 +91,7 @@ export function ProfileDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{profile ? "Editar Perfil" : "Nuevo Perfil"}</DialogTitle>
+          <DialogTitle>{profile ? (readOnly ? "Detalle Perfil" : "Editar Perfil") : "Nuevo Perfil"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -100,6 +102,8 @@ export function ProfileDialog({
                 value={formData.nombre}
                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 required
+                disabled={readOnly}
+                readOnly={readOnly}
               />
             </div>
 
@@ -110,25 +114,29 @@ export function ProfileDialog({
                 value={formData.descripcion}
                 onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                 rows={3}
+                disabled={readOnly}
+                readOnly={readOnly}
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {profile ? "Actualizando..." : "Creando..."}
-                </>
-              ) : profile ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {profile ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : profile ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

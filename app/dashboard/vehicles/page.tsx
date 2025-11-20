@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Paperclip } from "lucide-react";
+import { Plus, Edit, PowerSquare, Paperclip, History, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Parametrizacion, User, Vehicle } from "@/types";
@@ -14,21 +14,41 @@ import { VehicleDialog } from "@/components/dialogs/VehicleDialog";
 import { parametrizationService } from "@/services/parametrizationService";
 import { userService } from "@/services/userService";
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ButtonTooltip } from "@/components/ui/button-tooltip"
+import { ButtonTooltip } from "@/components/ui/button-tooltip";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function VehiclesPage() {
+    const { user, logout } = useAuth();
+
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+    const [dialogReadOnly, setDialogReadOnly] = useState(false);
     const [oficinas, setOficinas] = useState<Parametrizacion[]>([]);
     const [conductores, setConductores] = useState<User[]>([]);
     const [tiposVehiculo, setTiposVehiculo] = useState<Parametrizacion[]>([]);
     const { toast } = useToast();
+    const { user: authUser } = useAuth();
 
-    const [adjuntosOpen, setAdjuntosOpen] = useState(false)
-    const [entidadId, setEntidadId] = useState<string | null>(null)
+    const [adjuntosOpen, setAdjuntosOpen] = useState(false);
+    const [entidadId, setEntidadId] = useState<string | null>(null);
+
+    const [historialOpen, setHistorialOpen] = useState(false);
+    const [historialId, setHistorialId] = useState<string>("");
+    const [historialLabel, setHistorialLabel] = useState<string>("");
+
+    if (user && user.permisos && typeof user.permisos === "string") {
+        user.permisos = JSON.parse(user.permisos);
+    }
+
+    const hasPermission = (permission: string): boolean => {
+        if (!user || !user.permisos) return false
+        if (user.rolNombre === "ADMIN") return true
+        return user.permisos[permission] === true
+    }
 
     useEffect(() => {
         loadData();
@@ -60,11 +80,19 @@ export default function VehiclesPage() {
 
     const handleCreate = () => {
         setSelectedVehicle(null);
+        setDialogReadOnly(false);
         setDialogOpen(true);
     };
 
     const handleEdit = (vehicle: Vehicle) => {
         setSelectedVehicle(vehicle);
+        setDialogReadOnly(false);
+        setDialogOpen(true);
+    };
+
+    const handleView = (vehicle: Vehicle) => {
+        setSelectedVehicle(vehicle);
+        setDialogReadOnly(true);
         setDialogOpen(true);
     };
 
@@ -87,10 +115,16 @@ export default function VehiclesPage() {
         }
     };
 
-    const handleAdjuntos = async (id: string) => {
-        setEntidadId(id)
-        setAdjuntosOpen(true)
-    }
+    const handleAdjuntos = (id: string) => {
+        setEntidadId(id);
+        setAdjuntosOpen(true);
+    };
+
+    const handleHistorial = (id: string, placa: string) => {
+        setHistorialId(id);
+        setHistorialLabel(`Vehículo [${placa}]`);
+        setHistorialOpen(true);
+    };
 
     const columns: ColumnDef<Vehicle>[] = [
         {
@@ -128,27 +162,42 @@ export default function VehiclesPage() {
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(veh)} tooltipContent="Editar">
-                                <Edit className="h-4 w-4" />
-                            </ButtonTooltip>
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(veh.id)} tooltipContent="Adjuntos">
-                                <Paperclip className="h-4 w-4" />
-                            </ButtonTooltip>
-                            <ButtonTooltip
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleStatus(veh.id)}
-                                className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
-                                tooltipContent={veh.activo ? "Desactivar" : "Activar"}
-                            >
-                                <PowerSquare className="h-4 w-4" />
-                            </ButtonTooltip>
+                            {hasPermission("vehicles.edit") ? (
+                                <>
+                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(veh)} tooltipContent="Editar">
+                                        <Edit className="h-4 w-4" />
+                                    </ButtonTooltip>
+                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(veh.id)} tooltipContent="Adjuntos">
+                                        <Paperclip className="h-4 w-4" />
+                                    </ButtonTooltip>
+                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(veh.id, veh.placa)} tooltipContent="Historial">
+                                        <History className="h-4 w-4" />
+                                    </ButtonTooltip>
+                                    <ButtonTooltip
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleToggleStatus(veh.id)}
+                                        className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
+                                        tooltipContent={veh.activo ? "Desactivar" : "Activar"}
+                                    >
+                                        <PowerSquare className="h-4 w-4" />
+                                    </ButtonTooltip>
+                                </>
+                            ) : (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(veh)} tooltipContent="Ver">
+                                    <Eye className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                         </div>
                     </TooltipProvider>
                 );
             },
         },
     ];
+
+    if (!hasPermission("vehicles.view")) {
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver vehículos.</div>
+    }
 
     if (loading) {
         return (
@@ -168,10 +217,12 @@ export default function VehiclesPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Vehículos</h1>
                     <p className="text-gray-600">Gestiona los vehículos del sistema</p>
                 </div>
-                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nuevo Vehículo
-                </Button>
+                {hasPermission("vehicles.edit") && (
+                    <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Vehículo
+                    </Button>
+                )}
             </div>
 
             <Card>
@@ -188,6 +239,7 @@ export default function VehiclesPage() {
                 conductores={conductores}
                 tiposVehiculo={tiposVehiculo}
                 onSuccess={loadData}
+                readOnly={dialogReadOnly}
             />
 
             <AdjuntosDialog
@@ -196,6 +248,14 @@ export default function VehiclesPage() {
                 tipo="vehiculos"
                 entityId={entidadId || ""}
                 title="Adjuntos"
+            />
+
+            <HistorialDialog
+                open={historialOpen}
+                onOpenChange={setHistorialOpen}
+                tipo="Vehiculo"
+                id={historialId}
+                label={historialLabel}
             />
         </div>
     );

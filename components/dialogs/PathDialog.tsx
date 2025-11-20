@@ -24,6 +24,7 @@ interface PathDialogProps {
   ruta?: Path | null
   oficinas: Parametrizacion[]
   onSuccess: () => void
+  readOnly?: boolean // modo solo lectura
 }
 
 const DIAS_SEMANA = [
@@ -36,7 +37,7 @@ const DIAS_SEMANA = [
   { value: "d", label: "Domingo" },
 ]
 
-export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: PathDialogProps) {
+export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess, readOnly = false }: PathDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     id: "",
@@ -102,7 +103,7 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{ruta ? "Editar Ruta" : "Nueva Ruta"}</DialogTitle>
+          <DialogTitle>{ruta ? (readOnly ? "Detalle Ruta" : "Editar Ruta") : "Nueva Ruta"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -117,6 +118,8 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
                     required
                     placeholder="Código único de la ruta"
                     maxLength={200}
+                    disabled={readOnly}
+                    readOnly={readOnly}
                   />
                 </div>
               </div>
@@ -130,6 +133,8 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
                   required
                   placeholder="Nombre descriptivo de la ruta"
                   maxLength={200}
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
             </div>
@@ -142,8 +147,9 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
                   onValueChange={(value: "l" | "m" | "x" | "j" | "v" | "s" | "d") =>
                     setFormData({ ...formData, dia: value })
                   }
+                  disabled={readOnly}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger disabled={readOnly}>
                     <SelectValue placeholder="Selecciona un día" />
                   </SelectTrigger>
                   <SelectContent>
@@ -161,8 +167,9 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
                 <Select
                   value={formData.oficinaId ? String(formData.oficinaId) : ""}
                   onValueChange={(value) => setFormData({ ...formData, oficinaId: value })}
+                  disabled={readOnly}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger disabled={readOnly}>
                     <SelectValue placeholder="Selecciona una planta" />
                   </SelectTrigger>
                   <SelectContent>
@@ -179,20 +186,22 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess }: Pa
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {ruta ? "Actualizando..." : "Creando..."}
-                </>
-              ) : ruta ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {ruta ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : ruta ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

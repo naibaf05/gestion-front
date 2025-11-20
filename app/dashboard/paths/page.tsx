@@ -1,26 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Route, PowerSquare } from "lucide-react"
+import { Plus, Edit, Route, PowerSquare, Eye } from "lucide-react"
 import { pathService } from "@/services/pathService"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Path, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { PathDialog } from "@/components/dialogs/PathDialog"
+import { useAuth } from "@/contexts/AuthContext"
 import type { ColumnDef } from "@tanstack/react-table"
 import { DiaKey, getDiaColor, getDiaSemana } from "@/utils/utils"
 
 export default function RutasPage() {
+    const { user, logout } = useAuth();
+
     const [rutas, setRutas] = useState<Path[]>([])
     const [oficinas, setOficinas] = useState<Parametrizacion[]>([])
     const [loading, setLoading] = useState(true)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedRuta, setSelectedRuta] = useState<Path | null>(null)
+    const [dialogReadOnly, setDialogReadOnly] = useState(false)
     const { toast } = useToast()
+    const { user: authUser } = useAuth()
+
+    if (user && user.permisos && typeof user.permisos === "string") {
+        user.permisos = JSON.parse(user.permisos);
+    }
+
+    const hasPermission = (permission: string): boolean => {
+        if (!user || !user.permisos) return false
+        if (user.rolNombre === "ADMIN") return true
+        return user.permisos[permission] === true
+    }
 
     useEffect(() => {
         loadData()
@@ -49,11 +64,19 @@ export default function RutasPage() {
 
     const handleCreate = () => {
         setSelectedRuta(null)
+        setDialogReadOnly(false)
         setDialogOpen(true)
     }
 
     const handleEdit = (ruta: Path) => {
         setSelectedRuta(ruta)
+        setDialogReadOnly(false)
+        setDialogOpen(true)
+    }
+
+    const handleView = (ruta: Path) => {
+        setSelectedRuta(ruta)
+        setDialogReadOnly(true)
         setDialogOpen(true)
     }
 
@@ -125,22 +148,34 @@ export default function RutasPage() {
                 const ruta = row.original
                 return (
                     <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(ruta)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleStatus(ruta.id)}
-                            className={ruta.activo ? "new-text-green-600" : "new-text-red-600"}
-                        >
-                            <PowerSquare className="h-4 w-4" />
-                        </Button>
+                        {hasPermission("routes.edit") ? (
+                            <>
+                                <Button variant="ghost" size="sm" onClick={() => handleEdit(ruta)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleStatus(ruta.id)}
+                                    className={ruta.activo ? "new-text-green-600" : "new-text-red-600"}
+                                >
+                                    <PowerSquare className="h-4 w-4" />
+                                </Button>
+                            </>
+                        ) : (
+                            <Button variant="ghost" size="sm" onClick={() => handleView(ruta)}>
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
                 )
             },
         },
     ]
+
+    if (!hasPermission("routes.view")) {
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver rutas.</div>
+    }
 
     if (loading) {
         return (
@@ -163,10 +198,12 @@ export default function RutasPage() {
                     </h1>
                     <p className="text-gray-600">Gestiona las rutas de recolección</p>
                 </div>
-                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nueva Ruta
-                </Button>
+                {hasPermission("routes.edit") && (
+                    <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nueva Ruta
+                    </Button>
+                )}
             </div>
 
             {/* Tabla de Rutas */}
@@ -187,6 +224,7 @@ export default function RutasPage() {
                 ruta={selectedRuta}
                 oficinas={oficinas}
                 onSuccess={loadData}
+                readOnly={dialogReadOnly}
             />
         </div>
     )

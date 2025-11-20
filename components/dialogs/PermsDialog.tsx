@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Shield, Settings, FolderCog, Building2, CalendarSearch } from "lucide-react"
+import { Loader2, Shield, Settings, FolderCog, Building2, CalendarSearch, FolderDown, FileCode, Bell } from "lucide-react"
 import { userService } from "@/services/userService"
 import { PermissionCategory, Profile } from "@/types"
 
@@ -35,9 +35,6 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
             { id: "routes.edit", name: "Editar rutas", category: "general" },
             { id: "vehicles.view", name: "Ver vehículos", category: "general" },
             { id: "vehicles.edit", name: "Editar vehículos", category: "general" },
-            { id: "vehicles.driver", name: "Es conductor", category: "general" },
-            { id: "visits.view", name: "Ver visitas", category: "operations" },
-            { id: "visits.edit", name: "Editar visitas", category: "operations" },
 
         ]
     },
@@ -56,6 +53,8 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
             { id: "geo.edit", name: "Editar geolocalización", category: "clients" },
             { id: "rates.view", name: "Ver tarifas", category: "clients" },
             { id: "rates.edit", name: "Editar tarifas", category: "clients" },
+            { id: "cartera.view", name: "Ver cartera", category: "clients" },
+            { id: "cartera.edit", name: "Editar cartera", category: "clients" },
         ]
     },
     {
@@ -70,8 +69,33 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
             { id: "generar.pdf", name: "Generar PDF", category: "progs" },
             { id: "prog.view", name: "Ver programación", category: "progs" },
             { id: "prog.edit", name: "Editar programación", category: "progs" },
-            { id: "event.view", name: "Ver eventual", category: "progs" },
-            { id: "event.edit", name: "Editar eventual", category: "progs" },
+        ]
+    },
+    {
+        id: "salidas",
+        name: "Salidas",
+        icon: FileCode,
+        permissions: [
+            { id: "salida.view", name: "Ver Salidas", category: "salidas" },
+            { id: "salida.edit", name: "Editar Salidas", category: "salidas" },
+        ]
+    },
+    {
+        id: "certificados",
+        name: "Certificados",
+        icon: FolderDown,
+        permissions: [
+            { id: "certificados.view", name: "Ver certificados", category: "certificados" },
+            { id: "certificados.edit", name: "Editar certificados", category: "certificados" },
+        ]
+    },
+    {
+        id: "reportes",
+        name: "Reportes",
+        icon: FileCode,
+        permissions: [
+            { id: "reportes.view", name: "Ver Reportes", category: "reportes" },
+            { id: "reportes.assign", name: "Asignar Facturas", category: "reportes" },
         ]
     },
     {
@@ -84,12 +108,12 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
         ]
     },
     {
-        id: "certificados",
-        name: "Certificados",
-        icon: Settings,
+        id: "alerts",
+        name: "Alertas",
+        icon: Bell,
         permissions: [
-            { id: "certificados.view", name: "Ver certificados", category: "certificados" },
-            { id: "certificados.edit", name: "Editar certificados", category: "certificados" },
+            { id: "alerts.view", name: "Ver alertas", category: "alerts" },
+            { id: "alerts.edit", name: "Editar alertas", category: "alerts" },
         ]
     }
 ]

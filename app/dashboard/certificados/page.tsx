@@ -16,6 +16,7 @@ import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function CertificadosPage() {
     const { user, logout } = useAuth()
@@ -35,6 +36,25 @@ export default function CertificadosPage() {
     const [selectedCertificado, setSelectedCertificado] = useState<Certificados | null>(null);
     const [tipo, setTipo] = useState("1");
     const { toast } = useToast();
+
+    // Estados para mensajes de confirmación similares a progs-admin
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [tipoConfirm, setTipoConfirm] = useState<string | null>(null);
+    const [titleConfirm, setTitleConfirm] = useState<string | null>(null);
+    const [descripcionConfirm, setDescripcionConfirm] = useState<string | null>(null);
+    const [confirmText, setConfirmText] = useState<string | null>(null);
+    const [cancelText, setCancelText] = useState<string | null>(null);
+    const [hideCancelConfirm, setHideCancelConfirm] = useState<boolean>(false);
+
+    if (user && user.permisos && typeof user.permisos === "string") {
+        user.permisos = JSON.parse(user.permisos);
+    }
+
+    const hasPermission = (permission: string): boolean => {
+        if (!user || !user.permisos) return false
+        if (user.rolNombre === "ADMIN") return true
+        return user.permisos[permission] === true
+    }
 
     useEffect(() => {
         loadData();
@@ -94,19 +114,45 @@ export default function CertificadosPage() {
     };
 
     const handlePdf = async (obj: Certificados) => {
-        console.log("Generating PDF for:", obj);
-        console.log("Tipo value:", obj.tipo, "Type:", typeof obj.tipo);
-        let base64;
+        // Guardar el certificado seleccionado para acciones posteriores
+        setSelectedCertificado(obj);
 
-        // Convertir tipo a string para asegurar compatibilidad
+        // Replicar validaciones de progs-admin
+        if ((obj as any).tieneCartera === 1) {
+            setTipoConfirm("cartera");
+            setTitleConfirm("Certificado no disponible");
+            setDescripcionConfirm("Estimado usuario, para poder acceder al certificado solicitado, es necesario que se encuentre al día en su estado de cuenta. Por favor, regularice su cartera pendiente para habilitar la descarga.");
+            setConfirmText("Entendido");
+            setCancelText("");
+            setHideCancelConfirm(true);
+            setConfirmDialogOpen(true);
+            return;
+        }
+
+        if ((obj as any).noFactura === 1) {
+            setTipoConfirm("pdf-no-facturado");
+            setTitleConfirm("Certificado no disponible");
+            setDescripcionConfirm("El servicio asociado a este certificado aún no ha sido facturado. Una vez se emita la factura correspondiente y realice el pago correspondiente, el sistema habilitará la descarga del documento.");
+            setConfirmText("Entendido");
+            setCancelText("");
+            setHideCancelConfirm(true);
+            setConfirmDialogOpen(true);
+            return;
+        }
+
+        handlePdfNoValidate(obj);
+    }
+
+    const handlePdfNoValidate = async (obj: Certificados) => {
+        let base64;
         const tipoString = String(obj.tipo);
 
         switch (tipoString) {
             case "1":
-                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.clienteId || "",obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "2":
-                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.clienteId || "",obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
                 break;
             case "3":
                 base64 = await certificatesService.getCertificadoProformaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
@@ -115,7 +161,6 @@ export default function CertificadosPage() {
                 base64 = null;
                 break;
         }
-        console.log("Received base64:", base64);
         if (!base64) {
             toast({
                 title: "Error",
@@ -129,28 +174,42 @@ export default function CertificadosPage() {
     }
 
     const handleExcel = async (obj: Certificados) => {
-        console.log("Generating Excel for:", obj);
-        console.log("Tipo value:", obj.tipo, "Type:", typeof obj.tipo);
+        setSelectedCertificado(obj);
+        // Validaciones previas igual que PDF
+        if ((obj as any).tieneCartera === 1) {
+            setTipoConfirm("cartera-excel");
+            setTitleConfirm("Certificado no disponible");
+            setDescripcionConfirm("Estimado usuario, para poder acceder al certificado solicitado, es necesario que se encuentre al día en su estado de cuenta. Por favor, regularice su cartera pendiente para habilitar la descarga.");
+            setConfirmText("Entendido");
+            setCancelText("");
+            setHideCancelConfirm(true);
+            setConfirmDialogOpen(true);
+            return;
+        }
+        if ((obj as any).noFactura === 1) {
+            setTipoConfirm("excel-no-facturado");
+            setTitleConfirm("Certificado no disponible");
+            setDescripcionConfirm("El servicio asociado a este certificado aún no ha sido facturado. Una vez se emita la factura correspondiente y realice el pago correspondiente, el sistema habilitará la descarga del documento.");
+            setConfirmText("Entendido");
+            setCancelText("");
+            setHideCancelConfirm(true);
+            setConfirmDialogOpen(true);
+            return;
+        }
+        handleExcelNoValidate(obj);
+    }
+
+    const handleExcelNoValidate = async (obj: Certificados) => {
         let base64;
-
-        // Convertir tipo a string para asegurar compatibilidad
         const tipoString = String(obj.tipo);
-
         switch (tipoString) {
-            case "1":
-                base64 = null;
-                break;
-            case "2":
-                base64 = null;
-                break;
             case "3":
                 base64 = await certificatesService.getCertificadoProformaExcel(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             default:
-                base64 = null;
+                base64 = null; // Solo proforma soporta Excel actualmente
                 break;
         }
-        console.log("Received base64:", base64);
         if (!base64) {
             toast({
                 title: "Error",
@@ -159,22 +218,14 @@ export default function CertificadosPage() {
             });
             return;
         }
-
-        // Convertir base64 a Blob y descargar automáticamente
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        });
-
-        // Crear nombre del archivo con información del certificado
+        const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const fileName = `Certificado_Proforma_${obj.sedeNombre || 'Sede'}_${obj.inicio}_${obj.fin}.xlsx`;
-
-        // Crear enlace de descarga y activarlo
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -183,7 +234,6 @@ export default function CertificadosPage() {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-
         toast({
             title: "Descarga iniciada",
             description: `El archivo ${fileName} se está descargando`,
@@ -192,7 +242,7 @@ export default function CertificadosPage() {
     }
 
     const handleToggleStatus = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas desactivar este certificado?")) {
+        if (window.confirm("¿Estás seguro de que deseas desactivar este certificado?")) {
             try {
                 await certificatesService.toggleStatus(id);
                 toast({
@@ -212,8 +262,37 @@ export default function CertificadosPage() {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-ES');
+    const handleConfirmDialog = async () => {
+        try {
+            if (tipoConfirm === "pdf-no-facturado" || tipoConfirm === "cartera") {
+                if (selectedCertificado) {
+                    handlePdfNoValidate(selectedCertificado);
+                }
+            } else if (tipoConfirm === "excel-no-facturado" || tipoConfirm === "cartera-excel") {
+                if (selectedCertificado) {
+                    handleExcelNoValidate(selectedCertificado);
+                }
+            }
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error?.message || "No se pudo realizar la acción",
+                variant: "error",
+            });
+        } finally {
+            setConfirmDialogOpen(false);
+            setTipoConfirm(null);
+            setTitleConfirm(null);
+            setDescripcionConfirm(null);
+            setConfirmText(null);
+            setCancelText(null);
+            setHideCancelConfirm(false);
+        }
+    };
+
+    const handleCancelDialog = () => {
+        setConfirmDialogOpen(false);
+        setTipoConfirm(null);
     };
 
     const columns: ColumnDef<Certificados>[] = [
@@ -256,15 +335,17 @@ export default function CertificadosPage() {
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
                                 <FileText className="h-4 w-4" />
                             </ButtonTooltip>
-                            <ButtonTooltip
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleStatus(item.id)}
-                                className={item.activo ? "new-text-green-600" : "new-text-red-600"}
-                                tooltipContent={item.activo ? "Desactivar" : "Activar"}
-                            >
-                                <PowerSquare className="h-4 w-4" />
-                            </ButtonTooltip>
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleStatus(item.id)}
+                                    className={item.activo ? "new-text-green-600" : "new-text-red-600"}
+                                    tooltipContent={item.activo ? "Desactivar" : "Activar"}
+                                >
+                                    <PowerSquare className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                         </div>
                     </TooltipProvider>
                 );
@@ -309,30 +390,38 @@ export default function CertificadosPage() {
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(item)} tooltipContent="Editar">
-                                <Edit className="h-4 w-4" />
-                            </ButtonTooltip>
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(item)} tooltipContent="Editar">
+                                    <Edit className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
                                 <FileText className="h-4 w-4" />
                             </ButtonTooltip>
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handleExcel(item)} tooltipContent="Excel">
                                 <Table className="h-4 w-4" />
                             </ButtonTooltip>
-                            <ButtonTooltip
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleStatus(item.id)}
-                                className={item.activo ? "new-text-green-600" : "new-text-red-600"}
-                                tooltipContent={item.activo ? "Desactivar" : "Activar"}
-                            >
-                                <PowerSquare className="h-4 w-4" />
-                            </ButtonTooltip>
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleStatus(item.id)}
+                                    className={item.activo ? "new-text-green-600" : "new-text-red-600"}
+                                    tooltipContent={item.activo ? "Desactivar" : "Activar"}
+                                >
+                                    <PowerSquare className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                         </div>
                     </TooltipProvider>
                 );
             },
         },
     ];
+
+    if (!hasPermission("certificados.view")) {
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver los certificados.</div>
+    }
 
     return (
         <div className="space-y-6">
@@ -354,48 +443,54 @@ export default function CertificadosPage() {
                         <TabsContent value="llantas">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                <Button onClick={() => handleCreate("1")} className="bg-primary hover:bg-primary-hover">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Certificado
-                                </Button>
+                                {hasPermission("certificados.edit") && (
+                                    <Button onClick={() => handleCreate("1")} className="bg-primary hover:bg-primary-hover">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Certificado
+                                    </Button>
+                                )}
                             </div>
                             <DataTable
                                 columns={columns}
                                 data={certificadosLlantas}
                                 searchKey={["sedeNombre", "clienteNombre"]}
-                                searchPlaceholder="Buscar por sede..."
+                                searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
 
                         <TabsContent value="otros">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                <Button onClick={() => handleCreate("2")} className="bg-primary hover:bg-primary-hover">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Certificado
-                                </Button>
+                                {hasPermission("certificados.edit") && (
+                                    <Button onClick={() => handleCreate("2")} className="bg-primary hover:bg-primary-hover">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Certificado
+                                    </Button>
+                                )}
                             </div>
                             <DataTable
                                 columns={columns}
                                 data={certificadosOtros}
                                 searchKey={["sedeNombre", "clienteNombre"]}
-                                searchPlaceholder="Buscar por sede..."
+                                searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
 
                         <TabsContent value="proforma">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Certificado
-                                </Button>
+                                {hasPermission("certificados.edit") && (
+                                    <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Certificado
+                                    </Button>
+                                )}
                             </div>
                             <DataTable
                                 columns={columnsProforma}
                                 data={certificadosProforma}
                                 searchKey={["sedeNombre", "clienteNombre"]}
-                                searchPlaceholder="Buscar por sede..."
+                                searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
                     </Tabs>
@@ -410,6 +505,18 @@ export default function CertificadosPage() {
                 clientes={clientes}
                 onSuccess={loadData}
                 tipo={tipo}
+            />
+
+            <ConfirmationDialog
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+                title={titleConfirm || "Confirmar"}
+                description={descripcionConfirm || "¿Estás seguro?"}
+                confirmText={confirmText || undefined}
+                cancelText={cancelText || undefined}
+                hideCancel={hideCancelConfirm}
+                onConfirm={handleConfirmDialog}
+                onCancel={handleCancelDialog}
             />
 
             {base64 && (

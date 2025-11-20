@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, PlusCircle, TableProperties, FileText, Trash2, Paperclip } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -22,12 +22,16 @@ import { PdfDialog } from "@/components/dialogs/PdfDialog"
 import { certificatesService } from "@/services/certificatesService"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function ProgsAdminPage() {
+  const { user, logout } = useAuth();
+
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [dialogAmountsOpen, setDialogAmountsOpen] = useState(false);
   const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -83,7 +87,16 @@ export default function ProgsAdminPage() {
   const [adjuntosOpen, setAdjuntosOpen] = useState(false)
   const [entidadId, setEntidadId] = useState<string | null>(null)
 
-  // Obtener tipos únicos para mostrar la leyenda
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
+
   const tiposUnicos = progs.reduce((acc: { nombre: string, color: string }[], prog) => {
     const existe = acc.find(tipo => tipo.nombre === prog.tipoNombre);
     if (!existe) {
@@ -93,17 +106,14 @@ export default function ProgsAdminPage() {
   }, []);
 
   useEffect(() => {
-    // Limpiar timeout anterior si existe
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current)
     }
 
-    // Agregar un pequeño delay para evitar múltiples llamadas
     loadingTimeoutRef.current = setTimeout(() => {
       loadData()
     }, 100)
 
-    // Cleanup function
     return () => {
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
@@ -113,7 +123,6 @@ export default function ProgsAdminPage() {
 
   const handleDateChange = (newDate: Date | undefined) => {
     if (newDate && !isNaN(newDate.getTime())) {
-      // Validar que la fecha inicio no sea mayor que la fecha fin
       if (fechaFin && newDate > fechaFin) {
         toast({
           title: "Fecha inválida",
@@ -136,7 +145,6 @@ export default function ProgsAdminPage() {
 
   const handleFechaFinChange = (newDate: Date | undefined) => {
     if (newDate && !isNaN(newDate.getTime())) {
-      // Validar que la fecha fin no sea menor que la fecha inicio
       if (selectedDate && newDate < selectedDate) {
         toast({
           title: "Fecha inválida",
@@ -199,13 +207,16 @@ export default function ProgsAdminPage() {
     const visita = await visitService.getId(obj.visitaRecolId);
     setVisitaRecol(visita);
     setSelected(obj);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   }
 
-  const handleEditNew = (obj: ProgVisitaRecol) => {
-    setVisitaRecol(null);
-    setSelected(obj)
-    setDialogOpen(true)
+  const handleView = async (obj: ProgVisitaRecol) => {
+    const visita = await visitService.getId(obj.visitaRecolId);
+    setVisitaRecol(visita);
+    setSelected(obj);
+    setDialogReadOnly(true);
+    setDialogOpen(true);
   }
 
   const handleAmounts = async (obj: ProgVisitaRecol) => {
@@ -217,10 +228,8 @@ export default function ProgsAdminPage() {
 
   const handlePdf = async (obj: ProgVisitaRecol) => {
     setSelected(obj)
-    // Reglas de validación previas a la descarga/visualización del PDF
-    // 1) Si tiene cartera pendiente, bloquear descarga y mostrar mensaje informativo
+
     if (obj.tieneCartera === 1) {
-      setSelected(obj)
       setTipoConfirm("cartera")
       setTitleConfirm("Certificado no disponible")
       setDescripcionConfirm(
@@ -233,9 +242,7 @@ export default function ProgsAdminPage() {
       return
     }
 
-    // 2) Si aún no ha sido facturado, mostrar advertencia no bloqueante y continuar al aceptar
     if (obj.noFactura === 1) {
-      setSelected(obj)
       setTipoConfirm("pdf-no-facturado")
       setTitleConfirm("Certificado no disponible")
       setDescripcionConfirm(
@@ -248,7 +255,6 @@ export default function ProgsAdminPage() {
       return
     }
 
-    // 3) Caso normal: descargar/abrir directamente
     handlePdfNoValidate(obj)
   }
 
@@ -312,7 +318,6 @@ export default function ProgsAdminPage() {
     setIdToConfirm(null)
   }
 
-  // Procesar datos para filtros personalizados
   const processedProgs = useMemo(() => {
     return progs.map(prog => ({
       ...prog,
@@ -335,17 +340,14 @@ export default function ProgsAdminPage() {
       },
       enableColumnFilter: true,
       filterFn: (row, id, value) => {
-        // Filtrar por el nombre completo del tipo
         const tipoNombre = row.original.tipoNombre;
         if (!tipoNombre) return false;
 
         if (Array.isArray(value)) {
           return value.some(v => {
-            // Si el valor del filtro es una letra, comparar con la primera letra
             if (v.length === 1) {
               return tipoNombre.charAt(0).toUpperCase() === v.toUpperCase();
             }
-            // Si no, comparar con el nombre completo
             return tipoNombre.toLowerCase().includes(v.toLowerCase());
           });
         }
@@ -402,34 +404,20 @@ export default function ProgsAdminPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              {obj.visitaRecolId ?
-                <>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
-                    <Edit className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
-                    <TableProperties className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
-                    <FileText className="h-4 w-4" />
-                  </ButtonTooltip>
-                </>
-                :
-                <>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
-                    <Edit className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
-                    <TableProperties className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
-                    <FileText className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNew(obj)} tooltipContent="Agregar">
-                    <PlusCircle className="h-4 w-4" />
-                  </ButtonTooltip>
-                </>
-              }
+              {hasPermission("admin.edit") ? (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
+                  <Edit className="h-4 w-4" />
+                </ButtonTooltip>
+              ) : (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(obj)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+              {hasPermission("amount.view") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAmounts(obj)} tooltipContent="Cantidades">
+                  <TableProperties className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
               <DropdownMenu>
                 <Tooltip>
                   <DropdownMenuTrigger asChild>
@@ -445,14 +433,24 @@ export default function ProgsAdminPage() {
                   <TooltipContent>Más acciones</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAdjuntos(obj.visitaRecolId)}>
-                    <Paperclip className="h-4 w-4 mr-2" />
-                    Adjuntos
-                  </DropdownMenuItem>
+                  {hasPermission("generar.pdf") ?
+                    <DropdownMenuItem onClick={() => handlePdf(obj)}>
+                      <FileText className="h-4 w-4" />
+                      PDF
+                    </DropdownMenuItem> : <></>
+                  }
+                  {hasPermission("admin.edit") ?
+                    <>
+                      <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAdjuntos(obj.visitaRecolId)}>
+                        <Paperclip className="h-4 w-4" />
+                        Adjuntos
+                      </DropdownMenuItem>
+                    </> : <></>
+                  }
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -461,6 +459,10 @@ export default function ProgsAdminPage() {
       },
     },
   ]
+
+  if (!hasPermission("admin.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver administración de recolecciones.</div>
+  }
 
   if (loading) {
     return (
@@ -521,10 +523,12 @@ export default function ProgsAdminPage() {
             ) : (
               <div />
             )}
-            <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Visita
-            </Button>
+            {hasPermission("admin.edit") && (
+              <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Visita
+              </Button>
+            )}
           </div>
           <DataTable
             columns={columns}
@@ -549,6 +553,7 @@ export default function ProgsAdminPage() {
         comerciales={comerciales}
         plantas={plantas}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       {visitaRecol && (

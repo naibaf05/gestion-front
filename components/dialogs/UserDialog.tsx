@@ -31,6 +31,7 @@ interface UserDialogProps {
   user?: User | null;
   profiles: Profile[];
   onSuccess: () => void;
+  readOnly?: boolean;
 }
 
 export function UserDialog({
@@ -39,6 +40,7 @@ export function UserDialog({
   user,
   profiles,
   onSuccess,
+  readOnly = false,
 }: UserDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -113,7 +115,7 @@ export function UserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{user ? "Editar Usuario" : "Nuevo Usuario"}</DialogTitle>
+          <DialogTitle>{user ? (readOnly ? "Detalle Usuario" : "Editar Usuario") : "Nuevo Usuario"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -127,6 +129,8 @@ export function UserDialog({
                     setFormData({ ...formData, nombre: e.target.value })
                   }
                   required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
               <div className="space-y-2">
@@ -138,6 +142,8 @@ export function UserDialog({
                     setFormData({ ...formData, apellido: e.target.value })
                   }
                   required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
             </div>
@@ -152,6 +158,8 @@ export function UserDialog({
                     setFormData({ ...formData, documento: e.target.value })
                   }
                   required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
               <div className="space-y-2">
@@ -163,6 +171,8 @@ export function UserDialog({
                     setFormData({ ...formData, telefono: e.target.value })
                   }
                   required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
             </div>
@@ -177,6 +187,8 @@ export function UserDialog({
                     setFormData({ ...formData, username: e.target.value })
                   }
                   required
+                  disabled={readOnly}
+                  readOnly={readOnly}
                 />
               </div>
               <div className="space-y-2">
@@ -186,8 +198,9 @@ export function UserDialog({
                   onValueChange={(value) =>
                     setFormData({ ...formData, rolId: value })
                   }
+                  disabled={readOnly}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger disabled={readOnly}>
                     <SelectValue placeholder="Selecciona un perfil" />
                   </SelectTrigger>
                   <SelectContent>
@@ -211,6 +224,8 @@ export function UserDialog({
                   setFormData({ ...formData, email: e.target.value })
                 }
                 required
+                disabled={readOnly}
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -220,24 +235,26 @@ export function UserDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {user ? "Actualizando..." : "Creando..."}
-                </>
-              ) : user ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary-hover"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {user ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : user ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

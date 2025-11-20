@@ -21,6 +21,7 @@ interface LocationPickerDialogProps {
   initialLat?: number
   initialLng?: number
   onLocationConfirm: (lat: number, lng: number, address?: string) => void
+  readOnly?: boolean
 }
 
 export function LocationPickerDialog({
@@ -31,6 +32,7 @@ export function LocationPickerDialog({
   initialLat,
   initialLng,
   onLocationConfirm,
+  readOnly = false,
 }: LocationPickerDialogProps) {
   const [selectedLat, setSelectedLat] = useState<number>(initialLat || 6.2442)
   const [selectedLng, setSelectedLng] = useState<number>(initialLng || -75.5812)
@@ -52,6 +54,10 @@ export function LocationPickerDialog({
   }
 
   const handleConfirm = () => {
+    if (readOnly) {
+      onOpenChange(false)
+      return
+    }
     onLocationConfirm(selectedLat, selectedLng, selectedAddress)
     onOpenChange(false)
   }
@@ -68,7 +74,7 @@ export function LocationPickerDialog({
             <MapPin className="h-5 w-5" />
             {title}
           </DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogDescription>{readOnly ? 'Visualización de la ubicación' : description}</DialogDescription>
         </DialogHeader>
 
         <MapPicker
@@ -76,6 +82,7 @@ export function LocationPickerDialog({
           initialLng={selectedLng}
           onLocationSelect={handleLocationSelect}
           height="400px"
+          disabled={readOnly}
         />
 
         {selectedAddress && (
@@ -86,11 +93,13 @@ export function LocationPickerDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleCancel}>
-            Cancelar
+            {readOnly ? 'Cerrar' : 'Cancelar'}
           </Button>
-          <Button type="button" onClick={handleConfirm} className="bg-primary hover:bg-primary-hover">
-            Confirmar Ubicación
-          </Button>
+          {!readOnly && (
+            <Button type="button" onClick={handleConfirm} className="bg-primary hover:bg-primary-hover">
+              Confirmar Ubicación
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

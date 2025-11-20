@@ -15,13 +15,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Loader2, Download, Settings } from "lucide-react";
 import { reportesService, type TipoReporte } from "@/services/reportesService";
-import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 import { ColumnDef } from "@tanstack/react-table";
-import { set } from "date-fns";
 import { ReportDialog } from "@/components/dialogs/ReportDialog";
 import { ColumnConfigDialog } from "@/components/dialogs/ColumnConfigDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ReportesPage() {
+    const { user, logout } = useAuth();
+
     const [tipoReporte, setTipoReporte] = useState<TipoReporte | "">("");
     const [reporteNombre, setReporteNombre] = useState<string>("");
     const [fechaInicio, setFechaInicio] = useState(() => {
@@ -52,12 +53,23 @@ export default function ReportesPage() {
     const [columnConfigOpen, setColumnConfigOpen] = useState(false);
     const [availableColumns, setAvailableColumns] = useState<any[]>([]);
 
-    // Configuración de columnas por tipo de reporte
+    if (user && user.permisos && typeof user.permisos === "string") {
+        user.permisos = JSON.parse(user.permisos);
+    }
+
+    const hasPermission = (permission: string): boolean => {
+        if (!user || !user.permisos) return false
+        if (user.rolNombre === "ADMIN") return true
+        return user.permisos[permission] === true
+    }
+
+    // Configuración de columnas por tipo de reporte (aplica permiso rates.view para mostrar tarifa)
     const getColumnConfig = (tipoReporte: TipoReporte) => {
+        const canViewTarifa = hasPermission("rates.view");
         switch (tipoReporte) {
             case "reporte1":
-            case "reporte2":
-                return [
+            case "reporte2": {
+                const cols = [
                     // ======= SECCIÓN SEDE =======
                     { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
                     { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
@@ -87,27 +99,31 @@ export default function ReportesPage() {
                     { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
                     { key: "cantidad", label: "Cantidad", category: "visita", enabled: true },
-                    { key: "recolNombre", label: "Nombre Recolección", category: "visita", enabled: true },
+                    { key: "recolNombre", label: "Nombre Recolector", category: "visita", enabled: true },
                     { key: "unidad", label: "Unidad", category: "visita", enabled: true },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
-                    { key: "valor", label: "Valor", category: "visita", enabled: true },
-                    { key: "tarifa", label: "Tarifa", category: "visita", enabled: true },
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
                     { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true },
                     { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true },
                     { key: "numCert", label: "Certificado", category: "visita", enabled: true },
                     { key: "unidades", label: "Unidades", category: "visita", enabled: true },
                     { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: true },
                 ];
-            case "reporte3":
-                return [
+                return cols;
+            }
+            case "reporte3": {
+                const cols = [
                     { key: "nombreSede", label: "Sede", category: "sede", enabled: true },
                     { key: "direccionSede", label: "Dirección", category: "sede", enabled: true },
                     { key: "emailSede", label: "Email", category: "sede", enabled: true },
                     { key: "tipo_residuo", label: "Tipo de Residuo", category: "residuo", enabled: true },
-                    { key: "tarifa", label: "Tarifa", category: "residuo", enabled: true },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "residuo", enabled: true }] : []),
                     { key: "fecha_inicio", label: "Fecha Inicio", category: "fecha", enabled: true },
                     { key: "fecha_fin", label: "Fecha Fin", category: "fecha", enabled: true },
                 ];
+                return cols;
+            }
             default:
                 return [];
         }
@@ -115,16 +131,17 @@ export default function ReportesPage() {
 
     // Función helper para obtener la configuración de columnas a usar
     const getEffectiveColumnConfig = (tipoReporte: TipoReporte) => {
+        const canViewTarifa = hasPermission("rates.view");
         if (userColumnConfig) {
-            // Si el usuario ha configurado columnas, usar esa configuración
-            return userColumnConfig.filter(col => col.enabled);
+            // Filtrar según permiso tarifa
+            return userColumnConfig.filter(col => col.enabled && (canViewTarifa || col.key !== "tarifa"));
         }
 
-        // Si no hay configuración del usuario, usar la configuración por defecto
+        // Configuración por defecto filtrando tarifa si no hay permiso
         switch (tipoReporte) {
             case "reporte1":
-            case "reporte2":
-                return [
+            case "reporte2": {
+                const defaultCols = [
                     // === COLUMNAS POR DEFECTO ORGANIZADAS POR SECCIÓN ===
 
                     // SEDE (4 columnas principales)
@@ -143,21 +160,25 @@ export default function ReportesPage() {
                     { key: "tipoResiduo", label: "Tipo Residuo", width: "180px" },
                     { key: "cantidadKg", label: "Cantidad KG", width: "120px" },
                     { key: "cantidadM3", label: "Cantidad M3", width: "120px" },
-                    { key: "recolNombre", label: "Nombre Recolección", width: "200px" },
+                    { key: "recolNombre", label: "Nombre Recolector", width: "200px" },
                     { key: "numFactura", label: "Número Factura", width: "150px" },
-                    { key: "valor", label: "Valor", width: "150px" },
-                    { key: "tarifa", label: "Tarifa", width: "150px" },
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                 ];
-            case "reporte3":
-                return [
+                return defaultCols;
+            }
+            case "reporte3": {
+                const defaultCols = [
                     { key: "nombreSede", label: "Sede", width: "200px" },
                     { key: "direccionSede", label: "Dirección", width: "350px" },
                     { key: "emailSede", label: "Email", width: "250px" },
                     { key: "tipo_residuo", label: "Tipo de Residuo", width: "150px" },
-                    { key: "tarifa", label: "Tarifa", width: "150px" },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                     { key: "fecha_inicio", label: "Fecha Inicio", width: "120px" },
                     { key: "fecha_fin", label: "Fecha Fin", width: "120px" },
                 ];
+                return defaultCols;
+            }
             default:
                 return [];
         }
@@ -360,6 +381,10 @@ export default function ReportesPage() {
         setFechaFin(todayFormatted);
     };
 
+    if (!hasPermission("reportes.view")) {
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver los reportes.</div>
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -465,8 +490,8 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
-                showCheckboxes={true}
-                showAssignInvoice={true}
+                showCheckboxes={hasPermission("reportes.assign")}
+                showAssignInvoice={hasPermission("reportes.assign")}
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber) => {
                     asignarFactura(selectedRows, invoiceNumber);

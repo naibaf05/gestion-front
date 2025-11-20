@@ -12,6 +12,7 @@ interface SelectMultipleProps {
     onChange: (selected: string[]) => void
     placeholder?: string
     isFilter?: boolean
+    disabled?: boolean
 }
 
 export const SelectMultiple: React.FC<SelectMultipleProps> = ({
@@ -19,14 +20,17 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
     value,
     onChange,
     placeholder = "Selecciona opciones",
-    isFilter = false
+    isFilter = false,
+    disabled = false
 }) => {
     return (
         <ReactSelect
             isMulti
+            isDisabled={disabled}
             options={options}
             value={options.filter(opt => (value ? value.includes(opt.value) : false))}
             onChange={(selected: MultiValue<OptionType>) => {
+                if (disabled) return
                 onChange(selected.map(opt => opt.value))
             }}
             placeholder={placeholder}
@@ -41,6 +45,8 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
                     boxShadow: state.isFocused ? '0 0 0 2px #090a16' : 'none',
                     minHeight: 40,
                     '&:hover': { borderColor: 'none' },
+                    opacity: disabled ? 0.6 : 1,
+                    pointerEvents: disabled ? 'none' : 'auto'
                 }),
                 multiValue: (base) => ({
                     ...base,

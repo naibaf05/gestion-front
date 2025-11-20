@@ -28,6 +28,7 @@ interface RateDialogProps {
   undMedidas: Parametrizacion[];
   tiposResiduos?: Parametrizacion[];
   onSuccess: () => void;
+  readOnly?: boolean;
 }
 
 export function RateDialog({
@@ -38,6 +39,7 @@ export function RateDialog({
   undMedidas,
   tiposResiduos = [],
   onSuccess,
+  readOnly = false,
 }: RateDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -77,6 +79,10 @@ export function RateDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) {
+      onOpenChange(false);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -116,71 +122,99 @@ export function RateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{rate ? "Editar Tarifa" : "Nueva Tarifa"}</DialogTitle>
+          <DialogTitle>{readOnly ? "Ver Tarifa" : (rate ? "Editar Tarifa" : "Nueva Tarifa")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="undMedidaId">Unidad de Medida *</Label>
-                <SelectSingle
-                  id="undMedidaId"
-                  placeholder="Selecciona una unidad de medida"
-                  options={undMedidas}
-                  value={formData.undMedidaId}
-                  onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
-                  valueKey="id"
-                  labelKey="nombre"
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">
+                    {undMedidas.find(u => String(u.id) === String(formData.undMedidaId))?.nombre || "-"}
+                  </div>
+                ) : (
+                  <SelectSingle
+                    id="undMedidaId"
+                    placeholder="Selecciona una unidad de medida"
+                    options={undMedidas}
+                    value={formData.undMedidaId}
+                    onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
+                    valueKey="id"
+                    labelKey="nombre"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tipoResiduoId">Tipo de Residuo *</Label>
-                <SelectSingle
-                  id="tipoResiduoId"
-                  placeholder="Selecciona un tipo de residuo"
-                  options={tiposResiduos}
-                  value={formData.tipoResiduoId}
-                  onChange={(value) => setFormData({ ...formData, tipoResiduoId: value })}
-                  valueKey="id"
-                  labelKey="nombre"
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">
+                    {tiposResiduos.find(t => String(t.id) === String(formData.tipoResiduoId))?.nombre || "-"}
+                  </div>
+                ) : (
+                  <SelectSingle
+                    id="tipoResiduoId"
+                    placeholder="Selecciona un tipo de residuo"
+                    options={tiposResiduos}
+                    value={formData.tipoResiduoId}
+                    onChange={(value) => setFormData({ ...formData, tipoResiduoId: value })}
+                    valueKey="id"
+                    labelKey="nombre"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fechaInicio">Fecha Inicio *</Label>
-                <Input
-                  id="fechaInicio"
-                  type="date"
-                  value={formData.fechaInicio}
-                  onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fechaInicio || '-'}</div>
+                ) : (
+                  <Input
+                    id="fechaInicio"
+                    type="date"
+                    value={formData.fechaInicio}
+                    onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fechaFin">Fecha Fin</Label>
-                <Input
-                  id="fechaFin"
-                  type="date"
-                  value={formData.fechaFin}
-                  onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fechaFin || '-'}</div>
+                ) : (
+                  <Input
+                    id="fechaFin"
+                    type="date"
+                    value={formData.fechaFin}
+                    onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tarifa">Tarifa *</Label>
-                <InputDecimal
-                  id="tarifa"
-                  value={formData.tarifa}
-                  onChange={(e) => setFormData({ ...formData, tarifa: e.target.value })}
-                  decimalPlaces={2}
-                  placeholder="Ingrese la tarifa"
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.tarifa || '-'}</div>
+                ) : (
+                  <InputDecimal
+                    id="tarifa"
+                    value={formData.tarifa}
+                    onChange={(e) => setFormData({ ...formData, tarifa: e.target.value })}
+                    decimalPlaces={2}
+                    placeholder="Ingrese la tarifa"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <br></br>
-                <InputCheck
-                  id="puestoPlanta"
-                  checked={formData.puestoPlanta}
-                  onChange={e => setFormData({ ...formData, puestoPlanta: e.target.checked })}
-                  label="¿Es puesto de planta?"
-                />
+                {readOnly ? (
+                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.puestoPlanta ? 'Sí, puesto de planta' : 'No'}</div>
+                ) : (
+                  <InputCheck
+                    id="puestoPlanta"
+                    checked={formData.puestoPlanta}
+                    onChange={e => setFormData({ ...formData, puestoPlanta: e.target.checked })}
+                    label="¿Es puesto de planta?"
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -190,24 +224,26 @@ export function RateDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {readOnly ? 'Cerrar' : 'Cancelar'}
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {rate ? "Actualizando..." : "Creando..."}
-                </>
-              ) : rate ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary-hover"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {rate ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : rate ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

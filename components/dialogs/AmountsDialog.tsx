@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Plus, TableProperties, Trash2 } from "lucide-react"
+import { Edit, Eye, Plus, TableProperties, Trash2 } from "lucide-react"
 import { Parametrizacion, TipoResiduo, VisitaCantidad, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { parametrizationService } from "@/services/parametrizationService"
@@ -31,6 +31,7 @@ export function AmountsDialog({
   const [amounts, setAmounts] = useState<VisitaCantidad[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogReadOnly, setDialogReadOnly] = useState(false)
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [tiposResiduos, setTiposResiduos] = useState<TipoResiduo[]>([])
   const [selectedAmount, setSelectedAmount] = useState<VisitaCantidad | null>(null)
@@ -81,16 +82,27 @@ export function AmountsDialog({
   }
 
   const handleCreate = () => {
+    if (!hasPermission("amount.edit")) return
     setSelectedAmount(null)
+    setDialogReadOnly(false)
     setDialogOpen(true)
   }
 
   const handleEdit = (obj: VisitaCantidad) => {
+    if (!hasPermission("amount.edit")) return
     setSelectedAmount(obj)
+    setDialogReadOnly(false)
+    setDialogOpen(true)
+  }
+
+  const handleView = (obj: VisitaCantidad) => {
+    setSelectedAmount(obj)
+    setDialogReadOnly(true)
     setDialogOpen(true)
   }
 
   const handleDelete = (id: string) => {
+    if (!hasPermission("amount.edit")) return
     setAmountToDelete(id)
     setConfirmDialogOpen(true)
   }
@@ -146,12 +158,20 @@ export function AmountsDialog({
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
-                <Edit className="h-4 w-4" />
-              </ButtonTooltip>
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(obj.id)} className="new-text-red-600" tooltipContent="Eliminar">
-                <Trash2 className="h-4 w-4" />
-              </ButtonTooltip>
+              {hasPermission("amount.edit") ? (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(obj)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(obj.id)} className="new-text-red-600" tooltipContent="Eliminar">
+                    <Trash2 className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
+              ) : (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(obj)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
             </div>
           </TooltipProvider>
         )
@@ -183,10 +203,12 @@ export function AmountsDialog({
 
           <div className="flex justify-between items-center">
             <div></div>
-            <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Cantidad
-            </Button>
+            {hasPermission("amount.edit") && (
+              <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Cantidad
+              </Button>
+            )}
           </div>
 
           <DataTable columns={columns} data={amounts} searchKey="undMedidaNombre" searchPlaceholder="Buscar..." />
@@ -207,6 +229,7 @@ export function AmountsDialog({
         tiposResiduos={tiposResiduos}
         contenedores={contenedores}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       <ConfirmationDialog

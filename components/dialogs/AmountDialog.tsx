@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { Rate, Parametrizacion, VisitaCantidad, VisitaRecol, TipoResiduo } from "@/types";
+import type { Parametrizacion, VisitaCantidad, VisitaRecol, TipoResiduo } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
@@ -19,30 +19,28 @@ import { InputDecimal } from "../ui/input-decimal";
 import { Input } from "../ui/input";
 import { visitService } from "@/services/visitService";
 import { InputPositiveInteger } from "../ui/input-positive-integer";
-import { rateService } from "@/services/rateService";
 import { useAuth } from "@/contexts/AuthContext";
-import { set } from "date-fns";
 
 interface AmountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  progVisitaRecolId?: string | null;
   cantidad?: VisitaCantidad | null;
   visitaRecol: VisitaRecol;
   contenedores: Parametrizacion[];
   tiposResiduos: TipoResiduo[];
   onSuccess: () => void;
+  readOnly?: boolean;
 }
 
 export function AmountDialog({
   open,
   onOpenChange,
-  progVisitaRecolId,
   cantidad,
   visitaRecol,
   contenedores,
   tiposResiduos,
   onSuccess,
+  readOnly = false,
 }: AmountDialogProps) {
   const { user, logout } = useAuth()
   const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
@@ -186,74 +184,110 @@ export function AmountDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{cantidad ? "Editar Cantidad" : "Nueva Cantidad"}</DialogTitle>
+          <DialogTitle>{readOnly ? "Ver Cantidad" : (cantidad ? "Editar Cantidad" : "Nueva Cantidad")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="id" required>Tipo de Residuo</Label>
-                <SelectSingle
-                  id="id"
-                  placeholder="Selecciona un tipo de residuo"
-                  options={tiposResiduos}
-                  value={formData.id}
-                  onChange={handleTResiduoChange}
-                  valueKey="id"
-                  labelKey="nombreMostrar"
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {selectedTResiduo?.nombreMostrar || "-"}
+                  </div>
+                ) : (
+                  <SelectSingle
+                    id="id"
+                    placeholder="Selecciona un tipo de residuo"
+                    options={tiposResiduos}
+                    value={formData.id}
+                    onChange={handleTResiduoChange}
+                    valueKey="id"
+                    labelKey="nombreMostrar"
+                  />
+                )}
               </div>
               {hasPermission("rates.view") && (
                 <div className="space-y-2">
                   <Label htmlFor="tarifaId">Tarifa</Label>
-                  <Input
-                    id="tarifaNombre"
-                    value={formData.tarifaNombre}
-                    placeholder="Tarifa"
-                    disabled={true}
-                  />
+                  {readOnly ? (
+                    <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                      {formData.tarifaNombre || "-"}
+                    </div>
+                  ) : (
+                    <Input
+                      id="tarifaNombre"
+                      value={formData.tarifaNombre}
+                      placeholder="Tarifa"
+                      disabled={true}
+                    />
+                  )}
                 </div>
               )}
               <div className="space-y-2">
                 <Label htmlFor="contenedorId">Unidad de Entrega</Label>
-                <SelectSingle
-                  id="contenedorId"
-                  placeholder="Selecciona una unidad de entrega"
-                  options={contenedores}
-                  value={formData.contenedorId}
-                  onChange={(value) => setFormData({ ...formData, contenedorId: value })}
-                  valueKey="id"
-                  labelKey="nombre"
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {contenedores.find(c => c.id === formData.contenedorId)?.nombre || "-"}
+                  </div>
+                ) : (
+                  <SelectSingle
+                    id="contenedorId"
+                    placeholder="Selecciona una unidad de entrega"
+                    options={contenedores}
+                    value={formData.contenedorId}
+                    onChange={(value) => setFormData({ ...formData, contenedorId: value })}
+                    valueKey="id"
+                    labelKey="nombre"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="numContenedor">Unidades</Label>
-                <InputPositiveInteger
-                  value={formData.numContenedor}
-                  onChange={(e) => handleUnidadesChange(e.target.value)}
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {formData.numContenedor || "-"}
+                  </div>
+                ) : (
+                  <InputPositiveInteger
+                    value={formData.numContenedor}
+                    onChange={(e) => handleUnidadesChange(e.target.value)}
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cantidad" required>Cantidad (KG, M3, ...)</Label>
-                <InputDecimal
-                  id="cantidad"
-                  value={formData.cantidad}
-                  onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
-                  decimalPlaces={4}
-                  placeholder="Ingrese una cantidad"
-                  disabled={disabledCantidad}
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {formData.cantidad || "-"}
+                  </div>
+                ) : (
+                  <InputDecimal
+                    id="cantidad"
+                    value={formData.cantidad}
+                    onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
+                    decimalPlaces={4}
+                    placeholder="Ingrese una cantidad"
+                    disabled={disabledCantidad}
+                  />
+                )}
               </div>
               {viewCantidadKg && (
                 <div className="space-y-2">
                   <Label htmlFor="cantidadKg" required>Cantidad KG</Label>
-                  <InputDecimal
-                    id="cantidadKg"
-                    value={formData.cantidadKg}
-                    onChange={(e) => setFormData({ ...formData, cantidadKg: e.target.value })}
-                    decimalPlaces={4}
-                    placeholder="Ingrese una cantidad KG"
-                  />
+                  {readOnly ? (
+                    <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                      {formData.cantidadKg || "-"}
+                    </div>
+                  ) : (
+                    <InputDecimal
+                      id="cantidadKg"
+                      value={formData.cantidadKg}
+                      onChange={(e) => setFormData({ ...formData, cantidadKg: e.target.value })}
+                      decimalPlaces={4}
+                      placeholder="Ingrese una cantidad KG"
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -264,24 +298,26 @@ export function AmountDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {cantidad ? "Actualizando..." : "Creando..."}
-                </>
-              ) : cantidad ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary-hover"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {cantidad ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : cantidad ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

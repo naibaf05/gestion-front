@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Truck, Package, FileText } from "lucide-react";
+import { Plus, Edit, PowerSquare, Truck, Package, FileText, Eye } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { userService } from "@/services/userService";
 import { parametrizationService } from "@/services/parametrizationService";
@@ -36,6 +36,7 @@ export default function SalidasPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSalida, setSelectedSalida] = useState<Salida | null>(null);
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const { toast } = useToast();
 
   if (user && user.permisos && typeof user.permisos === "string") {
@@ -85,12 +86,22 @@ export default function SalidasPage() {
   };
 
   const handleCreate = () => {
+    if (!hasPermission("salida.edit")) return;
     setSelectedSalida(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEdit = (salida: Salida) => {
+    if (!hasPermission("salida.edit")) return;
     setSelectedSalida(salida);
+    setDialogReadOnly(false);
+    setDialogOpen(true);
+  };
+
+  const handleView = (salida: Salida) => {
+    setSelectedSalida(salida);
+    setDialogReadOnly(true);
     setDialogOpen(true);
   };
 
@@ -179,7 +190,7 @@ export default function SalidasPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              {hasPermission("salidas.edit") && (
+              {hasPermission("salida.edit") ? (
                 <>
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(salida)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
@@ -194,6 +205,12 @@ export default function SalidasPage() {
                     <PowerSquare className="h-4 w-4" />
                   </ButtonTooltip>
                 </>
+              ) : (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(salida)} tooltipContent="Ver">
+                    <Eye className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
               )}
             </div>
           </TooltipProvider>
@@ -201,6 +218,10 @@ export default function SalidasPage() {
       },
     },
   ];
+
+  if (!hasPermission("salida.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver las salidas.</div>
+  }
 
   if (loading) {
     return (
@@ -220,7 +241,7 @@ export default function SalidasPage() {
           <h1 className="text-3xl font-bold text-gray-900">Salidas</h1>
           <p className="text-gray-600">Gestiona las salidas de residuos</p>
         </div>
-        {hasPermission("salidas.edit") && (
+        {hasPermission("salida.edit") && (
           <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
             <Plus className="mr-2 h-4 w-4" />Nueva Salida
           </Button>
@@ -232,8 +253,8 @@ export default function SalidasPage() {
           <DataTable
             columns={columns}
             data={salidas}
-            searchKey={["sedeNombre", "conductorNombre", "productoNombre"]}
-            searchPlaceholder="Buscar por sede, conductor o producto..."
+            searchKey={["fecha", "clienteNombre", "conductorNombre", "productoNombre"]}
+            searchPlaceholder="Buscar ..."
           />
         </CardContent>
       </Card>
@@ -247,6 +268,7 @@ export default function SalidasPage() {
         productos={productos}
         plantas={plantas}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       {base64 && (

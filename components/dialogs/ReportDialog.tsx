@@ -64,6 +64,8 @@ export function ReportDialog<TData, TValue>({
     // Estados para el diálogo de asignar factura
     const [invoiceDialogOpen, setInvoiceDialogOpen] = React.useState(false);
     const [invoiceNumber, setInvoiceNumber] = React.useState("");
+    // Filtro para mostrar sólo registros sin número de factura
+    const [showOnlyWithoutFactura, setShowOnlyWithoutFactura] = React.useState(false);
 
     // Estado para sumar columnas
     const [summaryKeys, setSummaryKeys] = React.useState<string[]>([]);
@@ -140,54 +142,89 @@ export function ReportDialog<TData, TValue>({
         setSelectAll(checked);
     };
 
-    // Crear columnas con checkbox si es necesario
+    // Crear columnas con checkbox y header especial para numFactura (filtro vacíos)
     const columnsWithCheckbox = React.useMemo(() => {
-        if (!showCheckboxes) return columns;
+        let working = columns as any[];
+        if (showCheckboxes) {
+            const checkboxColumn = {
+                id: "select",
+                width: checkColWidth,
+                header: ({ table }: any) => {
+                    const filteredRows = table.getFilteredRowModel().rows;
+                    const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
+                    const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id: string) => selectedRows.has(id));
+                    const someFilteredSelected = filteredIds.some((id: string) => selectedRows.has(id));
+                    return (
+                        <div className="flex items-center justify-center">
+                            <Checkbox
+                                checked={allFilteredSelected}
+                                onCheckedChange={(checked) => handleSelectAll(checked as boolean, table)}
+                                aria-label="Seleccionar todas las filas visibles"
+                                className={someFilteredSelected && !allFilteredSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                            />
+                            {someFilteredSelected && !allFilteredSelected && (
+                                <span className="ml-1 text-xs text-gray-500">
+                                    ({filteredIds.filter((id: string) => selectedRows.has(id)).length}/{filteredIds.length})
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
+                cell: ({ row, table }: any) => {
+                    const rowId = String(row.original[rowIdField]);
+                    return (
+                        <div className="flex items-center justify-center">
+                            <Checkbox
+                                checked={selectedRows.has(rowId)}
+                                onCheckedChange={(checked) => handleRowSelect(rowId, checked as boolean, table)}
+                                aria-label={`Seleccionar fila ${rowId}`}
+                            />
+                        </div>
+                    );
+                },
+                enableSorting: false,
+                enableHiding: false,
+            };
+            working = [checkboxColumn, ...working];
+        }
+        working = working.map(col => {
+            const key = col.accessorKey || col.id;
+            if (key === 'numFactura') {
+                return {
+                    ...col,
+                    header: () => (
+                        <div className="flex flex-col gap-1 py-1">
+                            <span className="text-xs font-medium">Número Factura</span>
+                            <label className="flex items-center gap-1 text-[10px] font-normal">
+                                <Checkbox
+                                    checked={showOnlyWithoutFactura}
+                                    onCheckedChange={(checked) => setShowOnlyWithoutFactura(!!checked)}
+                                    aria-label="Filtrar vacíos"
+                                />
+                                <span className="select-none">Vacíos</span>
+                            </label>
+                        </div>
+                    )
+                };
+            }
+            return col;
+        });
+        return working;
+    }, [columns, showCheckboxes, selectedRows, selectAll, data, rowIdField, showOnlyWithoutFactura, checkColWidth]);
 
-        const checkboxColumn = {
-            id: "select",
-            width: checkColWidth,
-            header: ({ table }: any) => {
-                // Calcular el estado del checkbox basado en filas filtradas
-                const filteredRows = table.getFilteredRowModel().rows;
-                const filteredIds = filteredRows.map((row: any) => String(row.original[rowIdField]));
-                const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id: string) => selectedRows.has(id));
-                const someFilteredSelected = filteredIds.some((id: string) => selectedRows.has(id));
+    // Data filtrada según toggle de facturas vacías
+    const dataForTable = React.useMemo(() => {
+        if (!showOnlyWithoutFactura) return data;
+        return data.filter((r: any) => {
+            const v = r?.numFactura;
+            return v == null || String(v).trim() === "";
+        });
+    }, [data, showOnlyWithoutFactura]);
 
-                return (
-                    <div className="flex items-center justify-center">
-                        <Checkbox
-                            checked={allFilteredSelected}
-                            onCheckedChange={(checked) => handleSelectAll(checked as boolean, table)}
-                            aria-label="Seleccionar todas las filas visibles"
-                            className={someFilteredSelected && !allFilteredSelected ? "data-[state=checked]:bg-primary/50" : ""}
-                        />
-                        {someFilteredSelected && !allFilteredSelected && (
-                            <span className="ml-1 text-xs text-gray-500">
-                                ({filteredIds.filter((id: string) => selectedRows.has(id)).length}/{filteredIds.length})
-                            </span>
-                        )}
-                    </div>
-                );
-            },
-            cell: ({ row, table }: any) => {
-                const rowId = String(row.original[rowIdField]);
-                return (
-                    <div className="flex items-center justify-center">
-                        <Checkbox
-                            checked={selectedRows.has(rowId)}
-                            onCheckedChange={(checked) => handleRowSelect(rowId, checked as boolean, table)}
-                            aria-label={`Seleccionar fila ${rowId}`}
-                        />
-                    </div>
-                );
-            },
-            enableSorting: false,
-            enableHiding: false,
-        };
-
-        return [checkboxColumn, ...columns];
-    }, [columns, showCheckboxes, selectedRows, selectAll, data, rowIdField]);
+    // Mantener filteredRows sincronizado con dataForTable cuando cambia el filtro de factura vacía
+    React.useEffect(() => {
+        setFilteredRows(dataForTable);
+    }, [dataForTable]);
 
     // Manejar exportación a Excel
     const handleExportExcel = () => {
@@ -199,7 +236,7 @@ export function ReportDialog<TData, TValue>({
             ? exportHeaders
             : keys;
 
-        const exportData = data.map((row: any) => {
+        const exportData = (showOnlyWithoutFactura ? dataForTable : data).map((row: any) => {
             const obj: any = {};
             keys.forEach((key: string, idx: number) => {
                 const value = key.split(".").reduce((acc: any, k: string) => acc?.[k], row);
@@ -372,7 +409,7 @@ export function ReportDialog<TData, TValue>({
                     <div className="overflow-x-auto">
                         <DataTable
                             columns={columnsWithCheckbox}
-                            data={data}
+                            data={dataForTable}
                             searchKey={searchKey}
                             searchPlaceholder={searchPlaceholder}
                             onTableInstanceChange={setTableInstance}

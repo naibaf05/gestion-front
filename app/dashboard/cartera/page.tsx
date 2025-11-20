@@ -12,12 +12,25 @@ import { carteraService } from "@/services/carteraService";
 import type { Cartera } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CarteraPage() {
+    const { user, logout } = useAuth();
+
     const [cartera, setCartera] = useState<Cartera[]>([]);
     const [loading, setLoading] = useState(true);
     const [importing, setImporting] = useState(false);
     const { toast } = useToast();
+
+    if (user && user.permisos && typeof user.permisos === "string") {
+        user.permisos = JSON.parse(user.permisos);
+    }
+
+    const hasPermission = (permission: string): boolean => {
+        if (!user || !user.permisos) return false
+        if (user.rolNombre === "ADMIN") return true
+        return user.permisos[permission] === true
+    }
 
     useEffect(() => {
         loadData();
@@ -84,6 +97,10 @@ export default function CarteraPage() {
         },
     ];
 
+    if (!hasPermission("cartera.view")) {
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver cartera.</div>
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -102,23 +119,25 @@ export default function CarteraPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Cartera</h1>
                     <p className="text-gray-600">Gestiona la cartera de clientes</p>
                 </div>
-                <Button
-                    onClick={handleImport}
-                    disabled={importing}
-                    className="bg-primary hover:bg-primary-hover"
-                >
-                    {importing ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Importando...
-                        </>
-                    ) : (
-                        <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Importar
-                        </>
-                    )}
-                </Button>
+                {!hasPermission("cartera.edit") ? null : (
+                    <Button
+                        onClick={handleImport}
+                        disabled={importing}
+                        className="bg-primary hover:bg-primary-hover"
+                    >
+                        {importing ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Importando...
+                            </>
+                        ) : (
+                            <>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Importar
+                            </>
+                        )}
+                    </Button>
+                )}
             </div>
 
             <Card>

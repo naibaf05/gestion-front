@@ -1,26 +1,46 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Eye, PowerSquare } from "lucide-react"
+import { Plus, Edit, Eye, PowerSquare, History } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { User, Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { UserDialog } from "@/components/dialogs/UserDialog"
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { ButtonTooltip } from "@/components/ui/button-tooltip"
 import type { ColumnDef } from "@tanstack/react-table"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function UsersPage() {
+  const { user, logout } = useAuth();
+
   const [users, setUsers] = useState<User[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [dialogReadOnly, setDialogReadOnly] = useState(false)
+  const [historialOpen, setHistorialOpen] = useState(false)
+  const [historialId, setHistorialId] = useState<string>("")
+  const [historialLabel, setHistorialLabel] = useState<string>("")
   const { toast } = useToast()
   const searchParams = useSearchParams()
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData()
@@ -58,11 +78,19 @@ export default function UsersPage() {
 
   const handleCreate = () => {
     setSelectedUser(null)
+    setDialogReadOnly(false)
     setDialogOpen(true)
   }
 
   const handleEdit = (employee: User) => {
     setSelectedUser(employee)
+    setDialogReadOnly(false)
+    setDialogOpen(true)
+  }
+
+  const handleView = (employee: User) => {
+    setSelectedUser(employee)
+    setDialogReadOnly(true)
     setDialogOpen(true)
   }
 
@@ -83,6 +111,12 @@ export default function UsersPage() {
         })
       }
     }
+  }
+
+  const handleHistorial = (id: string, nombre: string, apellido: string) => {
+    setHistorialId(id)
+    setHistorialLabel(`Usuario [${nombre} ${apellido}]`)
+    setHistorialOpen(true)
   }
 
   const columns: ColumnDef<User>[] = [
@@ -129,24 +163,43 @@ export default function UsersPage() {
       header: "Acciones",
       cell: ({ row }) => {
         const employee = row.original
+        const canEdit = hasPermission("users.edit")
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(employee.id)}
-              className={employee.activo ? "new-text-green-600" : "new-text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              {canEdit ? (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(employee)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(employee.id, employee.nombre, employee.apellido)} tooltipContent="Historial">
+                    <History className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleStatus(employee.id)}
+                    className={employee.activo ? "new-text-green-600" : "new-text-red-600"}
+                    tooltipContent={employee.activo ? "Desactivar" : "Activar"}
+                  >
+                    <PowerSquare className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
+              ) : (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(employee)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+            </div>
+          </TooltipProvider>
         )
       },
     },
   ]
+
+  if (!hasPermission("users.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver usuarios.</div>
+  }
 
   if (loading) {
     return (
@@ -166,10 +219,12 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Usuarios</h1>
           <p className="text-gray-600">Gestiona los usuarios del sistema</p>
         </div>
-        <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Usuario
-        </Button>
+        {hasPermission("users.edit") && (
+          <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Usuario
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -184,6 +239,15 @@ export default function UsersPage() {
         user={selectedUser}
         profiles={profiles}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Usuario"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   )

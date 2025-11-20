@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, PowerSquare, ListTodo } from "lucide-react"
+import { Plus, Edit, PowerSquare, ListTodo, Eye } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -15,16 +15,30 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function UsersPage() {
+  const { user, logout } = useAuth();
+
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [permsDialogOpen, setPermsDialogOpen] = useState(false)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+  const [dialogReadOnly, setDialogReadOnly] = useState(false)
   const [profileToToggle, setProfileToToggle] = useState<string | null>(null)
   const { toast } = useToast()
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData()
@@ -50,11 +64,19 @@ export default function UsersPage() {
 
   const handleCreate = () => {
     setSelectedProfile(null)
+    setDialogReadOnly(false)
     setDialogOpen(true)
   }
 
   const handleEdit = (profile: Profile) => {
     setSelectedProfile(profile)
+    setDialogReadOnly(false)
+    setDialogOpen(true)
+  }
+
+  const handleView = (profile: Profile) => {
+    setSelectedProfile(profile)
+    setDialogReadOnly(true)
     setDialogOpen(true)
   }
 
@@ -122,22 +144,41 @@ export default function UsersPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(prof)} tooltipContent="Editar">
-                <Edit className="h-4 w-4" />
-              </ButtonTooltip>
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePerms(prof)} tooltipContent="Permisos">
-                <ListTodo className="h-4 w-4" />
-              </ButtonTooltip>
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(prof.id)}
-                className={prof.activo ? "new-text-green-600" : "new-text-red-600"} tooltipContent="Cambiar estado">
-                <PowerSquare className="h-4 w-4" />
-              </ButtonTooltip>
+              {hasPermission("profiles.edit") && (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(prof)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(prof.id)}
+                    className={prof.activo ? "new-text-green-600" : "new-text-red-600"} tooltipContent="Cambiar estado">
+                    <PowerSquare className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
+              )}
+              {hasPermission("profiles.permissions") && (
+                <>
+                  {/* Separador visual si también puede editar */}
+                  {hasPermission("profiles.edit") && (<span className="w-px h-4 bg-border mx-1" />)}
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePerms(prof)} tooltipContent="Permisos">
+                    <ListTodo className="h-4 w-4" />
+                  </ButtonTooltip>
+                </>
+              )}
+              {!hasPermission("profiles.edit") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(prof)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
             </div>
           </TooltipProvider>
         )
       },
     },
   ]
+
+  if (!hasPermission("profiles.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver perfiles.</div>
+  }
 
   if (loading) {
     return (
@@ -157,10 +198,12 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Perfiles</h1>
           <p className="text-gray-600">Gestiona los perfiles del sistema</p>
         </div>
-        <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Perfil
-        </Button>
+        {hasPermission("profiles.edit") && (
+          <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Perfil
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -174,6 +217,7 @@ export default function UsersPage() {
         onOpenChange={setDialogOpen}
         profile={selectedProfile}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       {selectedProfile && (

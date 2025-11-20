@@ -21,6 +21,7 @@ interface MapPickerProps {
   onLocationSelect: (lat: number, lng: number, address?: string) => void
   height?: string
   className?: string
+  disabled?: boolean
 }
 
 export function MapPicker({
@@ -29,6 +30,7 @@ export function MapPicker({
   onLocationSelect,
   height = "400px",
   className = "",
+  disabled = false,
 }: MapPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
@@ -76,29 +78,31 @@ export function MapPicker({
 
       // Agregar marcador inicial
       markerRef.current = window.L.marker([currentLat, currentLng], {
-        draggable: true,
+        draggable: !disabled,
       }).addTo(mapInstanceRef.current)
 
-      // Evento cuando se arrastra el marcador
-      markerRef.current.on("dragend", (e: any) => {
-        const position = e.target.getLatLng()
-        setCurrentLat(position.lat)
-        setCurrentLng(position.lng)
-        onLocationSelect(position.lat, position.lng)
-        reverseGeocode(position.lat, position.lng)
-      })
+      if (!disabled) {
+        // Evento cuando se arrastra el marcador
+        markerRef.current.on("dragend", (e: any) => {
+          const position = e.target.getLatLng()
+          setCurrentLat(position.lat)
+          setCurrentLng(position.lng)
+          onLocationSelect(position.lat, position.lng)
+          reverseGeocode(position.lat, position.lng)
+        })
 
-      // Evento cuando se hace clic en el mapa
-      mapInstanceRef.current.on("click", (e: any) => {
-        const { lat, lng } = e.latlng
-        setCurrentLat(lat)
-        setCurrentLng(lng)
-        markerRef.current.setLatLng([lat, lng])
-        onLocationSelect(lat, lng)
-        reverseGeocode(lat, lng)
-      })
+        // Evento cuando se hace clic en el mapa
+        mapInstanceRef.current.on("click", (e: any) => {
+          const { lat, lng } = e.latlng
+          setCurrentLat(lat)
+          setCurrentLng(lng)
+          markerRef.current.setLatLng([lat, lng])
+          onLocationSelect(lat, lng)
+          reverseGeocode(lat, lng)
+        })
+      }
     }
-  }, [isLoaded, currentLat, currentLng, onLocationSelect])
+  }, [isLoaded, currentLat, currentLng, onLocationSelect, disabled])
 
   // Geocodificación inversa para obtener la dirección
   const reverseGeocode = async (lat: number, lng: number) => {
@@ -117,7 +121,7 @@ export function MapPicker({
 
   // Búsqueda de direcciones
   const searchLocation = async () => {
-    if (!searchAddress.trim()) return
+    if (disabled || !searchAddress.trim()) return
 
     setIsSearching(true)
     try {
@@ -150,6 +154,7 @@ export function MapPicker({
 
   // Obtener ubicación actual del usuario
   const getCurrentLocation = () => {
+    if (disabled) return
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -185,16 +190,17 @@ export function MapPicker({
       <div className="flex gap-2">
         <div className="flex-1">
           <Label htmlFor="search">Buscar dirección</Label>
-          <div className="flex gap-2">
+              <div className="flex gap-2">
             <Input
               id="search"
               value={searchAddress}
-              onChange={(e) => setSearchAddress(e.target.value)}
-              onKeyPress={handleKeyPress}
+                  onChange={(e) => !disabled && setSearchAddress(e.target.value)}
+                  onKeyPress={(e) => !disabled && handleKeyPress(e)}
               placeholder="Ingresa una dirección..."
               className="flex-1"
+                  disabled={disabled}
             />
-            <Button type="button" onClick={searchLocation} disabled={isSearching} variant="outline">
+                <Button type="button" onClick={searchLocation} disabled={isSearching || disabled} variant="outline">
               {isSearching ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
               ) : (
@@ -204,7 +210,7 @@ export function MapPicker({
           </div>
         </div>
         <div className="flex flex-col justify-end">
-          <Button type="button" onClick={getCurrentLocation} variant="outline" title="Usar mi ubicación actual">
+          <Button type="button" onClick={getCurrentLocation} variant="outline" title="Usar mi ubicación actual" disabled={disabled}>
             <Crosshair className="h-4 w-4" />
           </Button>
         </div>
@@ -213,9 +219,9 @@ export function MapPicker({
             <Label>Latitud</Label>
             <Input
               value={currentLat}
-              onChange={(e) => setCurrentLat(Number(e.target.value))}
+              onChange={(e) => !disabled && setCurrentLat(Number(e.target.value))}
               onBlur={() => {
-                if (mapInstanceRef.current && markerRef.current) {
+                if (!disabled && mapInstanceRef.current && markerRef.current) {
                   mapInstanceRef.current.setView([currentLat, currentLng], 15)
                   markerRef.current.setLatLng([currentLat, currentLng])
                   onLocationSelect(currentLat, currentLng)
@@ -223,7 +229,7 @@ export function MapPicker({
                 }
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (!disabled && e.key === "Enter") {
                   if (mapInstanceRef.current && markerRef.current) {
                     mapInstanceRef.current.setView([currentLat, currentLng], 15)
                     markerRef.current.setLatLng([currentLat, currentLng])
@@ -235,15 +241,16 @@ export function MapPicker({
               className="bg-gray-50"
               type="number"
               step="any"
+              disabled={disabled}
             />
           </div>
           <div>
             <Label>Longitud</Label>
             <Input
               value={currentLng}
-              onChange={(e) => setCurrentLng(Number(e.target.value))}
+              onChange={(e) => !disabled && setCurrentLng(Number(e.target.value))}
               onBlur={() => {
-                if (mapInstanceRef.current && markerRef.current) {
+                if (!disabled && mapInstanceRef.current && markerRef.current) {
                   mapInstanceRef.current.setView([currentLat, currentLng], 15)
                   markerRef.current.setLatLng([currentLat, currentLng])
                   onLocationSelect(currentLat, currentLng)
@@ -251,7 +258,7 @@ export function MapPicker({
                 }
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (!disabled && e.key === "Enter") {
                   if (mapInstanceRef.current && markerRef.current) {
                     mapInstanceRef.current.setView([currentLat, currentLng], 15)
                     markerRef.current.setLatLng([currentLat, currentLng])
@@ -263,6 +270,7 @@ export function MapPicker({
               className="bg-gray-50"
               type="number"
               step="any"
+              disabled={disabled}
             />
           </div>
         </div>
@@ -278,13 +286,13 @@ export function MapPicker({
             </div>
           </div>
         )}
-        <div ref={mapRef} style={{ height, width: "100%" }} className={!isLoaded ? "hidden" : ""} />
+        <div ref={mapRef} style={{ height, width: "100%" }} className={`${!isLoaded ? "hidden" : ""} ${disabled ? 'pointer-events-none opacity-80' : ''}`} />
 
         {/* Instrucciones */}
         <div className="absolute top-2 left-2 bg-white bg-opacity-90 p-2 rounded shadow text-xs">
           <div className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
-            <span>Haz clic o arrastra el marcador</span>
+            <span>{disabled ? 'Vista de ubicación' : 'Haz clic o arrastra el marcador'}</span>
           </div>
         </div>
       </div>

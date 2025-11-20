@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car, History, Eye } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Cliente, Parametrizacion, ParametrizationType } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ParametrizationDialog } from "@/components/dialogs/ParametrizationDialog"
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { clientService } from "@/services/clientService"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface ParametrizationConfig {
   key: ParametrizationType
@@ -120,6 +122,7 @@ const parametrizationConfigs: ParametrizationConfig[] = [
 ]
 
 export default function ParametrizationsPage() {
+  const { user } = useAuth()
   const [selectedType, setSelectedType] = useState<ParametrizationType>("poblados")
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -138,10 +141,24 @@ export default function ParametrizationsPage() {
 
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogReadOnly, setDialogReadOnly] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [currentType, setCurrentType] = useState<ParametrizationType>("poblados")
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
   const { toast } = useToast()
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos)
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData()
@@ -262,18 +279,30 @@ export default function ParametrizationsPage() {
   }
 
   const handleCreate = (type: ParametrizationType) => {
+    if (!hasPermission("settings.edit")) return
     setCurrentType(type)
     setSelectedItem(null)
+    setDialogReadOnly(false)
     setDialogOpen(true)
   }
 
   const handleEdit = (item: any, type: ParametrizationType) => {
+    if (!hasPermission("settings.edit")) return
     setCurrentType(type)
     setSelectedItem(item)
+    setDialogReadOnly(false)
+    setDialogOpen(true)
+  }
+
+  const handleView = (item: any, type: ParametrizationType) => {
+    setCurrentType(type)
+    setSelectedItem(item)
+    setDialogReadOnly(true)
     setDialogOpen(true)
   }
 
   const handleToggleStatus = async (id: string) => {
+    if (!hasPermission("settings.edit")) return
     if (confirm("¿Estás seguro de que deseas cambiar el estado a este elemento?")) {
       try {
         await parametrizationService.toggleStatus(id)
@@ -293,6 +322,13 @@ export default function ParametrizationsPage() {
       }
     }
   }
+
+  const handleHistorial = (id: string, nombre: string, tipo: ParametrizationType) => {
+    setHistorialId(id);
+    const tipoConfig = parametrizationConfigs.find(config => config.key === tipo);
+    setHistorialLabel(`${tipoConfig?.singular_title || 'Parametrización'} [${nombre}]`);
+    setHistorialOpen(true);
+  };
 
   const openLocationPicker = (item: any, type: ParametrizationType) => {
     setCurrentType(type)
@@ -359,33 +395,44 @@ export default function ParametrizationsPage() {
         const item = row.original
         return (
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(item, type)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            {type === 'oficinas' ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openLocationPicker(item, type)}
-                className={item.datosJson?.lat ? "new-text-green-600" : "new-text-red-600"}
-              >
-                {item.datosJson?.lat ? (
-                  <MapPin className="h-4 w-4" />
+            {hasPermission("settings.edit") ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(item, type)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleHistorial(item.id, item.nombre, type)}>
+                  <History className="h-4 w-4" />
+                </Button>
+                {type === 'oficinas' ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openLocationPicker(item, type)}
+                    className={item.datosJson?.lat ? "new-text-green-600" : "new-text-red-600"}
+                  >
+                    {item.datosJson?.lat ? (
+                      <MapPin className="h-4 w-4" />
+                    ) : (
+                      <MapPinOff className="h-4 w-4" />
+                    )}
+                  </Button>
                 ) : (
-                  <MapPinOff className="h-4 w-4" />
+                  <div></div>
                 )}
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleStatus(item.id)}
+                  className={item.activo ? "new-text-green-600" : "new-text-red-600"}
+                >
+                  <PowerSquare className="h-4 w-4" />
+                </Button>
+              </>
             ) : (
-              <div></div>
+              <Button variant="ghost" size="sm" onClick={() => handleView(item, type)}>
+                <Eye className="h-4 w-4" />
+              </Button>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(item.id)}
-              className={item.activo ? "new-text-green-600" : "new-text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
           </div>
         )
       },
@@ -407,6 +454,10 @@ export default function ParametrizationsPage() {
 
   const currentConfig = getCurrentConfig()
   const filteredData = getFilteredData()
+
+  if (!hasPermission("settings.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver parametrizaciones.</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -462,13 +513,15 @@ export default function ParametrizationsPage() {
             </div>
 
             {/* Botón Crear */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 opacity-0">Acción</label>
-              <Button onClick={() => handleCreate(selectedType)} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo {currentConfig.singular_title}
-              </Button>
-            </div>
+            {hasPermission("settings.edit") && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 opacity-0">Acción</label>
+                <Button onClick={() => handleCreate(selectedType)} className="bg-primary hover:bg-primary-hover">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nuevo {currentConfig.singular_title}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -494,6 +547,7 @@ export default function ParametrizationsPage() {
         type={currentType}
         clientes={clientes}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       <LocationPickerDialog
@@ -504,6 +558,14 @@ export default function ParametrizationsPage() {
         initialLat={selectedItem?.datosJson?.lat}
         initialLng={selectedItem?.datosJson?.lon}
         onLocationConfirm={handleLocationConfirm}
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Parametrizacion"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   )

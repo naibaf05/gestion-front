@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
-import { Check, CircleDollarSign, Edit, MapPin, Plus, PowerSquare } from "lucide-react"
+import { Check, CircleDollarSign, Edit, Eye, Plus, PowerSquare } from "lucide-react"
 import { Parametrizacion, Rate, Sede } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { rateService } from "@/services/rateService"
@@ -23,12 +23,16 @@ interface RatesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   sede?: Sede | null
+  readOnly?: boolean
+  canEdit?: boolean
 }
 
 export function RatesDialog({
   open,
   onOpenChange,
   sede,
+  readOnly = false,
+  canEdit = false,
 }: RatesDialogProps) {
   const [rates, setRates] = useState<Rate[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,6 +40,7 @@ export function RatesDialog({
   const [undMedidas, setUndMedidas] = useState<Parametrizacion[]>([])
   const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
   const [selectedRate, setSelectedRate] = useState<Rate | null>(null)
+  const [rateDialogReadOnly, setRateDialogReadOnly] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -71,16 +76,28 @@ export function RatesDialog({
   }
 
   const handleCreate = () => {
+    if (readOnly || !canEdit) return
     setSelectedRate(null)
+    setRateDialogReadOnly(false)
     setDialogOpen(true)
   }
 
   const handleEdit = (rate: Rate) => {
+    if (readOnly || !canEdit) return
     setSelectedRate(rate)
+    setRateDialogReadOnly(false)
+    setDialogOpen(true)
+  }
+
+  const handleView = (rate: Rate) => {
+    // Permite ver cuando sólo tiene rates.view (readOnly true) o no canEdit
+    setSelectedRate(rate)
+    setRateDialogReadOnly(true)
     setDialogOpen(true)
   }
 
   const handleToggleStatus = async (id: string) => {
+    if (readOnly || !canEdit) return
     if (confirm("¿Estás seguro de que deseas cambiar el estado a esta tarifa?")) {
       try {
         await rateService.toggleStatus(id);
@@ -174,17 +191,25 @@ export function RatesDialog({
         const prof = row.original
         return (
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(prof)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleToggleStatus(prof.id)}
-              className={prof.activo ? "new-text-green-600" : "new-text-red-600"}
-            >
-              <PowerSquare className="h-4 w-4" />
-            </Button>
+            {canEdit && !readOnly ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(prof)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleStatus(prof.id)}
+                  className={prof.activo ? "new-text-green-600" : "new-text-red-600"}
+                >
+                  <PowerSquare className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => handleView(prof)} title="Ver">
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )
       },
@@ -206,7 +231,7 @@ export function RatesDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[95vh] overflow-y-auto"
-                style={{ maxWidth: '80%' }}>
+          style={{ maxWidth: '80%' }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CircleDollarSign className="h-5 w-5" />
@@ -216,10 +241,12 @@ export function RatesDialog({
 
           <div className="flex justify-between items-center">
             <div></div>
-            <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Tarifa
-            </Button>
+            {!readOnly && canEdit && (
+              <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Tarifa
+              </Button>
+            )}
           </div>
 
           <DataTable columns={columns} data={rates} searchKey={["undMedidaNombre", "tipoResiduoCodigo", "tipoResiduoNombre", "tarifaNombre"]} searchPlaceholder="Buscar por unidad de medida..." />
@@ -232,15 +259,21 @@ export function RatesDialog({
         </DialogContent>
       </Dialog>
 
-      <RateDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        rate={selectedRate}
-        sede={sede}
-        undMedidas={undMedidas}
-        tiposResiduos={tiposResiduos}
-        onSuccess={loadData}
-      />
+      {dialogOpen && (
+        <RateDialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            if (!open) setRateDialogReadOnly(false)
+            setDialogOpen(open)
+          }}
+          rate={selectedRate}
+          sede={sede}
+          undMedidas={undMedidas}
+          tiposResiduos={tiposResiduos}
+          onSuccess={loadData}
+          readOnly={rateDialogReadOnly || readOnly || !canEdit}
+        />
+      )}
     </>
   )
 }

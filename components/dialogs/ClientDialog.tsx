@@ -31,9 +31,10 @@ interface ClientDialogProps {
   comerciales: Parametrizacion[]
   tClientes: Parametrizacion[]
   onSuccess: () => void
+  readOnly?: boolean // modo solo lectura
 }
 
-export function ClientDialog({ open, onOpenChange, client, poblados, comerciales, tClientes, onSuccess }: ClientDialogProps) {
+export function ClientDialog({ open, onOpenChange, client, poblados, comerciales, tClientes, onSuccess, readOnly = false }: ClientDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     nombre: "",
@@ -128,7 +129,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{client ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
+          <DialogTitle>{client ? (readOnly ? "Detalle Cliente" : "Editar Cliente") : "Nuevo Cliente"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="basica">
@@ -151,6 +152,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -162,6 +165,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={20}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                     </div>
@@ -175,6 +180,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, nombreComercial: e.target.value } })}
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -186,6 +193,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                     </div>
@@ -199,6 +208,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         required
                         autoComplete="off"
                         maxLength={200}
+                        disabled={readOnly}
+                        readOnly={readOnly}
                       />
                     </div>
 
@@ -212,6 +223,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -223,6 +236,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           required
                           autoComplete="off"
                           maxLength={20}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                     </div>
@@ -233,8 +248,9 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <Select
                           value={formData.pobladoId ? String(formData.pobladoId) : ""}
                           onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
+                          disabled={readOnly}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger disabled={readOnly}>
                             <SelectValue placeholder="Selecciona un municipio" />
                           </SelectTrigger>
                           <SelectContent>
@@ -251,8 +267,9 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <Select
                           value={formData.comercialId ? String(formData.comercialId) : ""}
                           onValueChange={(value) => setFormData({ ...formData, comercialId: value })}
+                          disabled={readOnly}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger disabled={readOnly}>
                             <SelectValue placeholder="Selecciona un comercial" />
                           </SelectTrigger>
                           <SelectContent>
@@ -283,6 +300,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           value={formData.fechaRenovacion}
                           onChange={(e) => setFormData({ ...formData, fechaRenovacion: e.target.value })}
                           autoComplete="off"
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -290,6 +309,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <InputPositiveInteger
                           value={formData.datosJson.fechaCierreFacturacion}
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaCierreFacturacion: e.target.value } })}
+                          disabled={readOnly}
                         />
                       </div>
                     </div>
@@ -304,6 +324,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, correo: e.target.value } })}
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -315,6 +337,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, correoFacturacion: e.target.value } })}
                           autoComplete="off"
                           maxLength={100}
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                     </div>
@@ -327,6 +351,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           value={formData.tiposClienteIds}
                           onChange={selected => setFormData({ ...formData, tiposClienteIds: selected })}
                           placeholder="Selecciona tipos de cliente"
+                          disabled={readOnly}
                         />
                       </div>
                       <div className="space-y-2">
@@ -334,6 +359,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                         <InputPositiveInteger
                           value={formData.datosJson.contratoComodato}
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, contratoComodato: e.target.value } })}
+                          disabled={readOnly}
                         />
                       </div>
                     </div>
@@ -347,6 +373,8 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                           value={formData.datosJson.fechaVencimientoContrato}
                           onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaVencimientoContrato: e.target.value } })}
                           autoComplete="off"
+                          disabled={readOnly}
+                          readOnly={readOnly}
                         />
                       </div>
                     </div>
@@ -358,20 +386,22 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {client ? "Actualizando..." : "Creando..."}
-                </>
-              ) : client ? (
-                "Actualizar"
-              ) : (
-                "Crear"
-              )}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {client ? "Actualizando..." : "Creando..."}
+                  </>
+                ) : client ? (
+                  "Actualizar"
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

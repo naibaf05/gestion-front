@@ -19,8 +19,13 @@ import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 import { WeekPicker } from "@/components/ui/week-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { ButtonTooltip } from "@/components/ui/button-tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function ProgsPage() {
+  const { user, logout } = useAuth();
+
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -47,6 +52,16 @@ export default function ProgsPage() {
   const [dialogTableOpen, setDialogTableOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProgPath | null>(null);
   const { toast } = useToast();
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
 
   useEffect(() => {
     loadData();
@@ -137,14 +152,18 @@ export default function ProgsPage() {
       cell: ({ row }) => {
         const item = row.original;
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => openTableDialog(item)}            >
-              <FileSpreadsheet className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              {hasPermission("prog.edit") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(item)} tooltipContent="Editar">
+                  <Edit className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => openTableDialog(item)} tooltipContent="Ver Programación">
+                <FileSpreadsheet className="h-4 w-4" />
+              </ButtonTooltip>
+            </div>
+          </TooltipProvider>
         );
       },
     },
@@ -169,16 +188,15 @@ export default function ProgsPage() {
       cell: ({ row }) => {
         const item = row.original;
         return (
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(item.id)}
-              className="new-text-red-600"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              {hasPermission("prog.edit") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="new-text-red-600" tooltipContent="Eliminar">
+                  <Trash2 className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+            </div>
+          </TooltipProvider>
         );
       },
     },
@@ -213,6 +231,10 @@ export default function ProgsPage() {
       },
     }
   ];
+
+  if (!hasPermission("prog.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver la programación.</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -267,13 +289,12 @@ export default function ProgsPage() {
             <TabsContent value="tablaEventual">
               <div className="flex justify-between items-center">
                 <div></div>
-                <Button
-                  onClick={handleCreateEv}
-                  className="bg-primary hover:bg-primary-hover"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nuevo Eventual
-                </Button>
+                {hasPermission("prog.edit") && (
+                  <Button onClick={handleCreateEv} className="bg-primary hover:bg-primary-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nuevo Eventual
+                  </Button>
+                )}
               </div>
               <DataTable columns={columns_ev} data={tablaEventual} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
             </TabsContent>

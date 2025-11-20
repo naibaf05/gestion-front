@@ -28,6 +28,7 @@ interface SalidaDialogProps {
   productos: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
+  readOnly?: boolean
 }
 
 export function SalidaDialog({
@@ -39,6 +40,7 @@ export function SalidaDialog({
   productos,
   plantas,
   onSuccess,
+  readOnly = false,
 }: SalidaDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -77,6 +79,10 @@ export function SalidaDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) {
+      onOpenChange(false)
+      return
+    }
     setLoading(true)
 
     try {
@@ -110,95 +116,133 @@ export function SalidaDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{salida ? "Editar Salida" : "Nueva Salida"}</DialogTitle>
+          <DialogTitle>{readOnly ? "Ver Salida" : (salida ? "Editar Salida" : "Nueva Salida")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="planta" required>Planta</Label>
-              <SelectSingle
-                id="planta"
-                placeholder="Selecciona una planta"
-                options={plantas}
-                value={formData.plantaId}
-                onChange={(value) => setFormData({ ...formData, plantaId: value })}
-                valueKey="id"
-                labelKey="nombreMostrar"
-              />
+              {readOnly ? (
+                <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                  {plantas.find(p => p.id === formData.plantaId)?.nombreMostrar || "-"}
+                </div>
+              ) : (
+                <SelectSingle
+                  id="planta"
+                  placeholder="Selecciona una planta"
+                  options={plantas}
+                  value={formData.plantaId}
+                  onChange={(value) => setFormData({ ...formData, plantaId: value })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="cliente" required>Destino</Label>
-              <SelectSingle
-                id="cliente"
-                placeholder="Selecciona un cliente"
-                options={clientes}
-                value={formData.clienteId}
-                onChange={(value) => setFormData({ ...formData, clienteId: value })}
-                valueKey="id"
-                labelKey="nombre"
-              />
+              {readOnly ? (
+                <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                  {clientes.find(c => c.id === formData.clienteId)?.nombre || "-"}
+                </div>
+              ) : (
+                <SelectSingle
+                  id="cliente"
+                  placeholder="Selecciona un cliente"
+                  options={clientes}
+                  value={formData.clienteId}
+                  onChange={(value) => setFormData({ ...formData, clienteId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="vehiculo" required>Vehículo</Label>
-              <SelectSingle
-                id="vehiculo"
-                placeholder="Selecciona un vehículo"
-                options={vehiculos}
-                value={formData.vehiculoId}
-                onChange={(value) => setFormData({ ...formData, vehiculoId: value })}
-                valueKey="id"
-                labelKey="placa"
-              />
+              {readOnly ? (
+                <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                  {vehiculos.find(v => v.id === formData.vehiculoId)?.placa || "-"}
+                </div>
+              ) : (
+                <SelectSingle
+                  id="vehiculo"
+                  placeholder="Selecciona un vehículo"
+                  options={vehiculos}
+                  value={formData.vehiculoId}
+                  onChange={(value) => setFormData({ ...formData, vehiculoId: value })}
+                  valueKey="id"
+                  labelKey="placa"
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="producto" required>Producto (Tipo de Residuo)</Label>
-              <SelectSingle
-                id="producto"
-                placeholder="Selecciona un tipo de residuo"
-                options={productos}
-                value={formData.productoId}
-                onChange={(value) => setFormData({ ...formData, productoId: value })}
-                valueKey="id"
-                labelKey="nombreMostrar"
-              />
+              {readOnly ? (
+                <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                  {productos.find(p => p.id === formData.productoId)?.nombreMostrar || "-"}
+                </div>
+              ) : (
+                <SelectSingle
+                  id="producto"
+                  placeholder="Selecciona un tipo de residuo"
+                  options={productos}
+                  value={formData.productoId}
+                  onChange={(value) => setFormData({ ...formData, productoId: value })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="peso" required>Peso (kg)</Label>
-                <InputDecimal
-                  id="peso"
-                  value={formData.peso.toString()}
-                  onChange={(e) => setFormData({ ...formData, peso: parseFloat(e.target.value) || 0 })}
-                  required
-                  placeholder="0.00"
-                  min={0}
-                  step="0.01"
-                  decimalPlaces={2}
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {formData.peso ? formData.peso.toFixed(2) + ' kg' : '-'}
+                  </div>
+                ) : (
+                  <InputDecimal
+                    id="peso"
+                    value={formData.peso.toString()}
+                    onChange={(e) => setFormData({ ...formData, peso: parseFloat(e.target.value) || 0 })}
+                    required
+                    placeholder="0.00"
+                    min={0}
+                    step="0.01"
+                    decimalPlaces={2}
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fecha" required>Fecha</Label>
-                <Input
-                  id="fecha"
-                  type="date"
-                  value={formData.fecha}
-                  onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                />
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {formData.fecha || '-'}
+                  </div>
+                ) : (
+                  <Input
+                    id="fecha"
+                    type="date"
+                    value={formData.fecha}
+                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                  />
+                )}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {salida ? "Actualizar" : "Crear"}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {salida ? "Actualizar" : "Crear"}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

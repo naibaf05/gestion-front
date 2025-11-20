@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Trash2, Key } from "lucide-react";
+import { Plus, Edit, PowerSquare, Trash2, Key, History, Eye } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import type { Cliente, Parametrizacion } from "@/types";
@@ -19,9 +19,14 @@ import { PasswordDialog } from "@/components/dialogs/PasswordDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ClientsPage() {
+  const { user, logout } = useAuth();
+
   const [clients, setClients] = useState<Cliente[]>([]);
   const [poblados, setPoblados] = useState<Parametrizacion[]>([]);
   const [comerciales, setComerciales] = useState<Parametrizacion[]>([]);
@@ -29,7 +34,22 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
   const { toast } = useToast();
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
+
+  if (user && user.permisos && typeof user.permisos === "string") {
+    user.permisos = JSON.parse(user.permisos);
+  }
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permisos) return false
+    if (user.rolNombre === "ADMIN") return true
+    return user.permisos[permission] === true
+  }
+
   const searchParams = useSearchParams();
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -93,11 +113,19 @@ export default function ClientsPage() {
 
   const handleCreate = () => {
     setSelectedClient(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEdit = (client: Cliente) => {
     setSelectedClient(client);
+    setDialogReadOnly(false);
+    setDialogOpen(true);
+  };
+
+  const handleView = (client: Cliente) => {
+    setSelectedClient(client);
+    setDialogReadOnly(true);
     setDialogOpen(true);
   };
 
@@ -118,6 +146,12 @@ export default function ClientsPage() {
         });
       }
     }
+  };
+
+  const handleHistorial = (id: string, nombre: string, nit: string) => {
+    setHistorialId(id);
+    setHistorialLabel(`Cliente [${nombre} - ${nit}]`);
+    setHistorialOpen(true);
   };
 
   const columns: ColumnDef<Cliente>[] = [
@@ -177,27 +211,52 @@ export default function ClientsPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEdit(client)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleToggleStatus(client.id)}
-                className={client.activo ? "new-text-green-600" : "new-text-red-600"}
-              >
-                <PowerSquare className="h-4 w-4" />
-              </Button>
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleChangePassword(client)} className="text-blue-600" tooltipContent="Cambiar Contraseña">
-                <Key className="h-4 w-4" />
-              </ButtonTooltip>
-              <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(client)} className="new-text-red-600" tooltipContent="Eliminar">
-                <Trash2 className="h-4 w-4" />
-              </ButtonTooltip>
+              {hasPermission("clients.edit") ? (
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(client)} tooltipContent="Editar">
+                    <Edit className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(client.id)}
+                    className={client.activo ? "new-text-green-600" : "new-text-red-600"}
+                    tooltipContent={client.activo ? "Desactivar" : "Activar"}
+                  >
+                    <PowerSquare className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <DropdownMenu>
+                    <Tooltip>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <span className="sr-only">Más acciones</span>
+                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                            <circle cx="5" cy="12" r="2" fill="currentColor" />
+                            <circle cx="12" cy="12" r="2" fill="currentColor" />
+                            <circle cx="19" cy="12" r="2" fill="currentColor" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <TooltipContent>Más acciones</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleChangePassword(client)} className="text-blue-600">
+                        <Key className="h-4 w-4" />
+                        Cambiar Contraseña
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(client)} className="new-text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleHistorial(client.id, client.nombre, client.nit)}>
+                        <History className="h-4 w-4" />
+                        Historial
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(client)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
             </div>
           </TooltipProvider>
         );
@@ -241,6 +300,10 @@ export default function ClientsPage() {
     setSelectedClient(null)
   }
 
+  if (!hasPermission("clients.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver clientes.</div>
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -259,13 +322,15 @@ export default function ClientsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
           <p className="text-gray-600">Gestiona los clientes del sistema</p>
         </div>
-        <Button
-          onClick={handleCreate}
-          className="bg-primary hover:bg-primary-hover"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Cliente
-        </Button>
+        {hasPermission("clients.edit") && (
+          <Button
+            onClick={handleCreate}
+            className="bg-primary hover:bg-primary-hover"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Cliente
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -288,6 +353,7 @@ export default function ClientsPage() {
         comerciales={comerciales}
         tClientes={tClientes}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       <ConfirmationDialog
@@ -305,6 +371,14 @@ export default function ClientsPage() {
         clientName={selectedClient?.nombre || ""}
         clientId={selectedClient?.id || ""}
         onSuccess={loadData}
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Cliente"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   );

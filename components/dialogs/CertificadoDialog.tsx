@@ -43,6 +43,7 @@ export function CertificadoDialog({
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    id: "",
     clienteId: "",
     sedeId: "",
     fecha: "",
@@ -57,6 +58,7 @@ export function CertificadoDialog({
   useEffect(() => {
     if (certificado) {
       setFormData({
+        id: certificado.id,
         clienteId: certificado.clienteId || "",
         sedeId: certificado.sedeId || "",
         fecha: certificado.fecha.split('T')[0],
@@ -68,6 +70,7 @@ export function CertificadoDialog({
       });
     } else {
       setFormData({
+        id: "",
         clienteId: "",
         sedeId: "",
         fecha: "",
@@ -144,10 +147,10 @@ export function CertificadoDialog({
 
       switch (tipoString) {
         case "1":
-          base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
           break;
         case "2":
-          base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
           break;
         case "3":
           base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);

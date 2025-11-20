@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarSign, Trash2 } from "lucide-react";
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, CalendarDays, CircleDollarSign, Trash2, History, Eye } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { pathService } from "@/services/pathService";
 import { parametrizationService } from "@/services/parametrizationService";
@@ -17,10 +17,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog";
 import { WeeklyScheduleDialog } from "@/components/dialogs/WeeklyScheduleDialog";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { RatesDialog } from "@/components/dialogs/RatesDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function SedesPage() {
@@ -48,10 +49,17 @@ export default function SedesPage() {
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [locationReadOnly, setLocationReadOnly] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleReadOnly, setScheduleReadOnly] = useState(false);
   const [ratesDialogOpen, setRatesDialogOpen] = useState(false);
+  const [ratesReadOnly, setRatesReadOnly] = useState(false);
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
   const { toast } = useToast();
   const [scheduleData, setScheduleData] = useState<any[]>([]);
   const searchParams = useSearchParams();
@@ -125,13 +133,21 @@ export default function SedesPage() {
 
   const handleCreate = () => {
     setSelectedSede(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEdit = (sede: Sede) => {
     setSelectedSede(sede);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
+
+  const handleView = (sede: Sede) => {
+    setSelectedSede(sede);
+    setDialogReadOnly(true);
+    setDialogOpen(true);
+  }
 
   const handleToggleStatus = async (id: string) => {
     if (confirm("¿Estás seguro de que deseas cambiar el estado a esta sede?")) {
@@ -150,6 +166,12 @@ export default function SedesPage() {
         });
       }
     }
+  };
+
+  const handleHistorial = (id: string, nombre: string, clienteNombre: string) => {
+    setHistorialId(id);
+    setHistorialLabel(`Sede [${nombre} - ${clienteNombre}]`);
+    setHistorialOpen(true);
   };
 
   const handleLocationConfirm = (
@@ -172,17 +194,21 @@ export default function SedesPage() {
 
   const openLocationPicker = (sede: Sede) => {
     setSelectedSede(sede);
+    // Solo lectura si no tiene permiso de geo.edit
+    setLocationReadOnly(!hasPermission("geo.edit"));
     setLocationDialogOpen(true);
   };
 
   const openScheduleDialog = (sede: Sede) => {
     setSelectedSede(sede);
     setScheduleData(sede.frecuencias || []);
+    setScheduleReadOnly(!hasPermission("schedule.edit"));
     setScheduleDialogOpen(true)
   }
 
   const openRatesDialog = (sede: Sede) => {
     setSelectedSede(sede);
+    setRatesReadOnly(!hasPermission("rates.edit"));
     setRatesDialogOpen(true);
   }
 
@@ -261,7 +287,7 @@ export default function SedesPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              {hasPermission("sedes.edit") && (
+              {hasPermission("sedes.edit") ? (
                 <>
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(sede)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
@@ -270,11 +296,11 @@ export default function SedesPage() {
                     tooltipContent={sede.activo ? "Desactivar" : "Activar"} className={sede.activo ? "new-text-green-600" : "new-text-red-600"}>
                     <PowerSquare className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDelete(sede)}
-                    tooltipContent="Eliminar" className="new-text-red-600">
-                    <Trash2 className="h-4 w-4" />
-                  </ButtonTooltip>
                 </>
+              ) : hasPermission("sedes.view") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(sede)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
               )}
               <DropdownMenu>
                 <Tooltip>
@@ -291,26 +317,39 @@ export default function SedesPage() {
                   <TooltipContent>Más acciones</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
+                  {hasPermission("sedes.edit") && (
+                    <DropdownMenuItem onClick={() => handleDelete(sede)}
+                      className="new-text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  )}
                   {hasPermission("schedule.view") && (
                     <DropdownMenuItem onClick={() => openScheduleDialog(sede)}>
-                      <CalendarDays className="h-4 w-4 mr-2" />
+                      <CalendarDays className="h-4 w-4" />
                       Frecuencias
                     </DropdownMenuItem>
                   )}
                   {hasPermission("geo.view") && (
                     <DropdownMenuItem onClick={() => openLocationPicker(sede)}>
                       {sede.lat ? (
-                        <MapPin className="h-4 w-4 mr-2 new-text-green-600" />
+                        <MapPin className="h-4 w-4 new-text-green-600" />
                       ) : (
-                        <MapPinOff className="h-4 w-4 mr-2 new-text-red-600" />
+                        <MapPinOff className="h-4 w-4 new-text-red-600" />
                       )}
                       Ubicación
                     </DropdownMenuItem>
                   )}
                   {hasPermission("rates.view") && (
                     <DropdownMenuItem onClick={() => openRatesDialog(sede)}>
-                      <CircleDollarSign className="h-4 w-4 mr-2" />
+                      <CircleDollarSign className="h-4 w-4" />
                       Tarifas
+                    </DropdownMenuItem>
+                  )}
+                  {hasPermission("sedes.edit") && (
+                    <DropdownMenuItem onClick={() => handleHistorial(sede.id, sede.nombre, sede.clienteNombre)}>
+                      <History className="h-4 w-4" />
+                      Historial
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -353,6 +392,10 @@ export default function SedesPage() {
     setSelectedSede(null)
   }
 
+  if (!hasPermission("sedes.view")) {
+    return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver sedes.</div>
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -392,7 +435,10 @@ export default function SedesPage() {
 
       <SedeDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setDialogReadOnly(false)
+          setDialogOpen(open)
+        }}
         sede={selectedSede}
         clientes={clientes}
         poblados={poblados}
@@ -400,16 +446,21 @@ export default function SedesPage() {
         generadores={generadores}
         periodos={periodos}
         onSuccess={loadData}
+        readOnly={dialogReadOnly}
       />
 
       <LocationPickerDialog
         open={locationDialogOpen}
-        onOpenChange={setLocationDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setLocationReadOnly(false);
+          setLocationDialogOpen(open);
+        }}
         title="Seleccionar Ubicación de la Sede"
         description="Busca la dirección o haz clic en el mapa para establecer la ubicación exacta de la sede"
         initialLat={selectedSede?.lat}
         initialLng={selectedSede?.lon}
         onLocationConfirm={handleLocationConfirm}
+        readOnly={locationReadOnly}
       />
 
       {/* Diálogo de horario semanal */}
@@ -422,12 +473,18 @@ export default function SedesPage() {
         initialSchedule={scheduleData}
         infoAdicional={infoAdicional}
         onSave={handleScheduleSave}
+        readOnly={scheduleReadOnly}
       />
 
       <RatesDialog
         open={ratesDialogOpen}
-        onOpenChange={setRatesDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setRatesReadOnly(false);
+          setRatesDialogOpen(open);
+        }}
         sede={selectedSede}
+        readOnly={ratesReadOnly}
+        canEdit={hasPermission("rates.edit")}
       />
 
       <ConfirmationDialog
@@ -437,6 +494,14 @@ export default function SedesPage() {
         description="¿Estás seguro de que deseas eliminar esta sede?"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Sede"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   );

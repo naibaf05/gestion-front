@@ -154,6 +154,20 @@ export interface Vehicle {
   datosJson?: any
 }
 
+export interface AlertaVehiculo {
+  id: string;
+  placa: string;
+  conductorNombre: string;
+  fechaSoat?: string;
+  fechaTecnomecanica?: string;
+}
+
+export interface AlertasCount {
+  soat: number;
+  tecnomecanica: number;
+  total: number;
+}
+
 export interface Rate {
   id: string
   sedeId: string
@@ -301,6 +315,8 @@ export interface Certificados {
   activo: boolean
   num: string
   notas?: string
+  noFactura?: number
+  tieneCartera?: number
 }
 
 // Tipos para salidas

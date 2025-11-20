@@ -1,14 +1,16 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { Users, Building2, Settings, Home, UserCheck, MapPin, LogOut, Menu, X, ChevronDown, ChevronRight, Route, FolderCog, Car, CalendarSearch, CalendarRange, ShieldCheck, FolderDown, FileCode, CircleDollarSign } from "lucide-react"
+import { Users, Building2, Settings, Home, UserCheck, MapPin, LogOut, Menu, X, ChevronDown, ChevronRight, Route, FolderCog, Car, CalendarSearch, CalendarRange, ShieldCheck, FolderDown, FileCode, CircleDollarSign, Bell } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { alertService } from "@/services/alertService"
 
 interface MenuItem {
   title: string
@@ -75,7 +77,7 @@ const menuItems: MenuItem[] = [
         title: "Cartera",
         href: "/dashboard/cartera",
         icon: CircleDollarSign,
-        requiredPermission: "clients.view"
+        requiredPermission: "cartera.view"
       },
     ],
   },
@@ -101,7 +103,7 @@ const menuItems: MenuItem[] = [
     title: "Salidas",
     href: "/dashboard/salidas",
     icon: FileCode,
-    requiredPermission: "settings.view",
+    requiredPermission: "salida.view",
   },
   {
     title: "Certificados",
@@ -113,7 +115,7 @@ const menuItems: MenuItem[] = [
     title: "Reportes",
     href: "/dashboard/reportes",
     icon: FileCode,
-    requiredPermission: "settings.view",
+    requiredPermission: "reportes.view",
   },
   {
     title: "Parametrizaciones",
@@ -121,11 +123,18 @@ const menuItems: MenuItem[] = [
     icon: Settings,
     requiredPermission: "settings.view",
   },
+  {
+    title: "Alertas",
+    href: "/dashboard/alertas",
+    icon: Bell,
+    requiredPermission: "alerts.view",
+  },
 ]
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [alertasCount, setAlertasCount] = useState(0)
   const { user, logout } = useAuth()
   const { config } = useConfig()
   const pathname = usePathname()
@@ -133,6 +142,38 @@ export function Sidebar() {
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
   }
+
+  // Cargar contador de alertas
+  useEffect(() => {
+    const loadAlertasCount = async () => {
+      try {
+        const count = await alertService.getAlertasCount()
+        setAlertasCount(count.total)
+      } catch (error) {
+        // Si hay error, no mostrar nada
+        setAlertasCount(0)
+      }
+    }
+
+    // Listener para actualizar el contador cuando se modifique una alerta
+    const handleAlertasUpdated = () => {
+      loadAlertasCount()
+    }
+
+    if (user && hasPermission("vehicles.view")) {
+      loadAlertasCount()
+      // Recargar cada 5 minutos
+      const interval = setInterval(loadAlertasCount, 5 * 60 * 1000)
+      
+      // Escuchar eventos de actualización de alertas
+      window.addEventListener('alertas-updated', handleAlertasUpdated)
+      
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('alertas-updated', handleAlertasUpdated)
+      }
+    }
+  }, [user])
 
   // Función para verificar si el usuario tiene un permiso específico
   const hasPermission = (permission: string): boolean => {
@@ -226,6 +267,14 @@ export function Sidebar() {
         >
           <item.icon className="mr-2 h-4 w-4" />
           {item.title}
+          {item.title === "Alertas" && alertasCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="ml-auto h-5 min-w-5 rounded-full p-0 px-1.5 flex items-center justify-center text-xs"
+            >
+              {alertasCount}
+            </Badge>
+          )}
         </Button>
       </Link>
     )

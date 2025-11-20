@@ -21,6 +21,7 @@ interface VehicleDialogProps {
     conductores: User[];
     tiposVehiculo: Parametrizacion[];
     onSuccess: () => void;
+    readOnly?: boolean; // modo solo lectura
 }
 
 export function VehicleDialog({
@@ -31,6 +32,7 @@ export function VehicleDialog({
     conductores,
     tiposVehiculo,
     onSuccess,
+    readOnly = false,
 }: VehicleDialogProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -98,7 +100,7 @@ export function VehicleDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{vehicle ? "Editar Vehículo" : "Nuevo Vehículo"}</DialogTitle>
+                    <DialogTitle>{vehicle ? (readOnly ? "Detalle Vehículo" : "Editar Vehículo") : "Nuevo Vehículo"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
@@ -113,6 +115,7 @@ export function VehicleDialog({
                                     onChange={v => setFormData({ ...formData, oficinaId: v })}
                                     valueKey="id"
                                     labelKey="nombre"
+                                    disabled={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -125,6 +128,7 @@ export function VehicleDialog({
                                     onChange={v => setFormData({ ...formData, datosJson: { ...formData.datosJson, tipoVehiculoId: v } })}
                                     valueKey="id"
                                     labelKey="nombre"
+                                    disabled={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -134,6 +138,8 @@ export function VehicleDialog({
                                     value={formData.interno}
                                     onChange={e => setFormData({ ...formData, interno: e.target.value })}
                                     required
+                                    disabled={readOnly}
+                                    readOnly={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -143,6 +149,8 @@ export function VehicleDialog({
                                     value={formData.placa}
                                     onChange={e => setFormData({ ...formData, placa: e.target.value })}
                                     required
+                                    disabled={readOnly}
+                                    readOnly={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -155,6 +163,7 @@ export function VehicleDialog({
                                     onChange={v => setFormData({ ...formData, conductorId: v })}
                                     valueKey="id"
                                     labelKey="nombreCompleto"
+                                    disabled={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -165,6 +174,8 @@ export function VehicleDialog({
                                     value={formData.datosJson.fechaSOAT}
                                     onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaSOAT: e.target.value } })}
                                     autoComplete="off"
+                                    disabled={readOnly}
+                                    readOnly={readOnly}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -175,6 +186,8 @@ export function VehicleDialog({
                                     value={formData.datosJson.fechaTecnomecanica}
                                     onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, fechaTecnomecanica: e.target.value } })}
                                     autoComplete="off"
+                                    disabled={readOnly}
+                                    readOnly={readOnly}
                                 />
                             </div>
                         </div>
@@ -185,24 +198,26 @@ export function VehicleDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Cancelar
+                            {readOnly ? "Cerrar" : "Cancelar"}
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-primary hover:bg-primary-hover"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {vehicle ? "Actualizando..." : "Creando..."}
-                                </>
-                            ) : vehicle ? (
-                                "Actualizar"
-                            ) : (
-                                "Crear"
-                            )}
-                        </Button>
+                        {!readOnly && (
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="bg-primary hover:bg-primary-hover"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {vehicle ? "Actualizando..." : "Creando..."}
+                                    </>
+                                ) : vehicle ? (
+                                    "Actualizar"
+                                ) : (
+                                    "Crear"
+                                )}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>
