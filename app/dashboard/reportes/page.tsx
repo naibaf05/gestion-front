@@ -113,21 +113,21 @@ export default function ReportesPage() {
                 return cols;
             }
             case "reporte3": {
-                const cols = [
-                    { key: "fecha", label: "Fecha", category: "general", enabled: true },
+                const cols = [                    
                     { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
                     { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
                     { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
                     { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
                     { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
                     { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true },
+                    { key: "fecha", label: "Fecha", category: "visita", enabled: true },
                     { key: "peso", label: "Peso (KG)", category: "visita", enabled: true },
-                    { key: "conductor", label: "Conductor", category: "vehiculo", enabled: true },
-                    { key: "placa", label: "Placa", category: "vehiculo", enabled: true },
-                    { key: "remision", label: "Remisión", category: "documento", enabled: true },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "tarifa", enabled: true }] : []),
-                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "tarifa", enabled: true }] : []),
-                    { key: "planta", label: "Planta", category: "planta", enabled: true },
+                    { key: "conductor", label: "Conductor", category: "visita", enabled: true },
+                    { key: "placa", label: "Placa", category: "visita", enabled: true },
+                    { key: "remision", label: "Remisión", category: "visita", enabled: true },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
+                    { key: "planta", label: "Planta", category: "visita", enabled: true },
                 ];
                 return cols;
             }
