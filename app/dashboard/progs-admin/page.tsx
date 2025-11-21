@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -25,6 +25,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function ProgsAdminPage() {
@@ -86,6 +87,9 @@ export default function ProgsAdminPage() {
 
   const [adjuntosOpen, setAdjuntosOpen] = useState(false)
   const [entidadId, setEntidadId] = useState<string | null>(null)
+  const [historialOpen, setHistorialOpen] = useState(false)
+  const [historialId, setHistorialId] = useState<string>("")
+  const [historialLabel, setHistorialLabel] = useState<string>("")
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -280,6 +284,12 @@ export default function ProgsAdminPage() {
     setAdjuntosOpen(true)
   }
 
+  const handleHistorial = (obj: ProgVisitaRecol) => {
+    setHistorialId(obj.visitaRecolId)
+    setHistorialLabel(`Visita [${obj.sedeNombre} - ${obj.fecha}]`)
+    setHistorialOpen(true)
+  }
+
   const confirm = async () => {
     try {
       if (tipoConfirm === "1") {
@@ -439,7 +449,7 @@ export default function ProgsAdminPage() {
                       PDF
                     </DropdownMenuItem> : <></>
                   }
-                  {hasPermission("admin.edit") ?
+                  {hasPermission("admin.edit") ? (
                     <>
                       <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
                         <Trash2 className="h-4 w-4" />
@@ -449,8 +459,12 @@ export default function ProgsAdminPage() {
                         <Paperclip className="h-4 w-4" />
                         Adjuntos
                       </DropdownMenuItem>
-                    </> : <></>
-                  }
+                      <DropdownMenuItem onClick={() => handleHistorial(obj)}>
+                        <History className="h-4 w-4" />
+                        Historial
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -590,6 +604,14 @@ export default function ProgsAdminPage() {
         tipo="progs"
         entityId={entidadId || ""}
         title="Adjuntos"
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="VisitaRecol"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   )

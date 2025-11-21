@@ -326,6 +326,8 @@ export interface Salida {
   plantaNombre?: string
   clienteId: string
   clienteNombre?: string
+  sedeId: string
+  sedeNombre?: string
   vehiculoId: string
   vehiculoPlaca?: string
   conductorId: string

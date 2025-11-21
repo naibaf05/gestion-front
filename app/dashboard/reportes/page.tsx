@@ -114,13 +114,20 @@ export default function ReportesPage() {
             }
             case "reporte3": {
                 const cols = [
-                    { key: "nombreSede", label: "Sede", category: "sede", enabled: true },
-                    { key: "direccionSede", label: "Dirección", category: "sede", enabled: true },
-                    { key: "emailSede", label: "Email", category: "sede", enabled: true },
-                    { key: "tipo_residuo", label: "Tipo de Residuo", category: "residuo", enabled: true },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "residuo", enabled: true }] : []),
-                    { key: "fecha_inicio", label: "Fecha Inicio", category: "fecha", enabled: true },
-                    { key: "fecha_fin", label: "Fecha Fin", category: "fecha", enabled: true },
+                    { key: "fecha", label: "Fecha", category: "general", enabled: true },
+                    { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
+                    { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
+                    { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
+                    { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
+                    { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
+                    { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true },
+                    { key: "peso", label: "Peso (KG)", category: "visita", enabled: true },
+                    { key: "conductor", label: "Conductor", category: "vehiculo", enabled: true },
+                    { key: "placa", label: "Placa", category: "vehiculo", enabled: true },
+                    { key: "remision", label: "Remisión", category: "documento", enabled: true },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "tarifa", enabled: true }] : []),
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "tarifa", enabled: true }] : []),
+                    { key: "planta", label: "Planta", category: "planta", enabled: true },
                 ];
                 return cols;
             }
@@ -169,13 +176,18 @@ export default function ReportesPage() {
             }
             case "reporte3": {
                 const defaultCols = [
-                    { key: "nombreSede", label: "Sede", width: "200px" },
-                    { key: "direccionSede", label: "Dirección", width: "350px" },
-                    { key: "emailSede", label: "Email", width: "250px" },
-                    { key: "tipo_residuo", label: "Tipo de Residuo", width: "150px" },
+                    { key: "fecha", label: "Fecha", width: "120px" },
+                    { key: "sedeNombre", label: "Nombre Sede", width: "200px" },
+                    { key: "sedeDireccion", label: "Dirección Sede", width: "350px" },
+                    { key: "clienteNombre", label: "Nombre Cliente", width: "250px" },
+                    { key: "clienteNit", label: "NIT Cliente", width: "180px" },
+                    { key: "peso", label: "Peso (KG)", width: "120px" },
+                    { key: "placa", label: "Placa", width: "120px" },
+                    { key: "remision", label: "Remisión", width: "150px" },
+                    { key: "conductor", label: "Conductor", width: "220px" },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
-                    { key: "fecha_inicio", label: "Fecha Inicio", width: "120px" },
-                    { key: "fecha_fin", label: "Fecha Fin", width: "120px" },
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
+                    { key: "planta", label: "Planta", width: "350px" },
                 ];
                 return defaultCols;
             }
@@ -490,9 +502,9 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
-                showCheckboxes={hasPermission("reportes.assign")}
-                showAssignInvoice={hasPermission("reportes.assign")}
-                rowIdField="id"
+                showCheckboxes={tipoReporte !== "reporte3" && hasPermission("reportes.assign")}
+                showAssignInvoice={tipoReporte !== "reporte3" && hasPermission("reportes.assign")}
+                rowIdField={tipoReporte === "reporte3" ? "remision" : "id"}
                 onAssignInvoice={(selectedRows, invoiceNumber) => {
                     asignarFactura(selectedRows, invoiceNumber);
                 }}

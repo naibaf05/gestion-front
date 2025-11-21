@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, Truck, Package, FileText, Eye } from "lucide-react";
+import { Plus, Edit, PowerSquare, FileText, Eye } from "lucide-react";
 import { clientService } from "@/services/clientService";
-import { userService } from "@/services/userService";
 import { parametrizationService } from "@/services/parametrizationService";
 import { salidaService } from "@/services/salidaService";
-import type { Salida, Sede, User, Parametrizacion, Cliente, Vehicle } from "@/types";
+import type { Salida, Sede, Parametrizacion, Vehicle } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { SalidaDialog } from "@/components/dialogs/SalidaDialog";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -28,7 +27,7 @@ export default function SalidasPage() {
   const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
 
   const [salidas, setSalidas] = useState<Salida[]>([]);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
   const [productos, setProductos] = useState<Parametrizacion[]>([]);
@@ -58,19 +57,19 @@ export default function SalidasPage() {
       setLoading(true);
       const [
         salidasData,
-        clientesData,
+        sedesData,
         vehiculosData,
         productosData,
         plantasData
       ] = await Promise.all([
         salidaService.getSalidas(),
-        clientService.getClientesActivos(),
+        clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         parametrizationService.getListaActivos("t_residuo"),
         parametrizationService.getListaActivos("oficina"),
       ]);
       setSalidas(salidasData);
-      setClientes(clientesData);
+      setSedes(sedesData);
       setVehiculos(vehiculosData);
       setProductos(productosData);
       setPlantas(plantasData);
@@ -153,6 +152,10 @@ export default function SalidasPage() {
     {
       accessorKey: "fecha",
       header: "Fecha"
+    },
+    {
+      accessorKey: "sedeNombre",
+      header: "Sede"
     },
     {
       accessorKey: "clienteNombre",
@@ -253,7 +256,7 @@ export default function SalidasPage() {
           <DataTable
             columns={columns}
             data={salidas}
-            searchKey={["fecha", "clienteNombre", "conductorNombre", "productoNombre"]}
+            searchKey={["fecha", "sedeNombre", "clienteNombre", "conductorNombre", "productoNombre"]}
             searchPlaceholder="Buscar ..."
           />
         </CardContent>
@@ -263,7 +266,7 @@ export default function SalidasPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         salida={selectedSalida}
-        clientes={clientes}
+        sedes={sedes}
         vehiculos={vehiculos}
         productos={productos}
         plantas={plantas}

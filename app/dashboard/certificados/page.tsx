@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, FileText, Plus, PowerSquare, Table, Trash2 } from "lucide-react";
+import { Edit, FileText, Plus, PowerSquare, Table, Trash2, History } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
@@ -17,6 +17,7 @@ import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 
 export default function CertificadosPage() {
     const { user, logout } = useAuth()
@@ -36,6 +37,10 @@ export default function CertificadosPage() {
     const [selectedCertificado, setSelectedCertificado] = useState<Certificados | null>(null);
     const [tipo, setTipo] = useState("1");
     const { toast } = useToast();
+    // Historial
+    const [historialOpen, setHistorialOpen] = useState(false);
+    const [historialId, setHistorialId] = useState<string>("");
+    const [historialLabel, setHistorialLabel] = useState<string>("");
 
     // Estados para mensajes de confirmación similares a progs-admin
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -295,6 +300,14 @@ export default function CertificadosPage() {
         setTipoConfirm(null);
     };
 
+    const handleHistorial = (item: Certificados) => {
+        setSelectedCertificado(item);
+        setHistorialId(item.id || "");
+        const nombre = item.sedeNombre || item.clienteNombre || "";
+        setHistorialLabel(`Certificado [${nombre}]`);
+        setHistorialOpen(true);
+    };
+
     const columns: ColumnDef<Certificados>[] = [
         {
             accessorKey: "clienteNombre",
@@ -335,6 +348,11 @@ export default function CertificadosPage() {
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
                                 <FileText className="h-4 w-4" />
                             </ButtonTooltip>
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
+                                    <History className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                             {hasPermission("certificados.edit") && (
                                 <ButtonTooltip
                                     variant="ghost"
@@ -401,6 +419,11 @@ export default function CertificadosPage() {
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handleExcel(item)} tooltipContent="Excel">
                                 <Table className="h-4 w-4" />
                             </ButtonTooltip>
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
+                                    <History className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                             {hasPermission("certificados.edit") && (
                                 <ButtonTooltip
                                     variant="ghost"
@@ -526,6 +549,14 @@ export default function CertificadosPage() {
                     base64={base64}
                 />
             )}
+
+            <HistorialDialog
+                open={historialOpen}
+                onOpenChange={setHistorialOpen}
+                tipo="Certificado"
+                id={historialId}
+                label={historialLabel}
+            />
         </div>
     );
 }

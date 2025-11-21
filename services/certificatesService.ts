@@ -28,13 +28,13 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoProformaPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+    async getCertificadoProformaPDF(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
-    async getCertificadoProformaExcel(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma/excel?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+    async getCertificadoProformaExcel(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma/excel?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 

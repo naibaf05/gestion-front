@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { salidaService } from "@/services/salidaService"
-import type { Salida, Parametrizacion, Cliente, Vehicle } from "@/types"
+import type { Salida, Parametrizacion, Vehicle, Sede } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import { InputDecimal } from "@/components/ui/input-decimal"
@@ -23,7 +23,7 @@ interface SalidaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   salida?: Salida | null
-  clientes: Cliente[]
+  sedes: Sede[]
   vehiculos: Vehicle[]
   productos: Parametrizacion[]
   plantas: Parametrizacion[]
@@ -35,7 +35,7 @@ export function SalidaDialog({
   open,
   onOpenChange,
   salida,
-  clientes,
+  sedes,
   vehiculos,
   productos,
   plantas,
@@ -45,7 +45,7 @@ export function SalidaDialog({
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     plantaId: "",
-    clienteId: "",
+    sedeId: "",
     vehiculoId: "",
     productoId: "",
     peso: 0,
@@ -57,7 +57,7 @@ export function SalidaDialog({
     if (salida) {
       setFormData({
         plantaId: salida.plantaId,
-        clienteId: salida.clienteId,
+        sedeId: salida.sedeId,
         vehiculoId: salida.vehiculoId,
         productoId: salida.productoId,
         peso: salida.peso,
@@ -68,7 +68,7 @@ export function SalidaDialog({
       const today = new Date().toISOString().split('T')[0]
       setFormData({
         plantaId: "",
-        clienteId: "",
+        sedeId: "",
         vehiculoId: "",
         productoId: "",
         peso: 0,
@@ -114,7 +114,7 @@ export function SalidaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[95vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{readOnly ? "Ver Salida" : (salida ? "Editar Salida" : "Nueva Salida")}</DialogTitle>
         </DialogHeader>
@@ -143,15 +143,15 @@ export function SalidaDialog({
               <Label htmlFor="cliente" required>Destino</Label>
               {readOnly ? (
                 <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
-                  {clientes.find(c => c.id === formData.clienteId)?.nombre || "-"}
+                  {sedes.find(c => c.id === formData.sedeId)?.nombre || "-"}
                 </div>
               ) : (
                 <SelectSingle
-                  id="cliente"
-                  placeholder="Selecciona un cliente"
-                  options={clientes}
-                  value={formData.clienteId}
-                  onChange={(value) => setFormData({ ...formData, clienteId: value })}
+                  id="sede"
+                  placeholder="Selecciona una sede"
+                  options={sedes}
+                  value={formData.sedeId}
+                  onChange={(value) => setFormData({ ...formData, sedeId: value })}
                   valueKey="id"
                   labelKey="nombre"
                 />
