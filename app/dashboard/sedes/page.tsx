@@ -346,7 +346,7 @@ export default function SedesPage() {
                       Tarifas
                     </DropdownMenuItem>
                   )}
-                  {hasPermission("sedes.edit") && (
+                  {hasPermission("users.historial") && (
                     <DropdownMenuItem onClick={() => handleHistorial(sede.id, sede.nombre, sede.clienteNombre)}>
                       <History className="h-4 w-4" />
                       Historial

@@ -177,7 +177,7 @@ export default function ProgsAdminPage() {
     try {
       setLoading(true)
       const [progsData, sedesData, vehiclesData, recolData, comercialData, plantasData] = await Promise.all([
-        progService.getDataProgsAdmin(dateString, fechaFinString),
+        user?.rolNombre === "CLIENTE" ? progService.getDataProgsAdminCliente(dateString, fechaFinString, user.id || "") : progService.getDataProgsAdmin(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         userService.getUsersActivos(),
@@ -301,11 +301,11 @@ export default function ProgsAdminPage() {
           variant: "success",
         });
       } else if (tipoConfirm === "pdf-no-facturado") {
-        if (selected) {
+        if (selected && user?.rolNombre !== "CLIENTE") {
           handlePdfNoValidate(selected)
         }
       } else if (tipoConfirm === "cartera") {
-        if (selected) {
+        if (selected && user?.rolNombre !== "CLIENTE") {
           handlePdfNoValidate(selected)
         }
       }
@@ -428,45 +428,52 @@ export default function ProgsAdminPage() {
                   <TableProperties className="h-4 w-4" />
                 </ButtonTooltip>
               )}
-              <DropdownMenu>
-                <Tooltip>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <span className="sr-only">Más acciones</span>
-                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                        <circle cx="5" cy="12" r="2" fill="currentColor" />
-                        <circle cx="12" cy="12" r="2" fill="currentColor" />
-                        <circle cx="19" cy="12" r="2" fill="currentColor" />
-                      </svg>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <TooltipContent>Más acciones</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                  {hasPermission("generar.pdf") ?
-                    <DropdownMenuItem onClick={() => handlePdf(obj)}>
-                      <FileText className="h-4 w-4" />
-                      PDF
-                    </DropdownMenuItem> : <></>
-                  }
-                  {hasPermission("admin.edit") ? (
-                    <>
-                      <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAdjuntos(obj.visitaRecolId)}>
-                        <Paperclip className="h-4 w-4" />
-                        Adjuntos
-                      </DropdownMenuItem>
+              {user?.rolNombre === "CLIENTE" ?
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
+                  <FileText className="h-4 w-4" />
+                </ButtonTooltip> :
+                <DropdownMenu>
+                  <Tooltip>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <span className="sr-only">Más acciones</span>
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                          <circle cx="5" cy="12" r="2" fill="currentColor" />
+                          <circle cx="12" cy="12" r="2" fill="currentColor" />
+                          <circle cx="19" cy="12" r="2" fill="currentColor" />
+                        </svg>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <TooltipContent>Más acciones</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end">
+                    {hasPermission("generar.pdf") ?
+                      <DropdownMenuItem onClick={() => handlePdf(obj)}>
+                        <FileText className="h-4 w-4" />
+                        PDF
+                      </DropdownMenuItem> : <></>
+                    }
+                    {hasPermission("admin.edit") && (
+                      <>
+                        <DropdownMenuItem onClick={() => handleDelete(obj.visitaRecolId)} className="new-text-red-600">
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAdjuntos(obj.visitaRecolId)}>
+                          <Paperclip className="h-4 w-4" />
+                          Adjuntos
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {hasPermission("users.historial") && (
                       <DropdownMenuItem onClick={() => handleHistorial(obj)}>
                         <History className="h-4 w-4" />
                         Historial
                       </DropdownMenuItem>
-                    </>
-                  ) : null}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
             </div>
           </TooltipProvider>
         )

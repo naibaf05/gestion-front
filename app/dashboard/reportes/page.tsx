@@ -113,7 +113,7 @@ export default function ReportesPage() {
                 return cols;
             }
             case "reporte3": {
-                const cols = [                    
+                const cols = [
                     { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
                     { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
                     { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
@@ -125,6 +125,8 @@ export default function ReportesPage() {
                     { key: "conductor", label: "Conductor", category: "visita", enabled: true },
                     { key: "placa", label: "Placa", category: "visita", enabled: true },
                     { key: "remision", label: "Remisión", category: "visita", enabled: true },
+                    { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
                     { key: "planta", label: "Planta", category: "visita", enabled: true },
@@ -182,9 +184,9 @@ export default function ReportesPage() {
                     { key: "clienteNombre", label: "Nombre Cliente", width: "250px" },
                     { key: "clienteNit", label: "NIT Cliente", width: "180px" },
                     { key: "peso", label: "Peso (KG)", width: "120px" },
-                    { key: "placa", label: "Placa", width: "120px" },
                     { key: "remision", label: "Remisión", width: "150px" },
-                    { key: "conductor", label: "Conductor", width: "220px" },
+                    { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
                     { key: "planta", label: "Planta", width: "350px" },
@@ -204,16 +206,35 @@ export default function ReportesPage() {
         return 'auto';
     };
 
-    // Función para generar columnas de tabla dinámicamente con id y width seguro
+    // Columnas que deben mostrarse con formato monetario (sin alterar el valor original numérico)
+    const CURRENCY_COLUMNS = new Set(["valor", "tarifa"]);
+    const currencyFormatter = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 2,
+    });
+
+    // Generar columnas; para columnas monetarias se usa un cell renderer que formatea sólo la visualización
     const generateTableColumns = (effectiveColumns: any[]): ColumnDef<any>[] => {
         return effectiveColumns.map(col => {
             const width = normalizeWidth(col.width);
-            return {
-                id: col.key, // id estable para evitar conflictos al re-renderizar
-                accessorKey: col.key,
+            const key = col.key;
+            const base: ColumnDef<any> = {
+                id: key,
+                accessorKey: key,
                 header: col.label,
                 width,
-            } as ColumnDef<any>;
+            };
+            if (CURRENCY_COLUMNS.has(key)) {
+                base.cell = ({ row }) => {
+                    const raw = row.original[key];
+                    const numeric = typeof raw === 'number' ? raw : (raw == null || raw === '' ? 0 : Number(raw));
+                    return (
+                        <div className="text-right tabular-nums font-medium">{currencyFormatter.format(numeric)}</div>
+                    );
+                };
+            }
+            return base;
         });
     };
 
@@ -237,13 +258,13 @@ export default function ReportesPage() {
         setLoading(true);
         try {
             const ids = selectedRows.map(row => row.id);
-
             const data = {
-                ids: ids,
-                numeroFactura: invoiceNumber
-            }
+                ids,
+                numeroFactura: invoiceNumber,
+                tipo: tipoReporte
+            };
             const resp = await reportesService.asignarFactura(data);
-
+            console.log("Respuesta del servicio:", resp);
             toast({
                 title: "Factura asignada",
                 description: "La factura ha sido asignada exitosamente",
@@ -502,12 +523,10 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
-                showCheckboxes={tipoReporte !== "reporte3" && hasPermission("reportes.assign")}
-                showAssignInvoice={tipoReporte !== "reporte3" && hasPermission("reportes.assign")}
-                rowIdField={tipoReporte === "reporte3" ? "remision" : "id"}
-                onAssignInvoice={(selectedRows, invoiceNumber) => {
-                    asignarFactura(selectedRows, invoiceNumber);
-                }}
+                showCheckboxes={hasPermission("reportes.assign")}
+                showAssignInvoice={hasPermission("reportes.assign")}
+                rowIdField="id"
+                onAssignInvoice={(selectedRows, invoiceNumber) => asignarFactura(selectedRows, invoiceNumber)}
             />
 
             <ColumnConfigDialog

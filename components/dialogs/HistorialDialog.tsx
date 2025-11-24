@@ -126,7 +126,7 @@ export function HistorialDialog({
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="max-w-md whitespace-pre-wrap">
-                        {item.observacion}
+                        {transformObservacion(item.observacion)}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -138,4 +138,21 @@ export function HistorialDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+const REPLACEMENTS: { pattern: RegExp; replacement: string }[] = [
+  { pattern: /;\s*/g, replacement: ";\n" },
+  { pattern: /fechaRenovacion:/g, replacement: "Fecha de Renovación:" },
+  { pattern: /datosJson\.correoFacturacion:/g, replacement: "Correo Facturación:" },
+  { pattern: /datosJson\.correo:\s?/g, replacement: "Correo:" },
+  { pattern: /datosJson\.fechaCierreFacturacion:\s?/g, replacement: "Fecha Cierre Facturación:" },
+];
+
+function transformObservacion(observacion: string | undefined | null): string {
+  if (!observacion) return "";
+  let out = observacion;
+  for (const { pattern, replacement } of REPLACEMENTS) {
+    out = out.replace(pattern, replacement);
+  }
+  return out;
 }

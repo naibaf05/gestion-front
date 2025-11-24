@@ -14,7 +14,8 @@ import { clientService } from "@/services/clientService";
 import type { Certificados, Cliente, Sede } from "@/types";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
@@ -70,9 +71,9 @@ export default function CertificadosPage() {
             setLoading(true);
             if (user && user.rolNombre === "CLIENTE") {
                 const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
-                    certificatesService.getCertificadosCliente("1", "11"),
-                    certificatesService.getCertificadosCliente("2", "11"),
-                    certificatesService.getCertificadosCliente("3", "11"),
+                    certificatesService.getCertificadosCliente("1", user.id || ""),
+                    certificatesService.getCertificadosCliente("2", user.id || ""),
+                    certificatesService.getCertificadosCliente("3", user.id || ""),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos()
                 ]);
@@ -270,11 +271,11 @@ export default function CertificadosPage() {
     const handleConfirmDialog = async () => {
         try {
             if (tipoConfirm === "pdf-no-facturado" || tipoConfirm === "cartera") {
-                if (selectedCertificado) {
+                if (selectedCertificado && user?.rolNombre !== "CLIENTE") {
                     handlePdfNoValidate(selectedCertificado);
                 }
             } else if (tipoConfirm === "excel-no-facturado" || tipoConfirm === "cartera-excel") {
-                if (selectedCertificado) {
+                if (selectedCertificado && user?.rolNombre !== "CLIENTE") {
                     handleExcelNoValidate(selectedCertificado);
                 }
             }
@@ -348,7 +349,7 @@ export default function CertificadosPage() {
                             <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
                                 <FileText className="h-4 w-4" />
                             </ButtonTooltip>
-                            {hasPermission("certificados.edit") && (
+                            {hasPermission("users.historial") && (
                                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
                                     <History className="h-4 w-4" />
                                 </ButtonTooltip>
@@ -413,28 +414,45 @@ export default function CertificadosPage() {
                                     <Edit className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
-                                <FileText className="h-4 w-4" />
-                            </ButtonTooltip>
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleExcel(item)} tooltipContent="Excel">
-                                <Table className="h-4 w-4" />
-                            </ButtonTooltip>
                             {hasPermission("certificados.edit") && (
-                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
-                                    <History className="h-4 w-4" />
-                                </ButtonTooltip>
-                            )}
-                            {hasPermission("certificados.edit") && (
-                                <ButtonTooltip
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleToggleStatus(item.id)}
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(item.id)}
                                     className={item.activo ? "new-text-green-600" : "new-text-red-600"}
                                     tooltipContent={item.activo ? "Desactivar" : "Activar"}
                                 >
                                     <PowerSquare className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
+                            <DropdownMenu>
+                                <Tooltip>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <span className="sr-only">Más acciones</span>
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                                <circle cx="5" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="19" cy="12" r="2" fill="currentColor" />
+                                            </svg>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <TooltipContent>Más acciones</TooltipContent>
+                                </Tooltip>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handlePdf(item)}>
+                                        <FileText className="h-4 w-4" />
+                                        PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExcel(item)}>
+                                        <Table className="h-4 w-4" />
+                                        Excel
+                                    </DropdownMenuItem>
+                                    {hasPermission("users.historial") && (
+                                        <DropdownMenuItem onClick={() => handleHistorial(item)}>
+                                            <History className="h-4 w-4" />
+                                            Historial
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </TooltipProvider>
                 );
@@ -460,7 +478,7 @@ export default function CertificadosPage() {
                         <TabsList className="mb-4">
                             <TabsTrigger value="llantas">Llantas</TabsTrigger>
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
-                            <TabsTrigger value="proforma">Proforma</TabsTrigger>
+                            {user?.rolNombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
                         </TabsList>
 
                         <TabsContent value="llantas">

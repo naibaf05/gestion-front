@@ -28,6 +28,7 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
         permissions: [
             { id: "users.view", name: "Ver usuarios", category: "general" },
             { id: "users.edit", name: "Editar usuarios", category: "general" },
+            { id: "users.historial", name: "Ver historial", category: "general" },
             { id: "profiles.view", name: "Ver perfiles", category: "general" },
             { id: "profiles.edit", name: "Editar perfiles", category: "general" },
             { id: "profiles.permissions", name: "Gestionar permisos", category: "general" },

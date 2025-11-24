@@ -48,6 +48,16 @@ export class AuthService {
       newPassword,
     })
   }
+
+  // Admin or privileged action to set a password for a user or client
+  async adminSetPassword(newPassword: string, options: { userId?: string; clientId?: string }): Promise<void> {
+    const { userId, clientId } = options
+    await apiService.post("/auth/admin/set-password", {
+      userId,
+      clientId,
+      newPassword,
+    })
+  }
 }
 
 export const authService = new AuthService()

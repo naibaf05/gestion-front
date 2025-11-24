@@ -400,9 +400,11 @@ export default function ParametrizationsPage() {
                 <Button variant="ghost" size="sm" onClick={() => handleEdit(item, type)}>
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleHistorial(item.id, item.nombre, type)}>
-                  <History className="h-4 w-4" />
-                </Button>
+                {hasPermission("users.historial") && (
+                  <Button variant="ghost" size="sm" onClick={() => handleHistorial(item.id, item.nombre, type)}>
+                    <History className="h-4 w-4" />
+                  </Button>
+                )}
                 {type === 'oficinas' ? (
                   <Button
                     variant="ghost"
@@ -429,9 +431,16 @@ export default function ParametrizationsPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="sm" onClick={() => handleView(item, type)}>
-                <Eye className="h-4 w-4" />
-              </Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={() => handleView(item, type)}>
+                  <Eye className="h-4 w-4" />
+                </Button>
+                {hasPermission("users.historial") && (
+                  <Button variant="ghost" size="sm" onClick={() => handleHistorial(item.id, item.nombre, type)}>
+                    <History className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
           </div>
         )

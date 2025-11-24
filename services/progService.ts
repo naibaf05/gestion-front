@@ -31,7 +31,17 @@ export class ProgService {
       obj.tipoNombre = getTipoVisita(tipo);
       obj.tipoColor = getTipoColor(tipo);
     });
-    console.log(response.data);
+    return response.data
+  }
+
+  async getDataProgsAdminCliente(inicio: string, fin: string, clienteId: string): Promise<ProgVisitaRecol[]> {
+    const response = await apiService.get<ApiResponse<ProgVisitaRecol[]>>(`/progs/progs-admin/cliente?inicio=${inicio}&fin=${fin}&clienteId=${clienteId}`)
+
+    response.data.forEach(obj => {
+      const tipo = obj.tipo as TipoVisitaKey
+      obj.tipoNombre = getTipoVisita(tipo);
+      obj.tipoColor = getTipoColor(tipo);
+    });
     return response.data
   }
 

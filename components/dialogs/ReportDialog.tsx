@@ -56,6 +56,13 @@ export function ReportDialog<TData, TValue>({
     // Constante configurable para el ancho de la columna de checks
     const DEFAULT_CHECK_COL_WIDTH = "100px";
     const checkColWidth = checkboxColumnWidth || DEFAULT_CHECK_COL_WIDTH;
+    // Columnas consideradas monetarias para formatear sumatorias
+    const CURRENCY_KEYS = React.useMemo(() => new Set(["valor", "tarifa"]), []);
+    const currencyFormatter = React.useMemo(() => new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 2,
+    }), []);
     // Estados para los checkboxes
     const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set());
     const [selectAll, setSelectAll] = React.useState(false);
@@ -438,6 +445,7 @@ export function ReportDialog<TData, TValue>({
                                     const label = columnOptions.find(o => o.value === key)?.label || key;
                                     const isNumeric = numericMap[key];
                                     const value = totals[key] ?? 0;
+                                    const isCurrency = isNumeric && CURRENCY_KEYS.has(key);
                                     return (
                                         <div key={key} className="rounded border bg-white p-2">
                                             <div className="text-xs text-gray-500 flex justify-between items-center">
@@ -445,7 +453,7 @@ export function ReportDialog<TData, TValue>({
                                                 {!isNumeric && <span className="text-[10px] px-1 py-0.5 bg-gray-200 rounded">No numérico</span>}
                                             </div>
                                             <div className="text-base font-semibold">
-                                                {isNumeric ? value.toLocaleString('es-CO') : '—'}
+                                                {isNumeric ? (isCurrency ? currencyFormatter.format(value) : value.toLocaleString('es-CO')) : '—'}
                                             </div>
                                         </div>
                                     );

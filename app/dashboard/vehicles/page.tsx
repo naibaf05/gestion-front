@@ -162,34 +162,35 @@ export default function VehiclesPage() {
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
-                            {hasPermission("vehicles.edit") ? (
+                            {hasPermission("vehicles.edit") ?
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(veh)} tooltipContent="Editar">
+                                    <Edit className="h-4 w-4" />
+                                </ButtonTooltip>
+                                :
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(veh)} tooltipContent="Ver">
+                                    <Eye className="h-4 w-4" />
+                                </ButtonTooltip>
+                            }
+                            {hasPermission("vehicles.edit") && (
                                 <>
-                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(veh)} tooltipContent="Editar">
-                                        <Edit className="h-4 w-4" />
-                                    </ButtonTooltip>
                                     <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(veh.id)} tooltipContent="Adjuntos">
                                         <Paperclip className="h-4 w-4" />
                                     </ButtonTooltip>
-                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(veh.id, veh.placa)} tooltipContent="Historial">
-                                        <History className="h-4 w-4" />
-                                    </ButtonTooltip>
-                                    <ButtonTooltip
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleToggleStatus(veh.id)}
+                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(veh.id)}
                                         className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
                                         tooltipContent={veh.activo ? "Desactivar" : "Activar"}
                                     >
                                         <PowerSquare className="h-4 w-4" />
                                     </ButtonTooltip>
                                 </>
-                            ) : (
-                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(veh)} tooltipContent="Ver">
-                                    <Eye className="h-4 w-4" />
+                            )}
+                            {hasPermission("users.historial") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(veh.id, veh.placa)} tooltipContent="Historial">
+                                    <History className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
                         </div>
-                    </TooltipProvider>
+                    </TooltipProvider >
                 );
             },
         },

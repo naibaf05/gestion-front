@@ -13,19 +13,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { authService } from "@/services/authService"
 
 interface PasswordDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    clientName: string
-    clientId: string
+    displayName?: string
+    userId?: string
+    clientId?: string
     onSuccess: () => void
 }
 
 export function PasswordDialog({
     open,
     onOpenChange,
-    clientName,
+    displayName,
+    userId,
     clientId,
     onSuccess
 }: PasswordDialogProps) {
@@ -38,6 +41,15 @@ export function PasswordDialog({
 
     const handleSave = async () => {
         // Validaciones
+        if (!userId && !clientId) {
+            toast({
+                title: "Error",
+                description: "Se requiere un userId o un clientId",
+                variant: "destructive",
+            })
+            return
+        }
+
         if (!newPassword.trim()) {
             toast({
                 title: "Error",
@@ -67,16 +79,12 @@ export function PasswordDialog({
 
         try {
             setLoading(true)
-            
-            // Aquí llamarías al servicio para cambiar la contraseña
-            // await clientService.changePassword(clientId, newPassword)
-            
-            // Por ahora simulamos la llamada
-            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            await authService.adminSetPassword(newPassword, { userId, clientId })
 
             toast({
                 title: "Contraseña actualizada",
-                description: `La contraseña de ${clientName} ha sido actualizada exitosamente`,
+                description: `La contraseña de ${displayName ?? "la cuenta"} ha sido actualizada exitosamente`,
             })
 
             handleClose()
@@ -106,7 +114,7 @@ export function PasswordDialog({
                 <DialogHeader>
                     <DialogTitle>Cambiar Contraseña</DialogTitle>
                     <p className="text-sm text-gray-600">
-                        Cliente: <span className="font-medium">{clientName}</span>
+                        Cuenta: <span className="font-medium">{displayName ?? "Sin nombre"}</span>
                     </p>
                 </DialogHeader>
 
@@ -182,7 +190,7 @@ export function PasswordDialog({
                     </Button>
                     <Button
                         onClick={handleSave}
-                        disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                        disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || (!userId && !clientId)}
                         className="bg-primary hover:bg-primary-hover"
                     >
                         {loading ? (

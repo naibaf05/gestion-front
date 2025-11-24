@@ -245,17 +245,26 @@ export default function ClientsPage() {
                         <Trash2 className="h-4 w-4" />
                         Eliminar
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleHistorial(client.id, client.nombre, client.nit)}>
-                        <History className="h-4 w-4" />
-                        Historial
-                      </DropdownMenuItem>
+                      {hasPermission("users.historial") && (
+                        <DropdownMenuItem onClick={() => handleHistorial(client.id, client.nombre, client.nit)}>
+                          <History className="h-4 w-4" />
+                          Historial
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
               ) : (
-                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(client)} tooltipContent="Ver">
-                  <Eye className="h-4 w-4" />
-                </ButtonTooltip>
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(client)} tooltipContent="Ver">
+                    <Eye className="h-4 w-4" />
+                  </ButtonTooltip>
+                  {hasPermission("users.historial") && (
+                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(client.id, client.nombre, client.nit)} tooltipContent="Historial">
+                      <History className="h-4 w-4" />
+                    </ButtonTooltip>
+                  )}
+                </>
               )}
             </div>
           </TooltipProvider>
@@ -368,7 +377,7 @@ export default function ClientsPage() {
       <PasswordDialog
         open={passwordDialogOpen}
         onOpenChange={setPasswordDialogOpen}
-        clientName={selectedClient?.nombre || ""}
+        displayName={selectedClient?.nombre || ""}
         clientId={selectedClient?.id || ""}
         onSuccess={loadData}
       />

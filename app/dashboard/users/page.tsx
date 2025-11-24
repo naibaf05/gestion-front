@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Eye, PowerSquare, History } from "lucide-react"
+import { Plus, Edit, Eye, PowerSquare, History, Key } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { User, Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { UserDialog } from "@/components/dialogs/UserDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table"
 import { useAuth } from "@/contexts/AuthContext"
+import { PasswordDialog } from "@/components/dialogs/PasswordDialog"
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
@@ -24,6 +26,7 @@ export default function UsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [dialogReadOnly, setDialogReadOnly] = useState(false)
   const [historialOpen, setHistorialOpen] = useState(false)
@@ -119,6 +122,11 @@ export default function UsersPage() {
     setHistorialOpen(true)
   }
 
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user)
+    setPasswordDialogOpen(true)
+  }
+
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: "nombre",
@@ -172,23 +180,51 @@ export default function UsersPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(employee)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(employee.id, employee.nombre, employee.apellido)} tooltipContent="Historial">
-                    <History className="h-4 w-4" />
-                  </ButtonTooltip>
-                  <ButtonTooltip
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleToggleStatus(employee.id)}
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(employee.id)}
                     className={employee.activo ? "new-text-green-600" : "new-text-red-600"}
                     tooltipContent={employee.activo ? "Desactivar" : "Activar"}
                   >
                     <PowerSquare className="h-4 w-4" />
                   </ButtonTooltip>
+                  <DropdownMenu>
+                    <Tooltip>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <span className="sr-only">Más acciones</span>
+                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                            <circle cx="5" cy="12" r="2" fill="currentColor" />
+                            <circle cx="12" cy="12" r="2" fill="currentColor" />
+                            <circle cx="19" cy="12" r="2" fill="currentColor" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <TooltipContent>Más acciones</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleChangePassword(employee)} className="text-blue-600">
+                        <Key className="h-4 w-4" />
+                        Cambiar Contraseña
+                      </DropdownMenuItem>
+                      {hasPermission("users.historial") && (
+                        <DropdownMenuItem onClick={() => handleHistorial(employee.id, employee.nombre, employee.apellido)}>
+                          <History className="h-4 w-4" />
+                          Historial
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               ) : (
-                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(employee)} tooltipContent="Ver">
-                  <Eye className="h-4 w-4" />
-                </ButtonTooltip>
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(employee)} tooltipContent="Ver">
+                    <Eye className="h-4 w-4" />
+                  </ButtonTooltip>
+                  {hasPermission("users.historial") && (
+                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(employee.id, employee.nombre, employee.apellido)} tooltipContent="Historial">
+                      <History className="h-4 w-4" />
+                    </ButtonTooltip>
+                  )}
+                </>
               )}
             </div>
           </TooltipProvider>
@@ -248,6 +284,14 @@ export default function UsersPage() {
         tipo="Usuario"
         id={historialId}
         label={historialLabel}
+      />
+
+      <PasswordDialog
+        open={passwordDialogOpen}
+        onOpenChange={setPasswordDialogOpen}
+        displayName={selectedUser?.nombre || ""}
+        userId={selectedUser?.id || ""}
+        onSuccess={loadData}
       />
     </div>
   )

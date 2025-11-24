@@ -5,20 +5,26 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, PowerSquare, ListTodo, Eye } from "lucide-react"
+import { Plus, Edit, PowerSquare, ListTodo, Eye, History } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Profile } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ProfileDialog } from "@/components/dialogs/ProfileDialog"
 import { PermsDialog } from "@/components/dialogs/PermsDialog"
 import type { ColumnDef } from "@tanstack/react-table"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { useAuth } from "@/contexts/AuthContext"
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
+
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
 
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,6 +91,12 @@ export default function UsersPage() {
     setPermsDialogOpen(true)
   }
 
+  const handleHistorial = (id: string, nombre: string) => {
+    setHistorialId(id);
+    setHistorialLabel(`Perfil [${nombre}]`);
+    setHistorialOpen(true);
+  };
+
   const handleToggleStatus = (id: string) => {
     setProfileToToggle(id)
     setConfirmDialogOpen(true)
@@ -144,7 +156,7 @@ export default function UsersPage() {
         return (
           <TooltipProvider>
             <div className="flex items-center space-x-2">
-              {hasPermission("profiles.edit") && (
+              {hasPermission("profiles.edit") ?
                 <>
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(prof)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
@@ -154,21 +166,40 @@ export default function UsersPage() {
                     <PowerSquare className="h-4 w-4" />
                   </ButtonTooltip>
                 </>
-              )}
-              {hasPermission("profiles.permissions") && (
-                <>
-                  {/* Separador visual si también puede editar */}
-                  {hasPermission("profiles.edit") && (<span className="w-px h-4 bg-border mx-1" />)}
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePerms(prof)} tooltipContent="Permisos">
-                    <ListTodo className="h-4 w-4" />
-                  </ButtonTooltip>
-                </>
-              )}
-              {!hasPermission("profiles.edit") && (
+                :
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(prof)} tooltipContent="Ver">
                   <Eye className="h-4 w-4" />
                 </ButtonTooltip>
-              )}
+              }
+              <DropdownMenu>
+                <Tooltip>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <span className="sr-only">Más acciones</span>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="2" fill="currentColor" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <circle cx="19" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <TooltipContent>Más acciones</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  {hasPermission("profiles.permissions") && (
+                    <DropdownMenuItem onClick={() => handlePerms(prof)} className="text-blue-600">
+                      <ListTodo className="h-4 w-4" />
+                      Permisos
+                    </DropdownMenuItem>
+                  )}
+                  {hasPermission("users.historial") && (
+                    <DropdownMenuItem onClick={() => handleHistorial(prof.id, prof.nombre)}>
+                      <History className="h-4 w-4" />
+                      Historial
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </TooltipProvider>
         )
@@ -239,6 +270,14 @@ export default function UsersPage() {
         onConfirm={confirmToggleStatus}
         onCancel={cancelToggleStatus}
         variant="default"
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Rol"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   )
