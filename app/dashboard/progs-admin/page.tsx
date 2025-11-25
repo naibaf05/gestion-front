@@ -339,7 +339,7 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "tipoNombreDisplay",
       header: "Tipo",
-      width: "6%",
+      width: "80px",
       cell: ({ row }) => {
         const primeraLetra = row.original.tipoNombre?.charAt(0)?.toUpperCase() || '';
         return (
@@ -367,19 +367,19 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "clienteNombre",
       header: "Cliente",
-      width: "25%",
+      width: "280px",
       enableColumnFilter: true
     },
     {
       accessorKey: "sedeNombre",
       header: "Sede",
-      width: "25%",
+      width: "280px",
       enableColumnFilter: true
     },
     {
       accessorKey: "recolNombre",
       header: "Recolector",
-      width: "15%",
+      width: "150px",
       cell: ({ row }) => {
         return `${row.original.recolNombre} ${row.original.recolApellido}`
       },
@@ -387,28 +387,17 @@ export default function ProgsAdminPage() {
     {
       accessorKey: "vehInterno",
       header: "Vehículo",
-      width: "10%",
+      width: "100px",
     },
     {
       accessorKey: "fecha",
       header: "Fecha",
-      width: "10%",
-    },
-    {
-      accessorKey: "visitaRecolId",
-      header: "Visita",
-      width: "5%",
-      cell: ({ row }) => {
-        const obj = row.getValue("visitaRecolId");
-        return (
-          obj ? <Check className="h-4 w-4" /> : null
-        );
-      },
+      width: "120px",
     },
     {
       id: "actions",
       header: "Acciones",
-      width: "15%",
+      width: "160px",
       cell: ({ row }) => {
         const obj = row.original
         return (
