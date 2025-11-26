@@ -244,7 +244,7 @@ export function ReportDialog<TData, TValue>({
             : keys;
 
         // Columns to treat as dates (customize as needed)
-        const DATE_KEYS = ["fechaVisita", "fechaInicio", "fechaFin", "fechaRenovacion", "fechaVencimientoContrato"];
+        const DATE_KEYS = ["fecha", "clienteFechaRenovacion", "fechaCierreFacCliente", "fechaVisita"];
 
         // Helper: parse DD/MM/YYYY or YYYY-MM-DD to JS Date
         function parseDate(val: string): Date | null {
