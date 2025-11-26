@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SelectSingle } from "@/components/ui/select-single"
 import { clientService } from "@/services/clientService"
 import type { Sede, Cliente, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -102,24 +102,26 @@ export function SedeDialog({
 
     try {
       if (sede) {
-        await clientService.updateSede(sede.id, formData)
+        const response = await clientService.updateSede(sede.id, formData)
         toast({
           title: "Sede actualizada",
-          description: "La sede ha sido actualizada exitosamente",
+          description: response.message || "La sede ha sido actualizada exitosamente",
+          variant: "success",
         })
       } else {
-        await clientService.createSede(formData)
+        const response = await clientService.createSede(formData)
         toast({
           title: "Sede creada",
-          description: "La sede ha sido creada exitosamente",
+          description: response.message || "La sede ha sido creada exitosamente",
+          variant: "success",
         })
       }
       onSuccess()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: sede ? "No se pudo actualizar la sede" : "No se pudo crear la sede",
+        title: sede ? "No se pudo actualizar la sede" : "No se pudo crear la sede",
+        description: error.message || "Error inesperado",
         variant: "destructive",
       })
     } finally {
@@ -138,211 +140,159 @@ export function SedeDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nombre" required>Nombre</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.nombre || "-"}</div>
-                ) : (
-                  <Input
-                    id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                    required
-                    placeholder="Nombre de la sede"
-                  />
-                )}
+                <Input
+                  id="nombre"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Nombre de la sede"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cliente" required>Cliente</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{clientes.find(c=>String(c.id)===String(formData.clienteId))?.nombre || "-"}</div>
-                ) : (
-                  <Select
-                    required
-                    value={formData.clienteId ? String(formData.clienteId) : ""}
-                    onValueChange={(value) => setFormData({ ...formData, clienteId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientes.map((cliente) => (
-                        <SelectItem key={cliente.id} value={String(cliente.id)}>
-                          {cliente.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <SelectSingle
+                  id="clienteId"
+                  placeholder="Selecciona un cliente"
+                  value={formData.clienteId}
+                  onChange={(value) => setFormData({ ...formData, clienteId: value })}
+                  options={clientes}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="direccion" required>Dirección</Label>
-              {readOnly ? (
-                <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.direccion || "-"}</div>
-              ) : (
-                <Input
-                  id="direccion"
-                  value={formData.direccion}
-                  onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                  required
-                  placeholder="Dirección completa de la sede"
-                />
-              )}
+              <Input
+                id="direccion"
+                value={formData.direccion}
+                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                required
+                disabled={readOnly}
+                readOnly={readOnly}
+                placeholder="Dirección completa de la sede"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="barrio" required>Barrio</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.barrio || "-"}</div>
-                ) : (
-                  <Input
-                    id="barrio"
-                    value={formData.barrio}
-                    onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
-                    required
-                    placeholder="Barrio donde se ubica"
-                  />
-                )}
+                <Input
+                  id="barrio"
+                  value={formData.barrio}
+                  onChange={(e) => setFormData({ ...formData, barrio: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Barrio donde se ubica"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="poblado" required>Municipio</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{poblados.find(p=>String(p.id)===String(formData.pobladoId))?.nombre || "-"}</div>
-                ) : (
-                  <Select
-                    value={formData.pobladoId ? String(formData.pobladoId) : ""}
-                    onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un municipio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {poblados.map((poblado) => (
-                        <SelectItem key={poblado.id} value={String(poblado.id)}>
-                          {poblado.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <SelectSingle
+                  id="pobladoId"
+                  placeholder="Selecciona un municipio"
+                  value={formData.pobladoId}
+                  onChange={(value) => setFormData({ ...formData, pobladoId: value })}
+                  options={poblados}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email" required>Email</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.email || "-"}</div>
-                ) : (
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    placeholder="correo@ejemplo.com"
-                  />
-                )}
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="correo@ejemplo.com"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telefono" required>Teléfono</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.telefono || "-"}</div>
-                ) : (
-                  <Input
-                    id="telefono"
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    required
-                    placeholder="Número de teléfono"
-                  />
-                )}
+                <Input
+                  id="telefono"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Número de teléfono"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="oficina" required>Planta</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.oficinaId.map(id => oficinas.find(o=>String(o.id)===String(id))?.nombre).filter(Boolean).join(', ') || '-'}</div>
-                ) : (
-                  <SelectMultiple
-                    options={oficinas.map(tc => ({ value: tc.id, label: tc.nombre }))}
-                    value={formData.oficinaId}
-                    onChange={selected => setFormData({ ...formData, oficinaId: selected })}
-                    placeholder="Selecciona plantas"
-                    disabled={readOnly}
-                  />
-                )}
+                <SelectMultiple
+                  options={oficinas.map(tc => ({ value: tc.id, label: tc.nombre }))}
+                  value={formData.oficinaId}
+                  onChange={selected => setFormData({ ...formData, oficinaId: selected })}
+                  placeholder="Selecciona plantas"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="generador" required>Generador</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{generadores.find(g=>String(g.id)===String(formData.generadorId))?.nombre || '-'}</div>
-                ) : (
-                  <Select
-                    value={formData.generadorId ? String(formData.generadorId) : ""}
-                    onValueChange={(value) => setFormData({ ...formData, generadorId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un generador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {generadores.map((generador) => (
-                        <SelectItem key={generador.id} value={String(generador.id)}>
-                          {generador.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <Label htmlFor="generador">Generador</Label>
+                <SelectSingle
+                  id="generadorId"
+                  placeholder="Selecciona un generador"
+                  value={formData.generadorId}
+                  onChange={(value) => setFormData({ ...formData, generadorId: value })}
+                  options={generadores}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="periodo" required>Periodo</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{periodos.find(p=>String(p.id)===String(formData.periodoId))?.nombre || '-'}</div>
-                ) : (
-                  <Select
-                    value={formData.periodoId ? String(formData.periodoId) : ""}
-                    onValueChange={(value) => setFormData({ ...formData, periodoId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un periodo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {periodos.map((periodo) => (
-                        <SelectItem key={periodo.id} value={String(periodo.id)}>
-                          {periodo.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <SelectSingle
+                  id="periodoId"
+                  placeholder="Selecciona un periodo"
+                  value={formData.periodoId}
+                  onChange={(value) => setFormData({ ...formData, periodoId: value })}
+                  options={periodos}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="atencion">Frecuencia Recolección</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.atencion || 0}</div>
-                ) : (
-                  <Input
-                    id="atencion"
-                    type="number"
-                    value={formData.atencion}
-                    onChange={(e) => setFormData({ ...formData, atencion: Number.parseInt(e.target.value) || 0 })}
-                    min="0"
-                    placeholder="Número de atención"
-                  />
-                )}
+                <Input
+                  id="atencion"
+                  type="number"
+                  value={formData.atencion}
+                  onChange={(e) => setFormData({ ...formData, atencion: Number.parseInt(e.target.value) || 0 })}
+                  min="0"
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Número de atención"
+                />
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? "Cerrar" : "Cancelar"}
             </Button>
             {!readOnly && (
               <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary-hover">

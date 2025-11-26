@@ -45,7 +45,7 @@ export function AmountsDialog({
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -115,13 +115,13 @@ export function AmountsDialog({
       toast({
         title: "Cantidad eliminada",
         description: "La cantidad ha sido eliminada exitosamente",
-        variant: "default",
+        variant: "success",
       });
       loadData();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: (error && error.message ? error.message : "No se pudo eliminar la cantidad"),
+        description: error.message || "No se pudo eliminar la cantidad",
         variant: "destructive",
       });
     } finally {
@@ -137,22 +137,27 @@ export function AmountsDialog({
     {
       accessorKey: "tResiduoNombre",
       header: "Tipo de Residuo",
+      width: "350px",
     },
     {
       accessorKey: "numContenedor",
       header: "Unidades",
+      width: "100px",
     },
     {
       accessorKey: "cantidadUnidad",
       header: "Cantidad",
+      width: "150px",
     },
     ...(hasPermission("rates.view") ? [{
       accessorKey: "tarifaNombre" as keyof VisitaCantidad,
       header: "Tarifa",
+      width: "150px",
     }] : []),
     {
       id: "actions",
       header: "Acciones",
+      width: "120px",
       cell: ({ row }) => {
         const obj = row.original
         return (

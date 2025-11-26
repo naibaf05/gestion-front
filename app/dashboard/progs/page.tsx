@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function ProgsPage() {
   const { user, logout } = useAuth();
@@ -59,7 +60,7 @@ export default function ProgsPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -112,43 +113,61 @@ export default function ProgsPage() {
     setDialogTableOpen(true);
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas eliminar la programación eventual?")) {
-      try {
-        await progService.deleteEv(id);
-        toast({
-          title: "Eliminar",
-          description: "La programación eventual ha sido eliminada correctamente",
-          variant: "success"
-        });
-        loadData();
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: (error && error.message) ?
-            error.message : "No se pudo eliminar",
-          variant: "error",
-        })
-      }
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [eventualToDelete, setEventualToDelete] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    setEventualToDelete(id);
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventualToDelete) return;
+    try {
+      await progService.deleteEv(eventualToDelete);
+      toast({
+        title: "Eliminar",
+        description: "La programación eventual ha sido eliminada correctamente",
+        variant: "success"
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar",
+        variant: "error",
+      });
+    } finally {
+      setEventualToDelete(null);
+      setConfirmDialogOpen(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setEventualToDelete(null);
+    setConfirmDialogOpen(false);
   };
 
   const columns: ColumnDef<ProgPath>[] = [
     {
       accessorKey: "rutaNombre",
       header: "Ruta",
+      width: "200px",
     },
     {
       accessorKey: "planta",
       header: "Planta",
+      width: "350px",
     },
     {
       accessorKey: "vehiculoInterno",
       header: "Vehículo",
+      width: "150px",
     },
     {
       id: "actions",
       header: "Acciones",
+      width: "160px",
       cell: ({ row }) => {
         const item = row.original;
         return (
@@ -173,18 +192,22 @@ export default function ProgsPage() {
     {
       accessorKey: "sedeNombre",
       header: "Sede",
+      width: "350px",
     },
     {
       accessorKey: "rutaNombre",
       header: "Ruta",
+      width: "200px",
     },
     {
       accessorKey: "vehInterno",
       header: "Vehículo",
+      width: "150px",
     },
     {
       id: "actions",
       header: "Acciones",
+      width: "100px",
       cell: ({ row }) => {
         const item = row.original;
         return (
@@ -329,6 +352,18 @@ export default function ProgsPage() {
         exportColumns={["tipo", "sedeNombre", "sedeDireccion", "sedeBarrio", "rutaNombre", "sedeLat"]}
         exportHeaders={["Tipo", "Sede", "Dirección", "Barrio", "Ruta", "Coordenadas"]}
         maxWidth="60vw"
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Eliminar programación eventual"
+        description="¿Estás seguro de que deseas eliminar la programación eventual?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        variant="destructive"
       />
     </div>
   );

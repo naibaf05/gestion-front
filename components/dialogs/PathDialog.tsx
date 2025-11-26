@@ -12,11 +12,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SelectSingle } from "@/components/ui/select-single"
 import { pathService } from "@/services/pathService"
 import type { Path, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Calendar } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 interface PathDialogProps {
   open: boolean
@@ -74,24 +74,26 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess, read
 
     try {
       if (ruta) {
-        await pathService.update(ruta.id, formData)
+        const result = await pathService.update(ruta.id, formData)
         toast({
           title: "Ruta actualizada",
-          description: "La ruta ha sido actualizada exitosamente",
+          description: result.message ? result.message : "La ruta ha sido actualizada exitosamente",
+          variant: "success",
         })
       } else {
-        await pathService.create(formData)
+        const result = await pathService.create(formData)
         toast({
           title: "Ruta creada",
-          description: "La ruta ha sido creada exitosamente",
+          description: result.message ? result.message : "La ruta ha sido creada exitosamente",
+          variant: "success",
         })
       }
       onSuccess()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: ruta ? "No se pudo actualizar la ruta" : "No se pudo crear la ruta",
+        title: ruta ? "No se pudo actualizar la ruta" : "No se pudo crear la ruta",
+        description: error.message ? error.message : "Error inesperado",
         variant: "destructive",
       })
     } finally {
@@ -109,7 +111,7 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess, read
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="codigo">Código *</Label>
+                <Label htmlFor="codigo" required>Código</Label>
                 <div className="flex gap-2">
                   <Input
                     id="codigo"
@@ -125,7 +127,7 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess, read
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre *</Label>
+                <Label htmlFor="nombre" required>Nombre</Label>
                 <Input
                   id="nombre"
                   value={formData.nombre}
@@ -141,46 +143,31 @@ export function PathDialog({ open, onOpenChange, ruta, oficinas, onSuccess, read
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dia">Día de la Semana *</Label>
-                <Select
+                <Label htmlFor="dia" required>Día de la Semana</Label>
+                <SelectSingle
+                  id="dia"
+                  options={DIAS_SEMANA}
                   value={formData.dia}
-                  onValueChange={(value: "l" | "m" | "x" | "j" | "v" | "s" | "d") =>
-                    setFormData({ ...formData, dia: value })
-                  }
+                  onChange={(value) => setFormData({ ...formData, dia: value as any })}
+                  valueKey="value"
+                  labelKey="label"
+                  placeholder="Selecciona un día"
                   disabled={readOnly}
-                >
-                  <SelectTrigger disabled={readOnly}>
-                    <SelectValue placeholder="Selecciona un día" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DIAS_SEMANA.map((dia) => (
-                      <SelectItem key={dia.value} value={dia.value}>
-                        {dia.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="oficina">Planta *</Label>
-                <Select
-                  value={formData.oficinaId ? String(formData.oficinaId) : ""}
-                  onValueChange={(value) => setFormData({ ...formData, oficinaId: value })}
+                <Label htmlFor="oficina" required>Planta</Label>
+                <SelectSingle
+                  id="oficina"
+                  options={oficinas.map(o => ({ id: String(o.id), nombre: o.nombre }))}
+                  value={formData.oficinaId}
+                  onChange={(value) => setFormData({ ...formData, oficinaId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
+                  placeholder="Selecciona una planta"
                   disabled={readOnly}
-                >
-                  <SelectTrigger disabled={readOnly}>
-                    <SelectValue placeholder="Selecciona una planta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {oficinas
-                      .map((oficina) => (
-                        <SelectItem key={oficina.id} value={String(oficina.id)}>
-                          {oficina.nombre}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             </div>
           </div>

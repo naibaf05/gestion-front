@@ -85,6 +85,7 @@ export function PasswordDialog({
             toast({
                 title: "Contraseña actualizada",
                 description: `La contraseña de ${displayName ?? "la cuenta"} ha sido actualizada exitosamente`,
+                variant: "success",
             })
 
             handleClose()

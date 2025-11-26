@@ -6,8 +6,8 @@ export class VehicleService {
         const response = await apiService.get<ApiResponse<Vehicle[]>>(`/vehicles`);
 
         response.data.forEach((element) => {
-            if (element.datosJson && typeof element.datosJson === "string") {
-                element.datosJson = JSON.parse(element.datosJson);
+            if (element.datosJsonString && typeof element.datosJsonString === "string") {
+                element.datosJson = JSON.parse(element.datosJsonString);
             }
         });
         return response.data;
@@ -18,16 +18,16 @@ export class VehicleService {
         return response.data
       }
 
-    async createVehicle(vehicle: Partial<Vehicle>): Promise<Vehicle> {
-        vehicle.datosJson = JSON.stringify(vehicle.datosJson);
+    async createVehicle(vehicle: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
+        vehicle.datosJsonString = JSON.stringify(vehicle.datosJson);
         const response = await apiService.post<ApiResponse<Vehicle>>("/vehicles", vehicle);
-        return response.data;
+        return response;
     }
 
-    async updateVehicle(id: string, vehicle: Partial<Vehicle>): Promise<Vehicle> {
-        vehicle.datosJson = JSON.stringify(vehicle.datosJson);
+    async updateVehicle(id: string, vehicle: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
+        vehicle.datosJsonString = JSON.stringify(vehicle.datosJson);
         const response = await apiService.put<ApiResponse<Vehicle>>(`/vehicles/${id}`, vehicle);
-        return response.data;
+        return response;
     }
 
     async toggleVehicleStatus(id: string): Promise<Vehicle> {

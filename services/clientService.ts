@@ -7,8 +7,8 @@ export class ClientService {
     const response = await apiService.get<ApiResponse<Cliente[]>>(`/clientes`)
 
     response.data.forEach((element) => {
-      if (element.datosJson && typeof element.datosJson === "string") {
-        element.datosJson = JSON.parse(element.datosJson);
+      if (element.datosJsonString && typeof element.datosJsonString === "string") {
+        element.datosJson = JSON.parse(element.datosJsonString);
         if (element.datosJson.tiposClienteIds) {
           element.tiposClienteIds = element.datosJson.tiposClienteIds;
         }
@@ -27,18 +27,18 @@ export class ClientService {
     return response.data
   }
 
-  async createCliente(cliente: Partial<Cliente>): Promise<Cliente> {
+  async createCliente(cliente: Partial<Cliente>): Promise<ApiResponse<Cliente>> {
     cliente.datosJson.tiposClienteIds = cliente.tiposClienteIds;
-    cliente.datosJson = JSON.stringify(cliente.datosJson); 
+    cliente.datosJsonString = JSON.stringify(cliente.datosJson);
     const response = await apiService.post<ApiResponse<Cliente>>("/clientes", cliente)
-    return response.data
+    return response
   }
 
-  async updateCliente(id: string, cliente: Partial<Cliente>): Promise<Cliente> {
+  async updateCliente(id: string, cliente: Partial<Cliente>): Promise<ApiResponse<Cliente>> {
     cliente.datosJson.tiposClienteIds = cliente.tiposClienteIds;
-    cliente.datosJson = JSON.stringify(cliente.datosJson);    
+    cliente.datosJsonString = JSON.stringify(cliente.datosJson);
     const response = await apiService.put<ApiResponse<Cliente>>(`/clientes/${id}`, cliente)
-    return response.data
+    return response
   }
 
   async deleteCliente(id: string): Promise<void> {
@@ -79,14 +79,14 @@ export class ClientService {
     return response.data
   }
 
-  async createSede(sede: Partial<Sede>): Promise<Sede> {
+  async createSede(sede: Partial<Sede>): Promise<ApiResponse<Sede>> {
     const response = await apiService.post<ApiResponse<Sede>>("/sedes", sede)
-    return response.data
+    return response
   }
 
-  async updateSede(id: string, sede: Partial<Sede>): Promise<Sede> {
+  async updateSede(id: string, sede: Partial<Sede>): Promise<ApiResponse<Sede>> {
     const response = await apiService.put<ApiResponse<Sede>>(`/sedes/${id}`, sede)
-    return response.data
+    return response
   }
 
   async deleteSede(id: string): Promise<void> {

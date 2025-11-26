@@ -42,7 +42,7 @@ export default function UsersPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -110,7 +110,7 @@ export default function UsersPage() {
       toast({
         title: "Estado actualizado",
         description: "El estado del perfil ha sido actualizado exitosamente",
-        variant: "default",
+        variant: "success",
       })
       loadData()
     } catch (error) {
@@ -130,14 +130,17 @@ export default function UsersPage() {
 
   const columns: ColumnDef<Profile>[] = [
     {
+      width: "150px",
       accessorKey: "nombre",
       header: "Nombre",
     },
     {
+      width: "400px",
       accessorKey: "descripcion",
       header: "Descripción",
     },
     {
+      width: "100px",
       accessorKey: "activo",
       header: "Estado",
       cell: ({ row }) => {
@@ -149,6 +152,7 @@ export default function UsersPage() {
       },
     },
     {
+      width: "180px",
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {

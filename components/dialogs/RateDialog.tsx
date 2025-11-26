@@ -87,17 +87,17 @@ export function RateDialog({
 
     try {
       if (rate) {
-        await rateService.update(rate.id, formData);
+        const response = await rateService.update(rate.id, formData);
         toast({
           title: "Tarifa actualizada",
-          description: "La tarifa ha sido actualizada exitosamente",
+          description: response.message || "La tarifa ha sido actualizada exitosamente",
           variant: "success",
         });
       } else {
-        await rateService.create(formData);
+        const response = await rateService.create(formData);
         toast({
           title: "Tarifa creada",
-          description: "La tarifa ha sido creada exitosamente",
+          description: response.message || "La tarifa ha sido creada exitosamente",
           variant: "success",
         });
       }
@@ -106,11 +106,7 @@ export function RateDialog({
     } catch (error: any) {
       toast({
         title: rate ? "Error al actualizar la tarifa" : "Error al crear la tarifa",
-        description: (error && error.message) ?
-          error.message :
-          rate
-            ? "No se pudo actualizar la tarifa"
-            : "No se pudo crear la tarifa",
+        description: error.message || "Error inesperado",
         variant: "destructive",
       });
     } finally {
@@ -128,93 +124,75 @@ export function RateDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="undMedidaId">Unidad de Medida *</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">
-                    {undMedidas.find(u => String(u.id) === String(formData.undMedidaId))?.nombre || "-"}
-                  </div>
-                ) : (
-                  <SelectSingle
-                    id="undMedidaId"
-                    placeholder="Selecciona una unidad de medida"
-                    options={undMedidas}
-                    value={formData.undMedidaId}
-                    onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                )}
+                <Label htmlFor="undMedidaId" required>Unidad de Medida</Label>
+                <SelectSingle
+                  id="undMedidaId"
+                  placeholder="Selecciona una unidad de medida"
+                  options={undMedidas}
+                  value={formData.undMedidaId}
+                  onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="tipoResiduoId">Tipo de Residuo *</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">
-                    {tiposResiduos.find(t => String(t.id) === String(formData.tipoResiduoId))?.nombre || "-"}
-                  </div>
-                ) : (
-                  <SelectSingle
-                    id="tipoResiduoId"
-                    placeholder="Selecciona un tipo de residuo"
-                    options={tiposResiduos}
-                    value={formData.tipoResiduoId}
-                    onChange={(value) => setFormData({ ...formData, tipoResiduoId: value })}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                )}
+                <Label htmlFor="tipoResiduoId" required>Tipo de Residuo</Label>
+                <SelectSingle
+                  id="tipoResiduoId"
+                  placeholder="Selecciona un tipo de residuo"
+                  options={tiposResiduos}
+                  value={formData.tipoResiduoId}
+                  onChange={(value) => setFormData({ ...formData, tipoResiduoId: value })}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fechaInicio">Fecha Inicio *</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fechaInicio || '-'}</div>
-                ) : (
-                  <Input
-                    id="fechaInicio"
-                    type="date"
-                    value={formData.fechaInicio}
-                    onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
-                  />
-                )}
+                <Label htmlFor="fechaInicio" required>Fecha Inicio</Label>
+                <Input
+                  id="fechaInicio"
+                  type="date"
+                  value={formData.fechaInicio}
+                  onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fechaFin">Fecha Fin</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fechaFin || '-'}</div>
-                ) : (
-                  <Input
-                    id="fechaFin"
-                    type="date"
-                    value={formData.fechaFin}
-                    onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-                  />
-                )}
+                <Input
+                  id="fechaFin"
+                  type="date"
+                  value={formData.fechaFin}
+                  onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="tarifa">Tarifa *</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.tarifa || '-'}</div>
-                ) : (
-                  <InputDecimal
-                    id="tarifa"
-                    value={formData.tarifa}
-                    onChange={(e) => setFormData({ ...formData, tarifa: e.target.value })}
-                    decimalPlaces={2}
-                    placeholder="Ingrese la tarifa"
-                  />
-                )}
+                <Label htmlFor="tarifa" required>Tarifa</Label>
+                <InputDecimal
+                  id="tarifa"
+                  value={formData.tarifa}
+                  onChange={(e) => setFormData({ ...formData, tarifa: e.target.value })}
+                  decimalPlaces={2}
+                  placeholder="Ingrese la tarifa"
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <br></br>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.puestoPlanta ? 'Sí, puesto de planta' : 'No'}</div>
-                ) : (
-                  <InputCheck
-                    id="puestoPlanta"
-                    checked={formData.puestoPlanta}
-                    onChange={e => setFormData({ ...formData, puestoPlanta: e.target.checked })}
-                    label="¿Es puesto de planta?"
-                  />
-                )}
+                <InputCheck
+                  id="puestoPlanta"
+                  checked={formData.puestoPlanta}
+                  onChange={e => setFormData({ ...formData, puestoPlanta: e.target.checked })}
+                  label="¿Es puesto de planta?"
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
             </div>
           </div>

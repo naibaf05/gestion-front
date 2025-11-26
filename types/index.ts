@@ -22,9 +22,10 @@ export interface User {
   documento: string
   telefono: string
   email: string
-  rolId: string
-  rolNombre?: string
+  rolId?: string[]
   perfil?: Profile
+  roles?: Profile[]
+  nombrePerfiles?: string
   activo: boolean
   createdAt: string
   updatedAt: string
@@ -85,6 +86,7 @@ export interface Cliente {
   correoFacturacion?: string
   tiposClienteIds?: string[]
   datosJson?: any
+  datosJsonString?: string
   tipoCliente?: string
 }
 
@@ -152,6 +154,7 @@ export interface Vehicle {
   conductorNombre?: string;
   activo: boolean;
   datosJson?: any
+  datosJsonString?: string;
 }
 
 export interface AlertaVehiculo {

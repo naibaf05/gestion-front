@@ -97,7 +97,7 @@ export default function ProgsAdminPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -177,7 +177,7 @@ export default function ProgsAdminPage() {
     try {
       setLoading(true)
       const [progsData, sedesData, vehiclesData, recolData, comercialData, plantasData] = await Promise.all([
-        user?.rolNombre === "CLIENTE" ? progService.getDataProgsAdminCliente(dateString, fechaFinString, user.id || "") : progService.getDataProgsAdmin(dateString, fechaFinString),
+        user?.perfil?.nombre === "CLIENTE" ? progService.getDataProgsAdminCliente(dateString, fechaFinString, user.id || "") : progService.getDataProgsAdmin(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         userService.getUsersActivos(),
@@ -301,11 +301,11 @@ export default function ProgsAdminPage() {
           variant: "success",
         });
       } else if (tipoConfirm === "pdf-no-facturado") {
-        if (selected && user?.rolNombre !== "CLIENTE") {
+        if (selected && user?.perfil?.nombre !== "CLIENTE") {
           handlePdfNoValidate(selected)
         }
       } else if (tipoConfirm === "cartera") {
-        if (selected && user?.rolNombre !== "CLIENTE") {
+        if (selected && user?.perfil?.nombre !== "CLIENTE") {
           handlePdfNoValidate(selected)
         }
       }
@@ -417,7 +417,7 @@ export default function ProgsAdminPage() {
                   <TableProperties className="h-4 w-4" />
                 </ButtonTooltip>
               )}
-              {user?.rolNombre === "CLIENTE" ?
+              {user?.perfil?.nombre === "CLIENTE" ?
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
                   <FileText className="h-4 w-4" />
                 </ButtonTooltip> :

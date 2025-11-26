@@ -194,7 +194,6 @@ export function PermsDialog({
         try {
             setSaving(true)
 
-            // Preparar los permisos para enviar (solo los que están en true)
             const permissionsToSave: Record<string, any> = {}
             Object.entries(permissions).forEach(([key, value]) => {
                 if (value) {
@@ -202,9 +201,8 @@ export function PermsDialog({
                 }
             })
 
-            console.log(permissionsToSave);
-            profile.permisos = JSON.stringify(permissionsToSave);
-            await userService.updateProfile(profile.id, profile)
+            const permisosString = JSON.stringify(permissionsToSave);
+            await userService.toggleUserPermisos(profile.id, permisosString)
 
             toast({
                 title: "Permisos actualizados",

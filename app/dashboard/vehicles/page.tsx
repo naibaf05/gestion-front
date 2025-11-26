@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, PowerSquare, Paperclip, History, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Parametrizacion, User, Vehicle } from "@/types";
 import { vehicleService } from "@/services/vehicleService";
@@ -15,9 +17,9 @@ import { parametrizationService } from "@/services/parametrizationService";
 import { userService } from "@/services/userService";
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog";
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 export default function VehiclesPage() {
     const { user, logout } = useAuth();
@@ -31,7 +33,6 @@ export default function VehiclesPage() {
     const [conductores, setConductores] = useState<User[]>([]);
     const [tiposVehiculo, setTiposVehiculo] = useState<Parametrizacion[]>([]);
     const { toast } = useToast();
-    const { user: authUser } = useAuth();
 
     const [adjuntosOpen, setAdjuntosOpen] = useState(false);
     const [entidadId, setEntidadId] = useState<string | null>(null);
@@ -39,6 +40,8 @@ export default function VehiclesPage() {
     const [historialOpen, setHistorialOpen] = useState(false);
     const [historialId, setHistorialId] = useState<string>("");
     const [historialLabel, setHistorialLabel] = useState<string>("");
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [vehicleToToggle, setVehicleToToggle] = useState<string | null>(null);
 
     if (user && user.permisos && typeof user.permisos === "string") {
         user.permisos = JSON.parse(user.permisos);
@@ -46,7 +49,7 @@ export default function VehiclesPage() {
 
     const hasPermission = (permission: string): boolean => {
         if (!user || !user.permisos) return false
-        if (user.rolNombre === "ADMIN") return true
+        if (user.perfil?.nombre === "ADMIN") return true
         return user.permisos[permission] === true
     }
 
@@ -96,23 +99,36 @@ export default function VehiclesPage() {
         setDialogOpen(true);
     };
 
-    const handleToggleStatus = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas cambiar el estado de este vehículo?")) {
-            try {
-                await vehicleService.toggleVehicleStatus(id);
-                toast({
-                    title: "Estado actualizado",
-                    description: "El estado del vehículo ha sido actualizado",
-                });
-                loadData();
-            } catch (error) {
-                toast({
-                    title: "Error",
-                    description: "No se pudo actualizar el estado",
-                    variant: "destructive",
-                });
-            }
+    const handleToggleStatus = (id: string) => {
+        setVehicleToToggle(id);
+        setConfirmDialogOpen(true);
+    };
+
+    const confirmToggleStatus = async () => {
+        if (!vehicleToToggle) return;
+        try {
+            await vehicleService.toggleVehicleStatus(vehicleToToggle);
+            toast({
+                title: "Estado actualizado",
+                description: "El estado del vehículo ha sido actualizado",
+                variant: "success",
+            });
+            loadData();
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el estado",
+                variant: "destructive",
+            });
+        } finally {
+            setVehicleToToggle(null);
+            setConfirmDialogOpen(false);
         }
+    };
+
+    const cancelToggleStatus = () => {
+        setVehicleToToggle(null);
+        setConfirmDialogOpen(false);
     };
 
     const handleAdjuntos = (id: string) => {
@@ -128,24 +144,27 @@ export default function VehiclesPage() {
 
     const columns: ColumnDef<Vehicle>[] = [
         {
-            accessorKey: "planta.nombre",
+            width: "350px",
+            accessorKey: "oficinaNombre",
             header: "Planta",
-            cell: ({ row }) => row.original.oficinaNombre || "-",
         },
         {
+            width: "100px",
             accessorKey: "interno",
             header: "Interno",
         },
         {
+            width: "100px",
             accessorKey: "placa",
             header: "Placa",
         },
         {
-            accessorKey: "conductor.nombre",
+            width: "200px",
+            accessorKey: "conductorNombre",
             header: "Conductor",
-            cell: ({ row }) => row.original.conductorNombre || "-",
         },
         {
+            width: "100px",
             accessorKey: "activo",
             header: "Estado",
             cell: ({ row }) => (
@@ -155,6 +174,7 @@ export default function VehiclesPage() {
             ),
         },
         {
+            width: "180px",
             id: "actions",
             header: "Acciones",
             cell: ({ row }) => {
@@ -172,23 +192,42 @@ export default function VehiclesPage() {
                                 </ButtonTooltip>
                             }
                             {hasPermission("vehicles.edit") && (
-                                <>
-                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(veh.id)} tooltipContent="Adjuntos">
-                                        <Paperclip className="h-4 w-4" />
-                                    </ButtonTooltip>
-                                    <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(veh.id)}
-                                        className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
-                                        tooltipContent={veh.activo ? "Desactivar" : "Activar"}
-                                    >
-                                        <PowerSquare className="h-4 w-4" />
-                                    </ButtonTooltip>
-                                </>
-                            )}
-                            {hasPermission("users.historial") && (
-                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(veh.id, veh.placa)} tooltipContent="Historial">
-                                    <History className="h-4 w-4" />
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(veh.id)}
+                                    className={veh.activo ? "new-text-green-600" : "new-text-red-600"}
+                                    tooltipContent={veh.activo ? "Desactivar" : "Activar"}
+                                >
+                                    <PowerSquare className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
+                            <DropdownMenu>
+                                <Tooltip>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <span className="sr-only">Más acciones</span>
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                                <circle cx="5" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="19" cy="12" r="2" fill="currentColor" />
+                                            </svg>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <TooltipContent>Más acciones</TooltipContent>
+                                </Tooltip>
+                                <DropdownMenuContent align="end">
+                                    {hasPermission("profiles.permissions") && (
+                                        <DropdownMenuItem onClick={() => handleAdjuntos(veh.id)}>
+                                            <Paperclip className="h-4 w-4" />
+                                            Adjuntos
+                                        </DropdownMenuItem>
+                                    )}
+                                    {hasPermission("users.historial") && (
+                                        <DropdownMenuItem onClick={() => handleHistorial(veh.id, veh.placa)}>
+                                            <History className="h-4 w-4" />
+                                            Historial
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </TooltipProvider >
                 );
@@ -228,7 +267,7 @@ export default function VehiclesPage() {
 
             <Card>
                 <CardContent>
-                    <DataTable columns={columns} data={vehicles} searchKey="placa" searchPlaceholder="Buscar por placa..." />
+                    <DataTable columns={columns} data={vehicles} searchKey={["oficinaNombre", "interno", "placa", "conductorNombre"]} searchPlaceholder="Buscar ..." />
                 </CardContent>
             </Card>
 
@@ -257,6 +296,18 @@ export default function VehiclesPage() {
                 tipo="Vehiculo"
                 id={historialId}
                 label={historialLabel}
+            />
+
+            <ConfirmationDialog
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+                title="Cambiar estado del vehículo"
+                description="¿Estás seguro de que deseas cambiar el estado de este vehículo?"
+                confirmText="Cambiar Estado"
+                cancelText="Cancelar"
+                onConfirm={confirmToggleStatus}
+                onCancel={cancelToggleStatus}
+                variant="default"
             />
         </div>
     );

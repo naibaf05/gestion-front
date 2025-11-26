@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Check, CircleDollarSign, Edit, Eye, Plus, PowerSquare } from "lucide-react"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Parametrizacion, Rate, Sede } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { rateService } from "@/services/rateService"
@@ -90,80 +91,81 @@ export function RatesDialog({
   }
 
   const handleView = (rate: Rate) => {
-    // Permite ver cuando sólo tiene rates.view (readOnly true) o no canEdit
     setSelectedRate(rate)
     setRateDialogReadOnly(true)
     setDialogOpen(true)
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (readOnly || !canEdit) return
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a esta tarifa?")) {
-      try {
-        await rateService.toggleStatus(id);
-        toast({
-          title: "Estado actualizado",
-          description: "El estado de la tarifa ha sido actualizado",
-          variant: "success",
-        });
-        loadData();
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: (error && error.message ? error.message : "No se pudo actualizar el estado"),
-          variant: "error",
-        });
-        loadData();
-      }
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [rateToToggle, setRateToToggle] = useState<string | null>(null);
+
+  const handleToggleStatus = (id: string) => {
+    if (readOnly || !canEdit) return;
+    setRateToToggle(id);
+    setStatusDialogOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (!rateToToggle) return;
+    try {
+      await rateService.toggleStatus(rateToToggle);
+      toast({
+        title: "Estado actualizado",
+        description: "El estado de la tarifa ha sido actualizado",
+        variant: "success",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: (error && error.message ? error.message : "No se pudo actualizar el estado"),
+        variant: "error",
+      });
+      loadData();
+    } finally {
+      setRateToToggle(null);
+      setStatusDialogOpen(false);
     }
-  }
+  };
+
+  const cancelToggleStatus = () => {
+    setRateToToggle(null);
+    setStatusDialogOpen(false);
+  };
 
   const columns: ColumnDef<Rate>[] = [
     {
+      width: "150px",
       accessorKey: "undMedidaNombre",
       header: "Unidad de Medida",
     },
     {
+      width: "150px",
       accessorKey: "tipoResiduoCodigo",
       header: "Cod. Tipo de Residuo",
     },
     {
+      width: "250px",
       accessorKey: "tipoResiduoNombre",
       header: "Tipo de Residuo",
     },
     {
+      width: "100px",
       accessorKey: "tarifaNombre",
       header: "Tarifa",
     },
     {
+      width: "120px",
       accessorKey: "fechaInicio",
-      header: "Fecha Inicio",
-      cell: ({ row }) => {
-        const fecha = row.getValue("fechaInicio");
-        if (typeof fecha === "string") {
-          const [anio, mes, dia] = fecha.split("-");
-          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
-          return fechaLocal.toLocaleDateString();
-        } else {
-          return "";
-        }
-      },
+      header: "Fecha Inicio"
     },
     {
+      width: "120px",
       accessorKey: "fechaFin",
-      header: "Fecha Fin",
-      cell: ({ row }) => {
-        const fecha = row.getValue("fechaFin");
-        if (typeof fecha === "string") {
-          const [anio, mes, dia] = fecha.split("-");
-          const fechaLocal = new Date(Number(anio), Number(mes) - 1, Number(dia));
-          return fechaLocal.toLocaleDateString();
-        } else {
-          return "";
-        }
-      },
+      header: "Fecha Fin"
     },
     {
+      width: "120px",
       accessorKey: "puestoPlanta",
       header: "Puesto en planta",
       cell: ({ row }) => {
@@ -174,6 +176,7 @@ export function RatesDialog({
       },
     },
     {
+      width: "100px",
       accessorKey: "activo",
       header: "Estado",
       cell: ({ row }) => {
@@ -185,6 +188,7 @@ export function RatesDialog({
       },
     },
     {
+      width: "130px",
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
@@ -256,6 +260,18 @@ export function RatesDialog({
               Cerrar
             </Button>
           </DialogFooter>
+
+          <ConfirmationDialog
+            open={statusDialogOpen}
+            onOpenChange={setStatusDialogOpen}
+            title="Cambiar estado de la tarifa"
+            description="¿Estás seguro de que deseas cambiar el estado de esta tarifa?"
+            confirmText="Cambiar Estado"
+            cancelText="Cancelar"
+            onConfirm={confirmToggleStatus}
+            onCancel={cancelToggleStatus}
+            variant="default"
+          />
         </DialogContent>
       </Dialog>
 

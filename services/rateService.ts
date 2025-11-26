@@ -22,19 +22,19 @@ export class RateService {
     return response.data
   }
 
-  async create(rate: Partial<Rate>): Promise<Rate> {
+  async create(rate: Partial<Rate>): Promise<ApiResponse<Rate>> {
     const response = await apiService.post<ApiResponse<Rate>>("/rates", rate)
-    return response.data
+    return response
   }
 
-  async update(id: string, rate: Partial<Rate>): Promise<Rate> {
+  async update(id: string, rate: Partial<Rate>): Promise<ApiResponse<Rate>> {
     const response = await apiService.put<ApiResponse<Rate>>(`/rates/${id}`, rate)
-    return response.data
+    return response
   }
 
-  async toggleStatus(id: string): Promise<Rate> {
+  async toggleStatus(id: string): Promise<ApiResponse<Rate>> {
     const response = await apiService.patch<ApiResponse<Rate>>(`/rates/${id}/toggle-status`)
-    return response.data
+    return response
   }
 }
 

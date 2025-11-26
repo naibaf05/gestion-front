@@ -65,6 +65,8 @@ export default function SedesPage() {
   const searchParams = useSearchParams();
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [sedeToToggle, setSedeToToggle] = useState<string | null>(null);
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -72,7 +74,7 @@ export default function SedesPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -80,12 +82,10 @@ export default function SedesPage() {
     loadData();
   }, []);
 
-  // Efecto para detectar si se debe abrir el diálogo automáticamente
   useEffect(() => {
     const action = searchParams.get('action')
     if (action === 'create' && clientes.length > 0 && poblados.length > 0 && oficinas.length > 0 && generadores.length > 0 && periodos.length > 0) {
       handleCreate()
-      // Limpiar el parámetro de la URL sin recargar la página
       window.history.replaceState({}, '', '/dashboard/sedes')
     }
   }, [searchParams, clientes, poblados, oficinas, generadores, periodos]);
@@ -149,23 +149,36 @@ export default function SedesPage() {
     setDialogOpen(true);
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a esta sede?")) {
-      try {
-        await clientService.toggleSedeStatus(id);
-        toast({
-          title: "Estado actualizado",
-          description: "El estado de la sede ha sido actualizado",
-        });
-        loadData();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        });
-      }
+  const handleToggleStatus = (id: string) => {
+    setSedeToToggle(id);
+    setStatusDialogOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (!sedeToToggle) return;
+    try {
+      await clientService.toggleSedeStatus(sedeToToggle);
+      toast({
+        title: "Estado actualizado",
+        description: "El estado de la sede ha sido actualizado",
+        variant: "success",
+      });
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      });
+    } finally {
+      setSedeToToggle(null);
+      setStatusDialogOpen(false);
     }
+  };
+
+  const cancelToggleStatus = () => {
+    setSedeToToggle(null);
+    setStatusDialogOpen(false);
   };
 
   const handleHistorial = (id: string, nombre: string, clienteNombre: string) => {
@@ -194,7 +207,6 @@ export default function SedesPage() {
 
   const openLocationPicker = (sede: Sede) => {
     setSelectedSede(sede);
-    // Solo lectura si no tiene permiso de geo.edit
     setLocationReadOnly(!hasPermission("geo.edit"));
     setLocationDialogOpen(true);
   };
@@ -235,32 +247,32 @@ export default function SedesPage() {
     {
       accessorKey: "nombre",
       header: "Nombre",
-      width: "20%",
+      width: "250px",
     },
     {
       accessorKey: "clienteNombre",
       header: "Cliente",
-      width: "20%",
+      width: "250px",
     },
     {
       accessorKey: "direccion",
       header: "Dirección",
-      width: "20%",
+      width: "250px",
     },
     {
       accessorKey: "telefono",
       header: "Teléfono",
-      width: "15%",
+      width: "120px",
     },
     {
       accessorKey: "email",
       header: "Email",
-      width: "20%",
+      width: "250px",
     },
     {
       accessorKey: "poblado",
       header: "Municipio",
-      width: "15%",
+      width: "120px",
       cell: ({ row }) => {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
@@ -269,7 +281,7 @@ export default function SedesPage() {
     {
       accessorKey: "activo",
       header: "Estado",
-      width: "8%",
+      width: "100px",
       cell: ({ row }) => {
         return (
           <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
@@ -281,7 +293,7 @@ export default function SedesPage() {
     {
       id: "actions",
       header: "Acciones",
-      width: "20%",
+      width: "180px",
       cell: ({ row }) => {
         const sede = row.original;
         return (
@@ -494,6 +506,18 @@ export default function SedesPage() {
         description="¿Estás seguro de que deseas eliminar esta sede?"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <ConfirmationDialog
+        open={statusDialogOpen}
+        onOpenChange={setStatusDialogOpen}
+        title="Cambiar estado de la sede"
+        description="¿Estás seguro de que deseas cambiar el estado de esta sede?"
+        confirmText="Cambiar Estado"
+        cancelText="Cancelar"
+        onConfirm={confirmToggleStatus}
+        onCancel={cancelToggleStatus}
+        variant="default"
       />
 
       <HistorialDialog

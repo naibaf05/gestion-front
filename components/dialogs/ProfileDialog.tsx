@@ -64,12 +64,14 @@ export function ProfileDialog({
         toast({
           title: "Perfil actualizado",
           description: "El perfil ha sido actualizado exitosamente",
+          variant: "success",
         });
       } else {
         await userService.createProfile(formData);
         toast({
           title: "Perfil creado",
           description: "El perfil ha sido creado exitosamente.",
+          variant: "success",
         });
       }
       onSuccess();
@@ -114,6 +116,7 @@ export function ProfileDialog({
                 value={formData.descripcion}
                 onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                 rows={3}
+                required
                 disabled={readOnly}
                 readOnly={readOnly}
               />

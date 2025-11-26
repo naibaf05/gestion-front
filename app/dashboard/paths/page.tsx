@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { PathDialog } from "@/components/dialogs/PathDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import type { ColumnDef } from "@tanstack/react-table"
-import { DiaKey, getDiaColor, getDiaSemana } from "@/utils/utils"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function RutasPage() {
     const { user, logout } = useAuth();
@@ -24,8 +24,9 @@ export default function RutasPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedRuta, setSelectedRuta] = useState<Path | null>(null)
     const [dialogReadOnly, setDialogReadOnly] = useState(false)
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+    const [rutaToToggle, setRutaToToggle] = useState<string | null>(null)
     const { toast } = useToast()
-    const { user: authUser } = useAuth()
 
     if (user && user.permisos && typeof user.permisos === "string") {
         user.permisos = JSON.parse(user.permisos);
@@ -33,7 +34,7 @@ export default function RutasPage() {
 
     const hasPermission = (permission: string): boolean => {
         if (!user || !user.permisos) return false
-        if (user.rolNombre === "ADMIN") return true
+        if (user.perfil?.nombre === "ADMIN") return true
         return user.permisos[permission] === true
     }
 
@@ -80,38 +81,51 @@ export default function RutasPage() {
         setDialogOpen(true)
     }
 
-    const handleToggleStatus = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas cambiar el estado a esta ruta?")) {
-            try {
-                await pathService.toggleRutaStatus(id)
-                toast({
-                    title: "Estado actualizado",
-                    description: "El estado de la ruta ha sido actualizado",
-                })
-                loadData()
-            } catch (error) {
-                toast({
-                    title: "Error",
-                    description: "No se pudo actualizar el estado",
-                    variant: "destructive",
-                })
-            }
+    const handleToggleStatus = (id: string) => {
+        setRutaToToggle(id)
+        setConfirmDialogOpen(true)
+    }
+
+    const confirmToggleStatus = async () => {
+        if (!rutaToToggle) return
+        try {
+            await pathService.toggleRutaStatus(rutaToToggle)
+            toast({
+                title: "Estado actualizado",
+                description: "El estado de la ruta ha sido actualizado",
+                variant: "success",
+            })
+            loadData()
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el estado",
+                variant: "destructive",
+            })
+        } finally {
+            setRutaToToggle(null)
+            setConfirmDialogOpen(false)
         }
+    }
+
+    const cancelToggleStatus = () => {
+        setRutaToToggle(null)
+        setConfirmDialogOpen(false)
     }
 
     const columns: ColumnDef<Path>[] = [
         {
+            width: "100px",
             accessorKey: "codigo",
             header: "Código",
-            cell: ({ row }) => {
-                return <span className="font-mono text-sm">{row.getValue("codigo")}</span>
-            },
         },
         {
+            width: "200px",
             accessorKey: "nombre",
             header: "Nombre",
         },
         {
+            width: "100px",
             accessorKey: "diaNombre",
             header: "Día",
             cell: ({ row }) => {
@@ -123,6 +137,7 @@ export default function RutasPage() {
             },
         },
         {
+            width: "350px",
             accessorKey: "oficina",
             header: "Planta",
             cell: ({ row }) => {
@@ -131,6 +146,7 @@ export default function RutasPage() {
             },
         },
         {
+            width: "100px",
             accessorKey: "activo",
             header: "Estado",
             cell: ({ row }) => {
@@ -142,6 +158,7 @@ export default function RutasPage() {
             },
         },
         {
+            width: "150px",
             id: "actions",
             header: "Acciones",
             cell: ({ row }) => {
@@ -212,8 +229,8 @@ export default function RutasPage() {
                     <DataTable
                         columns={columns}
                         data={rutas}
-                        searchKey="nombre"
-                        searchPlaceholder="Buscar por nombre..."
+                        searchKey={["codigo", "nombre", "diaNombre"]}
+                        searchPlaceholder="Buscar ..."
                     />
                 </CardContent>
             </Card>
@@ -225,6 +242,18 @@ export default function RutasPage() {
                 oficinas={oficinas}
                 onSuccess={loadData}
                 readOnly={dialogReadOnly}
+            />
+
+            <ConfirmationDialog
+                open={confirmDialogOpen}
+                onOpenChange={setConfirmDialogOpen}
+                title="Cambiar estado de la ruta"
+                description="¿Estás seguro de que deseas cambiar el estado de esta ruta?"
+                confirmText="Cambiar Estado"
+                cancelText="Cancelar"
+                onConfirm={confirmToggleStatus}
+                onCancel={cancelToggleStatus}
+                variant="default"
             />
         </div>
     )

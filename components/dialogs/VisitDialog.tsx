@@ -97,7 +97,6 @@ export function VisitDialog({
         comercialId: visita.comercialId,
         progVisitaRecolId: ""
       });
-      // Establecer la sede seleccionada si existe
       const sede = sedes.find(s => s.id === visita.sedeId);
       if (sede) {
         setSelectedSede(sede);
@@ -118,7 +117,6 @@ export function VisitDialog({
         comercialId: "",
         progVisitaRecolId: ""
       })
-      // Establecer la sede seleccionada si viene de progVisitaRecol
       if (progVisitaRecol && progVisitaRecol.sedeId) {
         const sede = sedes.find(s => s.id === progVisitaRecol.sedeId);
         if (sede) {
@@ -128,7 +126,6 @@ export function VisitDialog({
     }
   }, [visita, open]);
 
-  // Efecto para establecer automáticamente la planta si la sede solo tiene una oficina
   useEffect(() => {
     if (selectedSede && selectedSede.oficinaId && selectedSede.oficinaId.length === 1) {
       setFormData(prev => ({
@@ -179,10 +176,10 @@ export function VisitDialog({
 
     try {
       if (visitaId) {
-        await visitService.update(visitaId, formData)
+        const response = await visitService.update(visitaId, formData)
         toast({
           title: "Visita actualizada",
-          description: "La visita ha sido actualizada exitosamente",
+          description: response.message || "La visita ha sido actualizada exitosamente",
           variant: "success"
         })
       } else {
@@ -193,10 +190,10 @@ export function VisitDialog({
         }
         formData.lat = location.latitude + "";
         formData.lon = location.longitude + "";
-        await visitService.create(formData)
+        const response = await visitService.create(formData)
         toast({
           title: "Visita creada",
-          description: "La visita ha sido creada exitosamente",
+          description: response.message || "La visita ha sido creada exitosamente",
           variant: "success"
         })
       }
@@ -205,11 +202,7 @@ export function VisitDialog({
     } catch (error: any) {
       toast({
         title: progVisitaRecol ? "Error al actualizar la visita" : "Error al crear la visita",
-        description: (error && error.message) ?
-          error.message :
-          progVisitaRecol
-            ? "No se pudo actualizar la visita"
-            : "No se pudo crear la visita",
+        description: error.message || "Error inesperado",
         variant: "error",
       });
     } finally {
@@ -228,161 +221,135 @@ export function VisitDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fecha" required>Fecha</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fecha || '-'}</div>
-                ) : (
-                  <Input
-                    id="fecha"
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                    autoComplete="off"
-                  />
-                )}
+                <Input
+                  id="fecha"
+                  type="date"
+                  value={formData.fecha}
+                  onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                  autoComplete="off"
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inicio" required>Inicio</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.inicio || '-'}</div>
-                ) : (
-                  <Input
-                    id="inicio"
-                    type="time"
-                    value={formData.inicio}
-                    onChange={(e) => setFormData({ ...formData, inicio: e.target.value })}
-                    autoComplete="off"
-                  />
-                )}
+                <Input
+                  id="inicio"
+                  type="time"
+                  value={formData.inicio}
+                  onChange={(e) => setFormData({ ...formData, inicio: e.target.value })}
+                  autoComplete="off"
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fin">Fin</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{formData.fin || '-'}</div>
-                ) : (
-                  <Input
-                    id="fin"
-                    type="time"
-                    value={formData.fin}
-                    onChange={(e) => setFormData({ ...formData, fin: e.target.value })}
-                    autoComplete="off"
-                  />
-                )}
+                <Input
+                  id="fin"
+                  type="time"
+                  value={formData.fin}
+                  onChange={(e) => setFormData({ ...formData, fin: e.target.value })}
+                  autoComplete="off"
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tipo" required>Tipo</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{tipos.find(t=>t.value===formData.tipo)?.label || '-'}</div>
-                ) : (
-                  <SelectSingle
-                    id="tipo"
-                    placeholder="Seleccione un tipo"
-                    options={tipos}
-                    value={formData.tipo}
-                    onChange={v => setFormData({ ...formData, tipo: v })}
-                    valueKey="value"
-                    labelKey="label"
-                  />
-                )}
+                <SelectSingle
+                  id="tipo"
+                  placeholder="Seleccione un tipo"
+                  options={tipos}
+                  value={formData.tipo}
+                  onChange={v => setFormData({ ...formData, tipo: v })}
+                  valueKey="value"
+                  labelKey="label"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sede" required>Sede</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{sedes.find(s=>String(s.id)===String(formData.sedeId))?.nombre || '-'}</div>
-                ) : (
-                  <SelectSingle
-                    id="sede"
-                    placeholder="Seleccione una sede"
-                    options={sedes}
-                    value={formData.sedeId}
-                    onChange={v => {
-                      setFormData({ ...formData, sedeId: v })
-                      const sede = sedes.find(s => parseInt(s.id) === parseInt(v))
-                      setSelectedSede(sede || null)
-                    }}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                )}
+                <SelectSingle
+                  id="sede"
+                  placeholder="Seleccione una sede"
+                  options={sedes}
+                  value={formData.sedeId}
+                  onChange={v => {
+                    setFormData({ ...formData, sedeId: v })
+                    const sede = sedes.find(s => parseInt(s.id) === parseInt(v))
+                    setSelectedSede(sede || null)
+                  }}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="planta">Planta</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{plantas.find(p=>String(p.id)===String(formData.plantaId))?.nombre || '-'}</div>
-                ) : (
-                  <SelectSingle
-                    id="planta"
-                    placeholder="Seleccione una planta"
-                    options={plantas}
-                    value={formData.plantaId}
-                    onChange={v => setFormData({ ...formData, plantaId: v })}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                )}
+                <SelectSingle
+                  id="planta"
+                  placeholder="Seleccione una planta"
+                  options={plantas}
+                  value={formData.plantaId}
+                  onChange={v => setFormData({ ...formData, plantaId: v })}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
               {formData.tipo !== 'puesto' ?
                 <div className="space-y-2">
                   <Label htmlFor="vehiculo">Vehículo</Label>
-                  {readOnly ? (
-                    <div className="text-sm py-2 px-3 rounded border bg-muted/30">{vehiculos.find(v=>String(v.id)===String(formData.vehId))?.interno || '-'}</div>
-                  ) : (
-                    <SelectSingle
-                      id="vehiculo"
-                      placeholder="Seleccione un vehículo"
-                      options={vehiculos}
-                      value={formData.vehId}
-                      onChange={v => setFormData({ ...formData, vehId: v })}
-                      valueKey="id"
-                      labelKey="interno"
-                    />
-                  )}
+                  <SelectSingle
+                    id="vehiculo"
+                    placeholder="Seleccione un vehículo"
+                    options={vehiculos}
+                    value={formData.vehId}
+                    onChange={v => setFormData({ ...formData, vehId: v })}
+                    valueKey="id"
+                    labelKey="interno"
+                    disabled={readOnly}
+                  />
                 </div> : ''}
               <div className="space-y-2">
                 <Label htmlFor="recolector" required>Recolector</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{recolectores.find(r=>String(r.id)===String(formData.recolId))?.nombreCompleto || '-'}</div>
-                ) : (
-                  <SelectSingle
-                    id="recolector"
-                    placeholder="Seleccione un recolector"
-                    options={recolectores}
-                    value={formData.recolId}
-                    onChange={v => setFormData({ ...formData, recolId: v })}
-                    valueKey="id"
-                    labelKey="nombreCompleto"
-                  />
-                )}
+                <SelectSingle
+                  id="recolector"
+                  placeholder="Seleccione un recolector"
+                  options={recolectores}
+                  value={formData.recolId}
+                  onChange={v => setFormData({ ...formData, recolId: v })}
+                  valueKey="id"
+                  labelKey="nombreCompleto"
+                  disabled={readOnly}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="comercial" required>Comercial</Label>
-                {readOnly ? (
-                  <div className="text-sm py-2 px-3 rounded border bg-muted/30">{comerciales.find(c=>String(c.id)===String(formData.comercialId))?.nombre || '-'}</div>
-                ) : (
-                  <SelectSingle
-                    id="comercial"
-                    placeholder="Seleccione un comercial"
-                    options={comerciales}
-                    value={formData.comercialId}
-                    onChange={v => setFormData({ ...formData, comercialId: v })}
-                    valueKey="id"
-                    labelKey="nombre"
-                  />
-                )}
+                <SelectSingle
+                  id="comercial"
+                  placeholder="Seleccione un comercial"
+                  options={comerciales}
+                  value={formData.comercialId}
+                  onChange={v => setFormData({ ...formData, comercialId: v })}
+                  valueKey="id"
+                  labelKey="nombre"
+                  disabled={readOnly}
+                />
               </div>
             </div>
             <div className="grid gap-4">
               <Label htmlFor="notas">Notas</Label>
-              {readOnly ? (
-                <div className="text-sm py-2 px-3 rounded border bg-muted/30 whitespace-pre-wrap">{formData.notas || '-'}</div>
-              ) : (
-                <Textarea
-                  id="notas"
-                  value={formData.notas}
-                  onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
-                  rows={2}
-                  placeholder="..."
-                />
-              )}
+              <Textarea
+                id="notas"
+                value={formData.notas}
+                onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
+                rows={2}
+                placeholder="..."
+                disabled={readOnly}
+                readOnly={readOnly}
+              />
             </div>
           </div>
           <DialogFooter>

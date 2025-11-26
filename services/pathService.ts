@@ -37,14 +37,14 @@ export class PathService {
     return response.data
   }
 
-  async create(ruta: Partial<Path>): Promise<Path> {
+  async create(ruta: Partial<Path>): Promise<ApiResponse<Path>> {
     const response = await apiService.post<ApiResponse<Path>>("/rutas", ruta)
-    return response.data
+    return response
   }
 
-  async update(id: string, ruta: Partial<Path>): Promise<Path> {
+  async update(id: string, ruta: Partial<Path>): Promise<ApiResponse<Path>> {
     const response = await apiService.put<ApiResponse<Path>>(`/rutas/${id}`, ruta)
-    return response.data
+    return response
   }
 
   async delete(id: string): Promise<void> {

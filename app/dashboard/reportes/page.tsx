@@ -59,7 +59,7 @@ export default function ReportesPage() {
 
     const hasPermission = (permission: string): boolean => {
         if (!user || !user.permisos) return false
-        if (user.rolNombre === "ADMIN") return true
+        if (user.perfil?.nombre === "ADMIN") return true
         return user.permisos[permission] === true
     }
 

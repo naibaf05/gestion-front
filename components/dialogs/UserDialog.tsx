@@ -6,24 +6,18 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectSingle } from "../ui/select-single";
 import { userService } from "@/services/userService";
 import type { User, Profile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { SelectMultiple } from "../ui/select-multiple";
 
 interface UserDialogProps {
   open: boolean;
@@ -49,7 +43,7 @@ export function UserDialog({
     documento: "",
     telefono: "",
     email: "",
-    rolId: "",
+    rolId: [] as string[],
     username: "",
   });
   const { toast } = useToast();
@@ -62,7 +56,7 @@ export function UserDialog({
         documento: user.documento,
         telefono: user.telefono,
         email: user.email,
-        rolId: user.rolId,
+        rolId: user.rolId || [],
         username: user.username,
       });
     } else {
@@ -72,7 +66,7 @@ export function UserDialog({
         documento: "",
         telefono: "",
         email: "",
-        rolId: "",
+        rolId: [],
         username: "",
       });
     }
@@ -84,26 +78,28 @@ export function UserDialog({
 
     try {
       if (user) {
-        await userService.updateUser(user.id, formData);
+        const resp = await userService.updateUser(user.id, formData);
         toast({
           title: "Usuario actualizado",
-          description: "El usuario ha sido actualizado exitosamente",
+          description: resp?.message || "El usuario ha sido actualizado exitosamente",
+          variant: "success",
         });
       } else {
-        await userService.createUser(formData);
+        const resp = await userService.createUser(formData);
         toast({
           title: "Usuario creado",
-          description: "El usuario ha sido creado exitosamente, recuerde que su contraseña inicial es su numero de documento",
+          description: resp?.message || "El usuario ha sido creado exitosamente, recuerde que su contraseña inicial es su numero de documento",
+          variant: "success",
         });
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: user
-          ? "No se pudo actualizar el usuario"
-          : "No se pudo crear el usuario",
+        title: user ? "No se pudo actualizar el usuario" : "No se pudo crear el usuario",
+        description: error.message
+          ? error.message
+          : "Error inesperado",
         variant: "destructive",
       });
     } finally {
@@ -121,7 +117,7 @@ export function UserDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre *</Label>
+                <Label htmlFor="nombre" required>Nombre</Label>
                 <Input
                   id="nombre"
                   value={formData.nombre}
@@ -134,7 +130,7 @@ export function UserDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="apellido">Apellido *</Label>
+                <Label htmlFor="apellido" required>Apellido</Label>
                 <Input
                   id="apellido"
                   value={formData.apellido}
@@ -150,7 +146,7 @@ export function UserDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="documento">Documento *</Label>
+                <Label htmlFor="documento" required>Documento</Label>
                 <Input
                   id="documento"
                   value={formData.documento}
@@ -163,7 +159,7 @@ export function UserDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefono">Teléfono *</Label>
+                <Label htmlFor="telefono" required>Teléfono</Label>
                 <Input
                   id="telefono"
                   value={formData.telefono}
@@ -179,7 +175,7 @@ export function UserDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Usuario *</Label>
+                <Label htmlFor="username" required>Usuario</Label>
                 <Input
                   id="username"
                   value={formData.username}
@@ -192,30 +188,19 @@ export function UserDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="perfil">Perfil *</Label>
-                <Select
-                  value={formData.rolId ? String(formData.rolId) : ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, rolId: value })
-                  }
+                <Label htmlFor="perfil" required>Perfil</Label>
+                <SelectMultiple
+                  options={profiles.map(tc => ({ value: tc.id, label: tc.nombre }))}
+                  value={formData.rolId}
+                  onChange={selected => setFormData({ ...formData, rolId: selected })}
+                  placeholder="Selecciona perfiles"
                   disabled={readOnly}
-                >
-                  <SelectTrigger disabled={readOnly}>
-                    <SelectValue placeholder="Selecciona un perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profiles.map((profile) => (
-                      <SelectItem key={profile.id} value={String(profile.id)}>
-                        {profile.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email" required>Email</Label>
               <Input
                 id="email"
                 type="email"

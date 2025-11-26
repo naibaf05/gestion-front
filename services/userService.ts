@@ -4,6 +4,13 @@ import type { User, Profile, ApiResponse } from "@/types"
 export class UserService {
   async getUsers(): Promise<User[]> {
     const response = await apiService.get<ApiResponse<User[]>>(`/users`)
+    response.data.forEach((element) => {
+      element.nombrePerfiles = '';
+      element.nombreCompleto = `${element.nombre} ${element.apellido}`;
+      if (element.roles && element.roles.length > 0) {
+        element.nombrePerfiles = element.roles.map(r => r.nombre).join(', ');
+      }
+    });
     return response.data
   }
 
@@ -20,14 +27,14 @@ export class UserService {
     return response.data
   }
 
-  async createUser(user: Partial<User>): Promise<User> {
+  async createUser(user: Partial<User>): Promise<ApiResponse<User>> {
     const response = await apiService.post<ApiResponse<User>>("/users", user)
-    return response.data
+    return response
   }
 
-  async updateUser(id: string, user: Partial<User>): Promise<User> {
+  async updateUser(id: string, user: Partial<User>): Promise<ApiResponse<User>> {
     const response = await apiService.put<ApiResponse<User>>(`/users/${id}`, user)
-    return response.data
+    return response
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -77,6 +84,12 @@ export class UserService {
 
   async togglRolesStatus(id: string): Promise<User> {
     const response = await apiService.patch<ApiResponse<User>>(`/roles/${id}/toggle-status`)
+    return response.data
+  }
+
+  async toggleUserPermisos(id: string, permisos: string): Promise<User> {
+    const data = { permisos };
+    const response = await apiService.patch<ApiResponse<User>>(`/roles/${id}/permisos`, data)
     return response.data
   }
 }

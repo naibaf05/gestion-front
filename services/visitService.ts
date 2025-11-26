@@ -2,14 +2,14 @@ import { apiService } from "./api";
 import type { ApiResponse, VisitaCantidad, VisitaRecol } from "@/types";
 
 export class VisitService {
-    async create(obj: Partial<VisitaRecol>): Promise<VisitaRecol> {
+    async create(obj: Partial<VisitaRecol>): Promise<ApiResponse<VisitaRecol>> {
         const response = await apiService.post<ApiResponse<VisitaRecol>>("/visitas", obj);
-        return response.data;
+        return response;
     }
 
-    async update(id: string, obj: Partial<VisitaRecol>): Promise<VisitaRecol> {
+    async update(id: string, obj: Partial<VisitaRecol>): Promise<ApiResponse<VisitaRecol>> {
         const response = await apiService.put<ApiResponse<VisitaRecol>>(`/visitas/${id}`, obj);
-        return response.data;
+        return response;
     }
 
     async getId(id: string): Promise<VisitaRecol> {

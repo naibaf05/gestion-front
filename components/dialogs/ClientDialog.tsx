@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SelectSingle } from "@/components/ui/select-single"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { clientService } from "@/services/clientService"
 import type { Cliente, Parametrizacion } from "@/types"
@@ -70,7 +70,7 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
         correo: client.correo || "",
         correoFacturacion: client.correoFacturacion || "",
         tiposClienteIds: client.tiposClienteIds || [],
-        datosJson: client.datosJson || {},
+        datosJson: client.datosJsonString ? JSON.parse(client.datosJsonString) : {},
       })
     } else {
       setFormData({
@@ -98,26 +98,26 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
 
     try {
       if (client) {
-        await clientService.updateCliente(client.id, formData)
+        const response = await clientService.updateCliente(client.id, formData)
         toast({
           title: "Cliente actualizado",
-          description: "El cliente ha sido actualizado exitosamente",
+          description: response.message || "El cliente ha sido actualizado exitosamente",
           variant: "success",
         })
       } else {
-        await clientService.createCliente(formData)
+        const response = await clientService.createCliente(formData)
         toast({
           title: "Cliente creado",
-          description: "El cliente ha sido creado exitosamente",
+          description: response.message || "El cliente ha sido creado exitosamente",
           variant: "success",
         })
       }
       onSuccess()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: client ? "No se pudo actualizar el cliente" : "No se pudo crear el cliente",
+        title: client ? "No se pudo actualizar el cliente" : "No se pudo crear el cliente",
+        description: error.message || "Error inesperado",
         variant: "destructive",
       })
     } finally {
@@ -245,41 +245,29 @@ export function ClientDialog({ open, onOpenChange, client, poblados, comerciales
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="poblado" required>Municipio</Label>
-                        <Select
+                        <SelectSingle
+                          id="pobladoId"
+                          placeholder="Selecciona un municipio"
                           value={formData.pobladoId ? String(formData.pobladoId) : ""}
-                          onValueChange={(value) => setFormData({ ...formData, pobladoId: value })}
+                          onChange={(value) => setFormData({ ...formData, pobladoId: value || "" })}
+                          options={poblados.map(p => ({ value: String(p.id), label: p.nombre }))}
+                          valueKey="value"
+                          labelKey="label"
                           disabled={readOnly}
-                        >
-                          <SelectTrigger disabled={readOnly}>
-                            <SelectValue placeholder="Selecciona un municipio" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {poblados.map((poblado) => (
-                              <SelectItem key={poblado.id} value={String(poblado.id)}>
-                                {poblado.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="comercial" required>Comercial</Label>
-                        <Select
+                        <SelectSingle
+                          id="comercialId"
+                          placeholder="Selecciona un comercial"
                           value={formData.comercialId ? String(formData.comercialId) : ""}
-                          onValueChange={(value) => setFormData({ ...formData, comercialId: value })}
+                          onChange={(value) => setFormData({ ...formData, comercialId: value || "" })}
+                          options={comerciales.map(c => ({ value: String(c.id), label: c.nombre }))}
+                          valueKey="value"
+                          labelKey="label"
                           disabled={readOnly}
-                        >
-                          <SelectTrigger disabled={readOnly}>
-                            <SelectValue placeholder="Selecciona un comercial" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {comerciales.map((comercial) => (
-                              <SelectItem key={comercial.id} value={String(comercial.id)}>
-                                {comercial.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                     </div>
                   </div>

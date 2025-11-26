@@ -243,16 +243,60 @@ export function ReportDialog<TData, TValue>({
             ? exportHeaders
             : keys;
 
+        // Columns to treat as dates (customize as needed)
+        const DATE_KEYS = ["fechaVisita", "fechaInicio", "fechaFin", "fechaRenovacion", "fechaVencimientoContrato"];
+
+        // Helper: parse DD/MM/YYYY or YYYY-MM-DD to JS Date
+        function parseDate(val: string): Date | null {
+            if (!val || typeof val !== "string") return null;
+            // Try DD/MM/YYYY
+            const m = val.match(/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/);
+            if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}`);
+            // Try YYYY-MM-DD
+            const m2 = val.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/);
+            if (m2) return new Date(`${m2[1]}-${m2[2]}-${m2[3]}`);
+            return null;
+        }
+
+        // Build export data and track date cells
         const exportData = (showOnlyWithoutFactura ? dataForTable : data).map((row: any) => {
             const obj: any = {};
             keys.forEach((key: string, idx: number) => {
-                const value = key.split(".").reduce((acc: any, k: string) => acc?.[k], row);
-                obj[headers[idx]] = value;
+                let value = key.split(".").reduce((acc: any, k: string) => acc?.[k], row);
+                // If key is a date column, parse and convert to Excel date
+                if (DATE_KEYS.includes(key) && typeof value === "string") {
+                    const d = parseDate(value);
+                    if (d) {
+                        // Excel date: days since 1899-12-30
+                        value = (d.getTime() - new Date("1899-12-30").getTime()) / (1000 * 60 * 60 * 24);
+                        obj[headers[idx]] = value;
+                    } else {
+                        obj[headers[idx]] = value;
+                    }
+                } else {
+                    obj[headers[idx]] = value;
+                }
             });
             return obj;
         });
 
         const ws = XLSX.utils.json_to_sheet(exportData);
+
+        // Set cell type to date for date columns
+        keys.forEach((key, idx) => {
+            if (DATE_KEYS.includes(key)) {
+                const colLetter = XLSX.utils.encode_col(idx);
+                for (let rowIdx = 1; rowIdx <= exportData.length; rowIdx++) {
+                    const cellRef = `${colLetter}${rowIdx + 1}`; // +1 for header
+                    const cell = ws[cellRef];
+                    if (cell && typeof cell.v === "number") {
+                        cell.t = "n";
+                        cell.z = "dd/mm/yyyy";
+                    }
+                }
+            }
+        });
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Datos");
         const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });

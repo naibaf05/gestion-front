@@ -51,7 +51,7 @@ export function VehicleDialog({
                 interno: vehicle.interno,
                 placa: vehicle.placa,
                 conductorId: vehicle.conductorId,
-                datosJson: vehicle.datosJson || {},
+                datosJson: vehicle.datosJsonString ? JSON.parse(vehicle.datosJsonString) : {},
             });
         } else {
             setFormData({
@@ -69,26 +69,26 @@ export function VehicleDialog({
         setLoading(true);
         try {
             if (vehicle) {
-                await vehicleService.updateVehicle(vehicle.id, formData);
+                const response = await vehicleService.updateVehicle(vehicle.id, formData);
                 toast({
                     title: "Vehículo actualizado",
-                    description: "El vehículo ha sido actualizado exitosamente",
+                    description: response.message || "El vehículo ha sido actualizado exitosamente",
+                    variant: "success",
                 });
             } else {
-                await vehicleService.createVehicle(formData);
+                const response = await vehicleService.createVehicle(formData);
                 toast({
                     title: "Vehículo creado",
-                    description: "El vehículo ha sido creado exitosamente.",
+                    description: response.message || "El vehículo ha sido creado exitosamente.",
+                    variant: "success",
                 });
             }
             onSuccess();
             onOpenChange(false);
-        } catch (error) {
+        } catch (error: any) {
             toast({
-                title: "Error",
-                description: vehicle
-                    ? "No se pudo actualizar el vehículo"
-                    : "No se pudo crear el vehículo",
+                title: vehicle ? "No se pudo actualizar el vehículo" : "No se pudo crear el vehículo",
+                description: error.message || "Error inesperado",
                 variant: "destructive",
             });
         } finally {
@@ -106,7 +106,7 @@ export function VehicleDialog({
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="planta">Planta *</Label>
+                                <Label htmlFor="planta" required>Planta</Label>
                                 <SelectSingle
                                     id="planta"
                                     placeholder="Seleccione una planta"
@@ -119,7 +119,7 @@ export function VehicleDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="tipoVehiculo">Tipo Vehículo *</Label>
+                                <Label htmlFor="tipoVehiculo" required>Tipo Vehículo</Label>
                                 <SelectSingle
                                     id="tipoVehiculo"
                                     placeholder="Seleccione un tipo de vehículo"
@@ -132,7 +132,7 @@ export function VehicleDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="interno">Interno *</Label>
+                                <Label htmlFor="interno" required>Interno</Label>
                                 <Input
                                     id="interno"
                                     value={formData.interno}
@@ -143,7 +143,7 @@ export function VehicleDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="placa">Placa *</Label>
+                                <Label htmlFor="placa" required>Placa</Label>
                                 <Input
                                     id="placa"
                                     value={formData.placa}
@@ -154,7 +154,7 @@ export function VehicleDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="conductor">Conductor *</Label>
+                                <Label htmlFor="conductor" required>Conductor</Label>
                                 <SelectSingle
                                     id="conductor"
                                     placeholder="Seleccione un conductor"

@@ -73,18 +73,19 @@ export function ProgDialog({
     setLoading(true);
     try {
       if (item) {
-        await progService.update(formData);
+        const response = await progService.update(formData);
         toast({
           title: "Actualizado",
-          description: "El registro ha sido actualizado exitosamente",
+          description: response.message || "El registro ha sido actualizado exitosamente",
+          variant: "success"
         });
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "No se pudo actualizar el registro",
+        title: "No se pudo actualizar el registro",
+        description: error.message || "Error inesperado",
         variant: "destructive",
       });
     } finally {
@@ -120,7 +121,7 @@ export function ProgDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="vehiculoId">Vehículo *</Label>
+                <Label htmlFor="vehiculoId" required>Vehículo</Label>
                 <SelectSingle
                   id="vehiculoId"
                   placeholder="Seleccione un Vehículo"
@@ -132,7 +133,7 @@ export function ProgDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fechaFin">Fecha Fin *</Label>
+                <Label htmlFor="fechaFin" required>Fecha Fin</Label>
                 <Input
                   id="fechaFin"
                   type="date"

@@ -8,9 +8,9 @@ export class ProgService {
     return response.data
   }
 
-  async update(ruta: Partial<ProgPath>): Promise<ProgPath> {
+  async update(ruta: Partial<ProgPath>): Promise<ApiResponse<ProgPath>> {
     const response = await apiService.put<ApiResponse<ProgPath>>(`/progs`, ruta)
-    return response.data
+    return response
   }
 
   async getDataEv(fecha: string, semanal: boolean): Promise<ProgEvPath[]> {

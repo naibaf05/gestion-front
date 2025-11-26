@@ -84,7 +84,7 @@ export function ProgEvDialog({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sedeId">Sede *</Label>
+                <Label htmlFor="sedeId" required>Sede</Label>
                 <SelectSingle
                   id="sedeId"
                   placeholder="Seleccione una Sede"
@@ -96,7 +96,7 @@ export function ProgEvDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rutaId">Ruta *</Label>
+                <Label htmlFor="rutaId" required>Ruta</Label>
                 <SelectSingle
                   id="rutaId"
                   placeholder="Seleccione una Ruta"

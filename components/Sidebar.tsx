@@ -179,8 +179,8 @@ export function Sidebar() {
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
 
-    // Si es admin, tiene todos los permisos
-    if (user.rolNombre === "ADMIN") return true
+    // Si es admin, tiene todos los permisos (usando perfil seleccionado)
+    if (user?.perfil?.nombre === "ADMIN") return true
 
     // Verificar si el usuario tiene el permiso específico
     return user.permisos[permission] === true
@@ -189,7 +189,7 @@ export function Sidebar() {
   // Función para verificar si un elemento del menú debe mostrarse
   const shouldShowMenuItem = (item: MenuItem): boolean => {
     // Verificar rol requerido (lógica existente)
-    if (item.requiredRole && user?.rolNombre !== item.requiredRole && user?.rolNombre !== "ADMIN") {
+    if (item.requiredRole && user?.perfil?.nombre !== item.requiredRole && user?.perfil?.nombre !== "ADMIN") {
       return false
     }
 
@@ -320,7 +320,7 @@ export function Sidebar() {
             <div className="flex items-center mb-4">
               <div className="flex-1">
                 <p className="text-sm font-medium">{user?.nombre} {user?.apellido}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.rolNombre}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.perfil?.nombre}</p>
               </div>
             </div>
             <Button

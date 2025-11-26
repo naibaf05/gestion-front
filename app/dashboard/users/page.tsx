@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Eye, PowerSquare, History, Key } from "lucide-react"
@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/toolti
 import type { ColumnDef } from "@tanstack/react-table"
 import { useAuth } from "@/contexts/AuthContext"
 import { PasswordDialog } from "@/components/dialogs/PasswordDialog"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function UsersPage() {
   const { user, logout } = useAuth();
@@ -32,6 +33,8 @@ export default function UsersPage() {
   const [historialOpen, setHistorialOpen] = useState(false)
   const [historialId, setHistorialId] = useState<string>("")
   const [historialLabel, setHistorialLabel] = useState<string>("")
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [userToToggle, setUserToToggle] = useState<string | null>(null)
   const { toast } = useToast()
   const searchParams = useSearchParams()
 
@@ -41,7 +44,7 @@ export default function UsersPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -49,12 +52,10 @@ export default function UsersPage() {
     loadData()
   }, [])
 
-  // Efecto para detectar si se debe abrir el diálogo automáticamente
   useEffect(() => {
     const action = searchParams.get('action')
     if (action === 'create' && profiles.length > 0) {
       handleCreate()
-      // Limpiar el parámetro de la URL sin recargar la página
       window.history.replaceState({}, '', '/dashboard/users')
     }
   }, [searchParams, profiles])
@@ -97,23 +98,36 @@ export default function UsersPage() {
     setDialogOpen(true)
   }
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a este cliente?")) {
-      try {
-        await userService.toggleUserStatus(id)
-        toast({
-          title: "Estado actualizado",
-          description: "El estado del estado ha sido actualizado",
-        })
-        loadData()
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        })
-      }
+  const handleToggleStatus = (id: string) => {
+    setUserToToggle(id)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmToggleStatus = async () => {
+    if (!userToToggle) return
+    try {
+      await userService.toggleUserStatus(userToToggle)
+      toast({
+        title: "Estado actualizado",
+        description: "El estado del usuario ha sido actualizado",
+        variant: "success",
+      })
+      loadData()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      })
+    } finally {
+      setUserToToggle(null)
+      setConfirmDialogOpen(false)
     }
+  }
+
+  const cancelToggleStatus = () => {
+    setUserToToggle(null)
+    setConfirmDialogOpen(false)
   }
 
   const handleHistorial = (id: string, nombre: string, apellido: string) => {
@@ -129,33 +143,32 @@ export default function UsersPage() {
 
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: "nombre",
+      width: "200px",
+      accessorKey: "nombreCompleto",
       header: "Nombre",
-      cell: ({ row }) => {
-        return `${row.original.nombre} ${row.original.apellido}`
-      },
     },
     {
+      width: "120px",
       accessorKey: "documento",
       header: "Documento",
     },
     {
+      width: "250px",
       accessorKey: "email",
       header: "Email",
     },
     {
+      width: "120px",
       accessorKey: "telefono",
       header: "Teléfono",
     },
     {
-      accessorKey: "perfil",
+      width: "200px",
+      accessorKey: "nombrePerfiles",
       header: "Perfil",
-      cell: ({ row }) => {
-        const profile = profiles.find((p) => p.id === row.original.rolId)
-        return profile?.nombre || "N/A"
-      },
     },
     {
+      width: "100px",
       accessorKey: "activo",
       header: "Estado",
       cell: ({ row }) => {
@@ -167,6 +180,7 @@ export default function UsersPage() {
       },
     },
     {
+      width: "180px",
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
@@ -292,6 +306,18 @@ export default function UsersPage() {
         displayName={selectedUser?.nombre || ""}
         userId={selectedUser?.id || ""}
         onSuccess={loadData}
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        title="Cambiar estado del usuario"
+        description="¿Estás seguro de que deseas cambiar el estado de este usuario?"
+        confirmText="Cambiar Estado"
+        cancelText="Cancelar"
+        onConfirm={confirmToggleStatus}
+        onCancel={cancelToggleStatus}
+        variant="default"
       />
     </div>
   )

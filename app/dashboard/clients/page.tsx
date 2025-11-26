@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +46,7 @@ export default function ClientsPage() {
 
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.permisos) return false
-    if (user.rolNombre === "ADMIN") return true
+    if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
 
@@ -54,17 +54,17 @@ export default function ClientsPage() {
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [clientToToggle, setClientToToggle] = useState<Cliente | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Efecto para detectar si se debe abrir el diálogo automáticamente
   useEffect(() => {
     const action = searchParams.get('action')
     if (action === 'create' && poblados.length > 0 && comerciales.length > 0 && tClientes.length > 0) {
       handleCreate()
-      // Limpiar el parámetro de la URL sin recargar la página
       window.history.replaceState({}, '', '/dashboard/clients')
     }
   }, [searchParams, poblados, comerciales, tClientes]);
@@ -129,24 +129,37 @@ export default function ClientsPage() {
     setDialogOpen(true);
   };
 
-  const handleToggleStatus = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas cambiar el estado a este cliente?")) {
-      try {
-        await clientService.toggleClienteStatus(id);
-        toast({
-          title: "Estado actualizado",
-          description: "El estado del cliente ha sido actualizado",
-        });
-        loadData();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado",
-          variant: "destructive",
-        });
-      }
+  const handleToggleStatus = (client: Cliente) => {
+    setClientToToggle(client);
+    setStatusDialogOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (!clientToToggle) return;
+    try {
+      await clientService.toggleClienteStatus(clientToToggle.id);
+      toast({
+        title: "Estado actualizado",
+        description: "El estado del cliente ha sido actualizado",
+        variant: "success",
+      });
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      });
+    } finally {
+      setClientToToggle(null);
+      setStatusDialogOpen(false);
     }
   };
+
+  const cancelToggleStatus = () => {
+    setClientToToggle(null);
+    setStatusDialogOpen(false);
+  }
 
   const handleHistorial = (id: string, nombre: string, nit: string) => {
     setHistorialId(id);
@@ -158,28 +171,28 @@ export default function ClientsPage() {
     {
       accessorKey: "nit",
       header: "NIT",
-      width: "10%",
+      width: "150px",
     },
     {
       accessorKey: "nombre",
       header: "Nombre",
-      width: "25%",
+      width: "300px",
     },
     {
       accessorKey: "datosJson.nombreComercial",
       header: "Nombre Comercial",
-      width: "25%",
+      width: "300px",
     },
     {
       accessorKey: "tipoCliente",
       header: "Tipo de Cliente",
-      width: "15%",
+      width: "200px",
       enableColumnFilter: true
     },
     {
       accessorKey: "contacto",
       header: "Contacto",
-      width: "15%",
+      width: "180px",
     },
     {
       accessorKey: "poblado.nombre",
@@ -188,7 +201,7 @@ export default function ClientsPage() {
         const poblado = poblados.find((p) => p.id === row.original.pobladoId);
         return poblado?.nombre || "N/A";
       },
-      width: "10%",
+      width: "100px",
     },
     {
       accessorKey: "activo",
@@ -200,12 +213,12 @@ export default function ClientsPage() {
           </Badge>
         );
       },
-      width: "8%",
+      width: "100px",
     },
     {
       id: "actions",
       header: "Acciones",
-      width: "20%",
+      width: "180px",
       cell: ({ row }) => {
         const client = row.original;
         return (
@@ -216,7 +229,7 @@ export default function ClientsPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(client)} tooltipContent="Editar">
                     <Edit className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(client.id)}
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(client)}
                     className={client.activo ? "new-text-green-600" : "new-text-red-600"}
                     tooltipContent={client.activo ? "Desactivar" : "Activar"}
                   >
@@ -372,6 +385,17 @@ export default function ClientsPage() {
         description="¿Estás seguro de que deseas eliminar este cliente?"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <ConfirmationDialog
+        open={statusDialogOpen}
+        onOpenChange={setStatusDialogOpen}
+        title="Cambiar estado del cliente"
+        description={clientToToggle ? `¿Estás seguro de que deseas cambiar el estado del cliente "${clientToToggle.nombre}"?` : "¿Estás seguro de que deseas cambiar el estado de este cliente?"}
+        confirmText="Cambiar Estado"
+        cancelText="Cancelar"
+        onConfirm={confirmToggleStatus}
+        onCancel={cancelToggleStatus}
       />
 
       <PasswordDialog

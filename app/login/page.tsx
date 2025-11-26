@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import { SelectSingle } from "@/components/ui/select-single"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,12 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({ username: "", password: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, availableRoles, chooseRole, logout } = useAuth()
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("")
   const { config } = useConfig()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,6 +104,33 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Dialogo para selección de perfil cuando hay múltiples */}
+        <Dialog open={!!availableRoles && availableRoles.length > 1} onOpenChange={() => { }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Selecciona un Perfil</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Tu cuenta tiene múltiples perfiles. Elige uno para continuar:</p>
+              <SelectSingle
+                id="role-select"
+                options={availableRoles?.map(r => ({ id: String(r.id), nombre: r.nombre })) || []}
+                value={selectedRoleId}
+                onChange={(value) => setSelectedRoleId(value)}
+                valueKey="id"
+                labelKey="nombre"
+                placeholder="Selecciona un perfil"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={logout}>Cancelar</Button>
+              <Button type="button" disabled={!selectedRoleId} onClick={() => chooseRole(selectedRoleId)} className="bg-primary hover:bg-primary-hover">Continuar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

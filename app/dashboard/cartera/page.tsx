@@ -7,15 +7,20 @@ import {
     CardContent
 } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, History } from "lucide-react";
 import { carteraService } from "@/services/carteraService";
 import type { Cartera } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useAuth } from "@/contexts/AuthContext";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 
 export default function CarteraPage() {
     const { user, logout } = useAuth();
+
+    const [historialOpen, setHistorialOpen] = useState(false);
+    const [historialId, setHistorialId] = useState<string>("");
+    const [historialLabel, setHistorialLabel] = useState<string>("");
 
     const [cartera, setCartera] = useState<Cartera[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,7 +33,7 @@ export default function CarteraPage() {
 
     const hasPermission = (permission: string): boolean => {
         if (!user || !user.permisos) return false
-        if (user.rolNombre === "ADMIN") return true
+        if (user.perfil?.nombre === "ADMIN") return true
         return user.permisos[permission] === true
     }
 
@@ -53,7 +58,6 @@ export default function CarteraPage() {
     };
 
     const handleImport = () => {
-        // Crear un input file temporal para seleccionar archivo
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.xlsx,.xls,.csv';
@@ -66,8 +70,9 @@ export default function CarteraPage() {
                     toast({
                         title: "Importación exitosa",
                         description: "Los datos de cartera han sido importados correctamente",
+                        variant: "success",
                     });
-                    loadData(); // Recargar datos después de importar
+                    loadData();
                 } catch (error) {
                     toast({
                         title: "Error",
@@ -82,18 +87,27 @@ export default function CarteraPage() {
         input.click();
     };
 
+    const handleHistorial = () => {
+        setHistorialId("0");
+        setHistorialLabel(`Cartera`);
+        setHistorialOpen(true);
+    };
+
     const columns: ColumnDef<Cartera>[] = [
         {
             accessorKey: "clienteNit",
             header: "NIT",
+            width: "150px",
         },
         {
             accessorKey: "clienteNombre",
             header: "Cliente",
+            width: "350px",
         },
         {
             accessorKey: "documento",
             header: "Documento",
+            width: "200px",
         },
     ];
 
@@ -119,25 +133,35 @@ export default function CarteraPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Cartera</h1>
                     <p className="text-gray-600">Gestiona la cartera de clientes</p>
                 </div>
-                {!hasPermission("cartera.edit") ? null : (
-                    <Button
-                        onClick={handleImport}
-                        disabled={importing}
-                        className="bg-primary hover:bg-primary-hover"
-                    >
-                        {importing ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Importando...
-                            </>
-                        ) : (
-                            <>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Importar
-                            </>
-                        )}
-                    </Button>
-                )}
+                <div className="gap-2 flex">
+                    {hasPermission("cartera.edit") && (
+                        <Button
+                            onClick={handleImport}
+                            disabled={importing}
+                            className="bg-primary hover:bg-primary-hover"
+                        >
+                            {importing ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Importando...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Importar
+                                </>
+                            )}
+                        </Button>
+                    )}
+                    {hasPermission("users.historial") && (
+                        <Button
+                            type="button" variant="outline"
+                            onClick={handleHistorial}
+                        >
+                            <History className="mr-2 h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <Card>
@@ -150,6 +174,14 @@ export default function CarteraPage() {
                     />
                 </CardContent>
             </Card>
+
+            <HistorialDialog
+                open={historialOpen}
+                onOpenChange={setHistorialOpen}
+                tipo="Cartera"
+                id={historialId}
+                label={historialLabel}
+            />
         </div>
     );
 }
