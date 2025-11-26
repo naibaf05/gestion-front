@@ -229,26 +229,32 @@ export default function ProgsPage() {
     {
       accessorKey: "tipo",
       header: "Tipo",
+      width: "100px",
     },
     {
       accessorKey: "sedeNombre",
       header: "Sede",
+      width: "300px",
     },
     {
       accessorKey: "sedeDireccion",
       header: "Dirección",
+      width: "300px",
     },
     {
       accessorKey: "sedeBarrio",
       header: "Barrio",
+      width: "120px",
     },
     {
       accessorKey: "rutaNombre",
       header: "Ruta",
+      width: "120px",
     },
     {
       accessorKey: "sedeLat",
       header: "Coordenadas",
+      width: "100px",
       cell: ({ row }) => {
         return row.original?.sedeLat ? "SI" : "NO";
       },
