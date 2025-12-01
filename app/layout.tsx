@@ -9,9 +9,9 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sistema de Trazabilidad - Residuos",
+  title: "FocusWeb - Gestión de Residuos",
   description: "Sistema integral de gestión de clientes, empleados y parametrizaciones",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({

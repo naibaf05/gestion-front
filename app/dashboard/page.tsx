@@ -13,6 +13,11 @@ import { DashboardBarChart } from "@/components/ui/dashboard-bar-chart"
 
 
 export default function DashboardPage() {
+  // Estado y función para actividades recientes
+  const [recentActivities, setRecentActivities] = useState<Array<{ id: string; type: string; message: string; time: string }> | null>(null)
+  const [activitiesLoading, setActivitiesLoading] = useState(true)
+  const [activitiesError, setActivitiesError] = useState<string | null>(null)
+
   const { user, logout } = useAuth()
   const { config } = useConfig()
   const router = useRouter()
@@ -25,9 +30,35 @@ export default function DashboardPage() {
   const [sedesData, setSedesData] = useState<SedeInfo[]>([])
   const [chartLoading, setChartLoading] = useState(true)
   const [chartError, setChartError] = useState<string | null>(null)
-  const [selectedMetric, setSelectedMetric] = useState<string>("empleados")
+  const [selectedMetric, setSelectedMetric] = useState<string>("visitas")
+  // Periodo (Año-Semestre) por defecto: semestre actual
+  const getDefaultPeriod = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1 // 1-12
+    const semester = month <= 6 ? 1 : 2
+    return `${year}-${semester}`
+  }
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(getDefaultPeriod())
 
+  const loadRecentActivities = async () => {
+    try {
+      setActivitiesLoading(true)
+      setActivitiesError(null)
+      const response = await reportesService.getRecentActivities()
+      setRecentActivities(response)
+    } catch (err) {
+      setActivitiesError("Error al cargar la actividad reciente")
+      setRecentActivities(null)
+    } finally {
+      setActivitiesLoading(false)
+    }
+  }
 
+  // Handler para reintentar cargar actividades
+  const handleActivitiesRetry = () => {
+    loadRecentActivities()
+  }
 
   // Configuración de iconos y colores para cada estadística
   const statsConfig = {
@@ -104,19 +135,23 @@ export default function DashboardPage() {
   useEffect(() => {
     loadStats()
     loadChartData()
+    loadRecentActivities()
   }, [])
 
   // Efecto para recargar datos del gráfico cuando cambia la métrica
   useEffect(() => {
     loadChartData()
-  }, [selectedMetric])
+  }, [selectedMetric, selectedPeriod])
 
   // Función para cargar datos del gráfico
-  const loadChartData = async () => {
+  const loadChartData = async (force: boolean = false) => {
     try {
       setChartLoading(true)
       setChartError(null)
-      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric)
+      const [anioStr, semestreStr] = selectedPeriod.split("-")
+      const anio = parseInt(anioStr, 10)
+      const semestre = parseInt(semestreStr, 10)
+      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric, anio, semestre, force)
       setChartData(response.data)
       setSedesData(response.sedes)
     } catch (err) {
@@ -136,15 +171,15 @@ export default function DashboardPage() {
 
   // Función para reintentar cargar gráfico
   const handleChartRetry = () => {
-    loadChartData()
+    loadChartData(true)
   }
 
   // Opciones para las métricas del gráfico
   const metricOptions = [
-    { value: "empleados", label: "Empleados" },
-    { value: "clientes", label: "Clientes" },
-    { value: "vehiculos", label: "Vehículos" },
-    { value: "certificados", label: "Certificados" }
+    { value: "visitas", label: "Visitas" },
+    { value: "salidas", label: "Salidas" },
+    { value: "cantidad_kg", label: "Cantidad KG" },
+    { value: "cantidad_m3", label: "Cantidad M3" },
   ]
 
   // Configuración del gráfico
@@ -173,7 +208,7 @@ export default function DashboardPage() {
     router.push('/dashboard/parametrizations')
   }
 
-  const isClient = user?.rolNombre === "CLIENTE"
+  const isClient = user?.perfil?.nombre === "CLIENTE"
 
   return (
     <div className="space-y-6 min-h-[90vh] flex flex-col">
@@ -272,29 +307,51 @@ export default function DashboardPage() {
               <CardDescription>Últimas acciones realizadas en el sistema</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Nuevo cliente registrado</p>
-                    <p className="text-xs text-gray-500">Hace 2 horas</p>
-                  </div>
+              {activitiesLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Empleado actualizado</p>
-                    <p className="text-xs text-gray-500">Hace 4 horas</p>
+              ) : activitiesError ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <p className="text-sm text-red-700">{activitiesError}</p>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleActivitiesRetry}
+                    className="text-red-700 border-red-300 hover:bg-red-100"
+                  >
+                    Reintentar
+                  </Button>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Nueva sede creada</p>
-                    <p className="text-xs text-gray-500">Hace 6 horas</p>
-                  </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivities && recentActivities.length > 0 ? (
+                    recentActivities.map(activity => {
+                      let color = "bg-gray-400"
+                      if (activity.type === "Usuario") color = "bg-green-500"
+                      else if (activity.type === "Cliente") color = "bg-blue-500"
+                      else if (activity.type === "Sede") color = "bg-purple-500"
+                      // Puedes agregar más tipos y colores aquí
+                      return (
+                        <div key={activity.id} className="flex items-center space-x-4">
+                          <div className={`w-2 h-2 rounded-full ${color}`}></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{activity.message}</p>
+                            <p className="text-xs text-gray-500">{activity.time}</p>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay actividad reciente.</p>
+                  )}
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -355,6 +412,8 @@ export default function DashboardPage() {
             metricOptions={metricOptions}
             selectedMetric={selectedMetric}
             onMetricChange={setSelectedMetric}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
             height={400}
           />
         </div>

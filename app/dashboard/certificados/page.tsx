@@ -58,7 +58,7 @@ export default function CertificadosPage() {
 
     const hasPermission = (permission: string): boolean => {
         if (!user || !user.permisos) return false
-        if (user.rolNombre === "ADMIN") return true
+        if (user.perfil?.nombre === "ADMIN") return true
         return user.permisos[permission] === true
     }
 
@@ -69,7 +69,7 @@ export default function CertificadosPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            if (user && user.rolNombre === "CLIENTE") {
+            if (user?.perfil?.nombre === "CLIENTE") {
                 const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
                     certificatesService.getCertificadosCliente("1", user.id || ""),
                     certificatesService.getCertificadosCliente("2", user.id || ""),
@@ -271,11 +271,11 @@ export default function CertificadosPage() {
     const handleConfirmDialog = async () => {
         try {
             if (tipoConfirm === "pdf-no-facturado" || tipoConfirm === "cartera") {
-                if (selectedCertificado && user?.rolNombre !== "CLIENTE") {
+                if (selectedCertificado && user?.perfil?.nombre === "CLIENTE") {
                     handlePdfNoValidate(selectedCertificado);
                 }
             } else if (tipoConfirm === "excel-no-facturado" || tipoConfirm === "cartera-excel") {
-                if (selectedCertificado && user?.rolNombre !== "CLIENTE") {
+                if (selectedCertificado && user?.perfil?.nombre === "CLIENTE") {
                     handleExcelNoValidate(selectedCertificado);
                 }
             }
@@ -478,7 +478,7 @@ export default function CertificadosPage() {
                         <TabsList className="mb-4">
                             <TabsTrigger value="llantas">Llantas</TabsTrigger>
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
-                            {user?.rolNombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
+                            {user?.perfil?.nombre === "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
                         </TabsList>
 
                         <TabsContent value="llantas">

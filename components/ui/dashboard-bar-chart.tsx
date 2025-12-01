@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, BarChart3, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MonthlySedeData, SedeInfo } from "@/types"
+import { SelectMultiple, OptionType } from "@/components/ui/select-multiple"
+import { set } from "date-fns"
+import { SelectSingle } from "./select-single"
 
 export interface DashboardChartDataPoint {
   name: string
@@ -34,6 +37,8 @@ export interface DashboardBarChartProps {
   metricOptions?: Array<{ value: string; label: string }>
   selectedMetric?: string
   onMetricChange?: (metric: string) => void
+  selectedPeriod?: string
+  onPeriodChange?: (period: string) => void
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -45,8 +50,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-sm" 
+                <div
+                  className="w-3 h-3 rounded-sm"
                   style={{ backgroundColor: entry.color }}
                 ></div>
                 <span className="text-sm text-muted-foreground">{entry.dataKey}</span>
@@ -74,8 +79,48 @@ export function DashboardBarChart({
   height = 350,
   metricOptions,
   selectedMetric,
-  onMetricChange
+  onMetricChange,
+  selectedPeriod,
+  onPeriodChange
 }: DashboardBarChartProps) {
+
+  // Mostrar solo las primeras 5 sedes seleccionadas por defecto (solo inicializar una vez)
+  const [visibleSedes, setVisibleSedes] = React.useState<string[]>([])
+  const [sedesSelected, setSedesSelected] = React.useState<SedeInfo[]>([]);
+  React.useEffect(() => {
+    if (sedes && sedes.length > 0) {
+      const initialIds = sedes.slice(0, 5).map(s => s.id)
+      setVisibleSedes(initialIds)
+      setSedesSelected(sedes.filter(s => initialIds.includes(s.id)))
+    } else {
+      setVisibleSedes([])
+      setSedesSelected([])
+    }
+  }, [sedes])
+
+  React.useEffect(() => {
+    if (sedes && sedes.length > 0 && visibleSedes.length > 0) {
+      setSedesSelected(sedes.filter(s => visibleSedes.includes(s.id)));
+    }
+  }, [visibleSedes]);
+
+  // Opciones para SelectMultiple
+  const sedeOptions: OptionType[] = sedes.map(sede => ({ value: sede.id, label: sede.name }))
+
+  // Handler para el cambio de selección múltiple
+  const handleSedesChange = (ids: string[]) => {
+    setVisibleSedes(ids)
+  }
+
+  // Opciones de periodo (año-semestre) dinámicas basadas en el año actual
+  const currentYear = React.useMemo(() => new Date().getFullYear(), [])
+  const periodOptions = React.useMemo(
+    () => [
+      { value: `${currentYear}-1`, label: `${currentYear}-1` },
+      { value: `${currentYear}-2`, label: `${currentYear}-2` },
+    ],
+    [currentYear]
+  )
 
   return (
     <Card className={cn("w-full", className)}>
@@ -94,19 +139,42 @@ export function DashboardBarChart({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Selector múltiple de sedes con scroll horizontal */}
+          {sedes && sedes.length > 0 && (
+            <div className="max-w-[550px] min-w-[120px]">
+              <SelectMultiple
+                options={sedeOptions}
+                value={visibleSedes}
+                onChange={handleSedesChange}
+                placeholder="Sedes"
+              />
+            </div>
+          )}
+          {/* Selector de métrica */}
           {metricOptions && onMetricChange && (
-            <Select value={selectedMetric} onValueChange={onMetricChange}>
-              <SelectTrigger className="w-[160px] h-9">
-                <SelectValue placeholder="Seleccionar métrica" />
-              </SelectTrigger>
-              <SelectContent>
-                {metricOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectSingle
+              id="metric-select"
+              className="w-[160px] h-9"
+              options={metricOptions || []}
+              value={selectedMetric}
+              onChange={onMetricChange}
+              valueKey="value"
+              labelKey="label"
+              placeholder="Seleccionar métrica"
+            />
+          )}
+          {/* Selector de periodo (Año-Semestre) */}
+          {onPeriodChange && (
+            <SelectSingle
+              id="period-select"
+              className="w-[120px] h-9"
+              options={periodOptions}
+              value={selectedPeriod}
+              onChange={onPeriodChange}
+              valueKey="value"
+              labelKey="label"
+              placeholder="Periodo"
+            />
           )}
           {onRefresh && (
             <Button
@@ -150,7 +218,7 @@ export function DashboardBarChart({
               )}
             </div>
           </div>
-        ) : data && data.length > 0 && sedes ? (
+        ) : data && data.length > 0 && sedesSelected ? (
           <div className="w-full" style={{ height }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -163,9 +231,9 @@ export function DashboardBarChart({
                 }}
                 barCategoryGap="25%"
               >
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  className="stroke-muted/30" 
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-muted/30"
                 />
                 <XAxis
                   dataKey="month"
@@ -187,11 +255,11 @@ export function DashboardBarChart({
                   className="text-xs"
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend 
+                <Legend
                   wrapperStyle={{ paddingTop: '20px' }}
                   iconType="rect"
                 />
-                {sedes.map((sede) => (
+                {sedesSelected.map((sede) => (
                   <Bar
                     key={sede.id}
                     dataKey={sede.name}

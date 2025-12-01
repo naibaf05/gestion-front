@@ -117,6 +117,17 @@ export interface Sede {
   frecuencias: any[]
 }
 
+export interface SedeChart {
+  id: string
+  name: string
+  numeroMes: number
+  nombreMes: string
+  numVisitas: number
+  numSalidas: number
+  numCantidadKg: number
+  numCantidadM3: number
+}
+
 // Tipos de configuración
 export interface AppConfig {
   primaryColor: string
@@ -387,10 +398,9 @@ export interface ChartConfig {
 
 export interface SedeChartData {
   sede: string
-  empleados: number
-  clientes: number
-  vehiculos: number
-  certificados: number
+  visitas: number
+  cantidad_kg: number
+  cantidad_m3: number
 }
 
 export interface ChartResponse {

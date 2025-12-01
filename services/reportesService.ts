@@ -1,5 +1,5 @@
 import { apiService } from "./api";
-import type { ApiResponse, ChartResponse, SedeChartData, GroupedChartResponse, MonthlySedeData, SedeInfo } from "@/types";
+import type { ApiResponse, GroupedChartResponse, MonthlySedeData, SedeInfo, SedeChart } from "@/types";
 
 export type TipoReporte = "reporte1" | "reporte2" | "reporte3" | "reporte4";
 
@@ -10,6 +10,8 @@ export interface ReporteRequest {
 }
 
 export class ReportesService {
+  private sedesCache: Record<string, SedeChart[]> = {}
+
   async generarReporte(data: ReporteRequest): Promise<any[]> {
     const response = await apiService.post<ApiResponse<any[]>>('/reportes/generar', data);
     return response.data;
@@ -17,6 +19,11 @@ export class ReportesService {
 
   async getStats(): Promise<any> {
     const response = await apiService.get<ApiResponse<any>>(`/reportes/stats`);
+    return response.data;
+  }
+
+  async getRecentActivities(): Promise<any> {
+    const response = await apiService.get<ApiResponse<any>>(`/reportes/recent-activities`);
     return response.data;
   }
 
@@ -45,85 +52,86 @@ export class ReportesService {
     return response.data;
   }
 
-  async getSedeChartData(): Promise<SedeChartData[]> {
-    // Simulamos datos para el gráfico por ahora
-    // En producción, esto haría una llamada al backend
-    return [
-      { sede: "Sede Norte", empleados: 45, clientes: 120, vehiculos: 15, certificados: 89 },
-      { sede: "Sede Sur", empleados: 38, clientes: 95, vehiculos: 12, certificados: 67 },
-      { sede: "Sede Este", empleados: 52, clientes: 140, vehiculos: 18, certificados: 102 },
-      { sede: "Sede Oeste", empleados: 41, clientes: 110, vehiculos: 14, certificados: 78 },
-      { sede: "Sede Central", empleados: 62, clientes: 180, vehiculos: 22, certificados: 134 }
-    ];
+  async getSedes(anio: number, semestre: number, force: boolean = false): Promise<SedeChart[]> {
+    const key = `${anio}-${semestre}`
+    if (!force && this.sedesCache[key]) {
+      return this.sedesCache[key]
+    }
+    const response = await apiService.get<ApiResponse<SedeChart[]>>(`/reportes/sedes-chart?anio=${anio}&semestre=${semestre}`)
+    this.sedesCache[key] = response.data;
+    return response.data;
   }
 
-  async getGroupedChartDataByMetric(metric: string): Promise<GroupedChartResponse> {
+  async getGroupedChartDataByMetric(metric: string, anio: number, semestre: number, force: boolean = false): Promise<GroupedChartResponse> {
     try {
-      // En el futuro, esto podría ser una llamada real al backend
-      // const response = await apiService.get<ApiResponse<GroupedChartResponse>>(`/reportes/charts/grouped/${metric}`);
-      
-      // Simulamos datos agrupados por mes y sede
-      const sedes: SedeInfo[] = [
-        { id: "sede1", name: "Sede Norte", color: "#3b82f6" },
-        { id: "sede2", name: "Sede Sur", color: "#f97316" },
-        { id: "sede3", name: "Sede Este", color: "#22c55e" },
-        { id: "sede4", name: "Sede Oeste", color: "#a855f7" },
-        { id: "sede5", name: "Sede Central", color: "#06b6d4" }
-      ];
+      const sedesRaw = await this.getSedes(anio, semestre, force);
 
-      const months = [
+      // Filtrar por sedes con valores > 0 según la métrica seleccionada
+      const hasPositiveById = new Set<string>()
+      for (const s of sedesRaw) {
+        const v = metric === 'visitas'
+          ? (s as any).numVisitas
+          : metric === 'salidas'
+            ? (s as any).numSalidas
+            : metric === 'cantidad_kg'
+              ? (s as any).numCantidadKg
+              : metric === 'cantidad_m3'
+                ? (s as any).numCantidadM3
+                : 0
+        if (s.id && v != null && Number(v) > 0) {
+          hasPositiveById.add(s.id)
+        }
+      }
+
+      const uniqueMap = new Map<string, { id: string; name: string }>()
+      for (const s of sedesRaw) {
+        if (s.id && hasPositiveById.has(s.id) && !uniqueMap.has(s.id)) {
+          uniqueMap.set(s.id, { id: s.id, name: (s as any).nombreSede ?? (s as any).name })
+        }
+      }
+      const uniqueSedes = Array.from(uniqueMap.values())
+      const sedeColors = ["#3b82f6", "#f97316", "#22c55e", "#a855f7", "#06b6d4"];
+      const sedes: SedeInfo[] = uniqueSedes.map((sede, idx) => ({
+        id: sede.id,
+        name: sede.name,
+        color: sedeColors[idx % sedeColors.length]
+      }));
+
+      const allMonths = [
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
       ];
-
-      // Generar datos simulados para cada mes
-      const data: MonthlySedeData[] = months.slice(0, 6).map(month => {
+      const monthsActual = semestre === 1 ? allMonths.slice(0, 6) : allMonths.slice(6, 12)
+      const data: MonthlySedeData[] = monthsActual.map(month => {
         const monthData: MonthlySedeData = { month };
-        
+
         sedes.forEach(sede => {
-          // Generar valores aleatorios basados en la métrica
-          const baseValue = {
-            empleados: Math.floor(Math.random() * 50) + 30,
-            clientes: Math.floor(Math.random() * 100) + 80,
-            vehiculos: Math.floor(Math.random() * 20) + 10,
-            certificados: Math.floor(Math.random() * 80) + 50
-          };
-          
-          monthData[sede.name] = baseValue[metric as keyof typeof baseValue] || 0;
+          const monthIndex = allMonths.indexOf(month) + 1
+          monthData[sede.name] = this.getValue(sedesRaw, metric, sede.id, monthIndex);
         });
-        
+
         return monthData;
       });
 
-      return {
+      const response = {
         data,
         sedes,
-        months: months.slice(0, 6)
+        months: monthsActual
       };
+      return response;
     } catch (error) {
       throw new Error('Error al obtener datos del gráfico agrupado');
     }
   }
 
-  async getChartDataByMetric(metric: string): Promise<ChartResponse> {
-    try {
-      // En el futuro, esto podría ser una llamada real al backend
-      // const response = await apiService.get<ApiResponse<ChartResponse>>(`/reportes/charts/${metric}`);
-      
-      // Por ahora simulamos la respuesta
-      const sedeData = await this.getSedeChartData();
-      const data = sedeData.map(item => ({
-        name: item.sede,
-        value: item[metric as keyof Omit<SedeChartData, 'sede'>] || 0
-      }));
-      
-      return {
-        data,
-        total: data.reduce((sum, item) => sum + item.value, 0)
-      };
-    } catch (error) {
-      throw new Error('Error al obtener datos del gráfico');
-    }
+  getValue(sedes: SedeChart[], metric: string, sedeId: string, month: number) {
+    const sedeData = sedes.find(s => s.id === sedeId && s.numeroMes === month);
+    if (!sedeData) return 0;
+    if (metric === 'visitas') return sedeData.numVisitas;
+    if (metric === 'salidas') return sedeData.numSalidas;
+    if (metric === 'cantidad_kg') return sedeData.numCantidadKg;
+    if (metric === 'cantidad_m3') return sedeData.numCantidadM3;
+    return 0;
   }
 
   async descargarReportePDF(base64Data: string, filename: string): Promise<void> {
