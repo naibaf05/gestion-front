@@ -271,11 +271,11 @@ export default function CertificadosPage() {
     const handleConfirmDialog = async () => {
         try {
             if (tipoConfirm === "pdf-no-facturado" || tipoConfirm === "cartera") {
-                if (selectedCertificado && user?.perfil?.nombre === "CLIENTE") {
+                if (selectedCertificado && user?.perfil?.nombre !== "CLIENTE") {
                     handlePdfNoValidate(selectedCertificado);
                 }
             } else if (tipoConfirm === "excel-no-facturado" || tipoConfirm === "cartera-excel") {
-                if (selectedCertificado && user?.perfil?.nombre === "CLIENTE") {
+                if (selectedCertificado && user?.perfil?.nombre !== "CLIENTE") {
                     handleExcelNoValidate(selectedCertificado);
                 }
             }
@@ -478,7 +478,7 @@ export default function CertificadosPage() {
                         <TabsList className="mb-4">
                             <TabsTrigger value="llantas">Llantas</TabsTrigger>
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
-                            {user?.perfil?.nombre === "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
+                            {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
                         </TabsList>
 
                         <TabsContent value="llantas">
