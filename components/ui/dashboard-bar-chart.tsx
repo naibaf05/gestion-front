@@ -39,6 +39,7 @@ export interface DashboardBarChartProps {
   onMetricChange?: (metric: string) => void
   selectedPeriod?: string
   onPeriodChange?: (period: string) => void
+  onSourceChange?: (source: string) => void
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -81,7 +82,8 @@ export function DashboardBarChart({
   selectedMetric,
   onMetricChange,
   selectedPeriod,
-  onPeriodChange
+  onPeriodChange,
+  onSourceChange
 }: DashboardBarChartProps) {
 
   // Mostrar solo las primeras 5 sedes seleccionadas por defecto (solo inicializar una vez)
@@ -122,6 +124,27 @@ export function DashboardBarChart({
     [currentYear]
   )
 
+  // Selector de fuente (Plantas/Sedes)
+  const sourceOptions = React.useMemo(
+    () => [
+      { value: "plantas", label: "Plantas" },
+      { value: "sedes", label: "Sedes" },
+    ],
+    []
+  )
+  const [selectedSource, setSelectedSource] = React.useState<string>("plantas")
+  const handleSourceChange = (value?: string) => {
+    const v = (value === "sedes" ? "sedes" : "plantas") as "plantas" | "sedes"
+    setSelectedSource(v)
+    if (onSourceChange) onSourceChange(v)
+    if (sedes && sedes.length > 0) {
+      const initialIds = sedes.slice(0, 5).map(s => s.id)
+      setVisibleSedes(initialIds)
+    } else {
+      setVisibleSedes([])
+    }
+  }
+
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -132,11 +155,16 @@ export function DashboardBarChart({
             </div>
             {config.title}
           </CardTitle>
-          {config.description && (
-            <CardDescription className="text-sm text-muted-foreground">
-              {config.description}
-            </CardDescription>
-          )}
+          <SelectSingle
+            id="source-select"
+            className="w-[140px] h-9"
+            options={sourceOptions}
+            value={selectedSource}
+            onChange={handleSourceChange}
+            valueKey="value"
+            labelKey="label"
+            placeholder="Fuente"
+          />
         </div>
         <div className="flex items-center gap-2">
           {/* Selector múltiple de sedes con scroll horizontal */}

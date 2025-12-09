@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -27,6 +27,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
+import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
 
 export default function ProgsAdminPage() {
   const { user, logout } = useAuth();
@@ -91,6 +92,9 @@ export default function ProgsAdminPage() {
   const [historialId, setHistorialId] = useState<string>("")
   const [historialLabel, setHistorialLabel] = useState<string>("")
 
+  // Estado para diálogo de Actualizar Tarifas
+  const [ratesDialogOpen, setRatesDialogOpen] = useState(false)
+
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
   }
@@ -103,7 +107,7 @@ export default function ProgsAdminPage() {
 
   const tiposUnicos = progs.reduce((acc: { nombre: string, color: string }[], prog) => {
     const existe = acc.find(tipo => tipo.nombre === prog.tipoNombre);
-    if (!existe) {
+    if (!existe && prog.tipoNombre) {
       acc.push({ nombre: prog.tipoNombre || '', color: prog.tipoColor || '' });
     }
     return acc;
@@ -328,6 +332,9 @@ export default function ProgsAdminPage() {
     setIdToConfirm(null)
   }
 
+  // Handler para abrir el diálogo de Actualizar Tarifas
+  const openRatesDialog = () => setRatesDialogOpen(true)
+
   const processedProgs = useMemo(() => {
     return progs.map(prog => ({
       ...prog,
@@ -533,12 +540,20 @@ export default function ProgsAdminPage() {
             ) : (
               <div />
             )}
-            {hasPermission("admin.edit") && (
-              <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                <Plus className="mr-2 h-4 w-4" />
-                Nueva Visita
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {hasPermission("rates.edit") && (
+                <Button onClick={openRatesDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <CircleDollarSign className="mr-2 h-4 w-4" />
+                  Actualizar Tarifas
+                </Button>
+              )}
+              {hasPermission("admin.edit") && (
+                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nueva Visita
+                </Button>
+              )}
+            </div>
           </div>
           <DataTable
             columns={columns}
@@ -609,6 +624,8 @@ export default function ProgsAdminPage() {
         id={historialId}
         label={historialLabel}
       />
+
+      <UpdateRatesDialog open={ratesDialogOpen} onOpenChange={setRatesDialogOpen} />
     </div>
   )
 }

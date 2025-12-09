@@ -40,6 +40,7 @@ export default function DashboardPage() {
     return `${year}-${semester}`
   }
   const [selectedPeriod, setSelectedPeriod] = useState<string>(getDefaultPeriod())
+  const [selectedSource, setSelectedSource] = useState<string>("plantas")
 
   const loadRecentActivities = async () => {
     try {
@@ -143,6 +144,10 @@ export default function DashboardPage() {
     loadChartData()
   }, [selectedMetric, selectedPeriod])
 
+  useEffect(() => {
+    loadChartData(true)
+  }, [selectedSource])
+
   // Función para cargar datos del gráfico
   const loadChartData = async (force: boolean = false) => {
     try {
@@ -151,7 +156,7 @@ export default function DashboardPage() {
       const [anioStr, semestreStr] = selectedPeriod.split("-")
       const anio = parseInt(anioStr, 10)
       const semestre = parseInt(semestreStr, 10)
-      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric, anio, semestre, force)
+      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric, anio, semestre, force, selectedSource)
       setChartData(response.data)
       setSedesData(response.sedes)
     } catch (err) {
@@ -184,8 +189,8 @@ export default function DashboardPage() {
 
   // Configuración del gráfico
   const chartConfig = {
-    title: "Estadísticas por Sede",
-    description: `Distribución de ${metricOptions.find(m => m.value === selectedMetric)?.label.toLowerCase()} por sede`,
+    title: "Estadísticas",
+    description: `Distribución de ${metricOptions.find(m => m.value === selectedMetric)?.label.toLowerCase()}`,
     color: selectedMetric === "empleados" ? "#3b82f6" :
       selectedMetric === "clientes" ? "#10b981" :
         selectedMetric === "vehiculos" ? "#f59e0b" : "#8b5cf6"
@@ -414,6 +419,7 @@ export default function DashboardPage() {
             onMetricChange={setSelectedMetric}
             selectedPeriod={selectedPeriod}
             onPeriodChange={setSelectedPeriod}
+            onSourceChange={setSelectedSource}
             height={400}
           />
         </div>

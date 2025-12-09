@@ -32,6 +32,12 @@ export class RateService {
     return response
   }
 
+  async updateTarifas(fechaInicio: string, fechaFin: string, sedeIds: string[]): Promise<ApiResponse<Rate>> {
+    const rate = { fechaInicio, fechaFin, sedeIds };
+    const response = await apiService.put<ApiResponse<Rate>>(`/rates/updateTarifas`, rate)
+    return response
+  }
+
   async toggleStatus(id: string): Promise<ApiResponse<Rate>> {
     const response = await apiService.patch<ApiResponse<Rate>>(`/rates/${id}/toggle-status`)
     return response

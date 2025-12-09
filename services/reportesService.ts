@@ -62,9 +62,25 @@ export class ReportesService {
     return response.data;
   }
 
-  async getGroupedChartDataByMetric(metric: string, anio: number, semestre: number, force: boolean = false): Promise<GroupedChartResponse> {
+  async getPlantas(anio: number, semestre: number, force: boolean = false): Promise<SedeChart[]> {
+    const key = `${anio}-${semestre}`
+    if (!force && this.sedesCache[key]) {
+      return this.sedesCache[key]
+    }
+    const response = await apiService.get<ApiResponse<SedeChart[]>>(`/reportes/plantas-chart?anio=${anio}&semestre=${semestre}`)
+    this.sedesCache[key] = response.data;
+    return response.data;
+  }
+
+  async getGroupedChartDataByMetric(metric: string, anio: number, semestre: number, force: boolean = false, source: string): Promise<GroupedChartResponse> {
     try {
-      const sedesRaw = await this.getSedes(anio, semestre, force);
+      let sedesRaw;
+      console.log("Source selected:", source);
+      if (source === "plantas") {
+        sedesRaw = await this.getPlantas(anio, semestre, force);
+      } else {
+        sedesRaw = await this.getSedes(anio, semestre, force);
+      }
 
       // Filtrar por sedes con valores > 0 según la métrica seleccionada
       const hasPositiveById = new Set<string>()

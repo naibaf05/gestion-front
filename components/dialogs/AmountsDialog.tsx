@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Eye, Plus, TableProperties, Trash2 } from "lucide-react"
+import { Edit, Eye, History, Plus, TableProperties, Trash2 } from "lucide-react"
 import { Parametrizacion, TipoResiduo, VisitaCantidad, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { parametrizationService } from "@/services/parametrizationService"
@@ -15,6 +15,7 @@ import { ButtonTooltip } from "../ui/button-tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { HistorialDialog } from "./HistorialDialog";
 
 interface AmountsDialogProps {
   open: boolean
@@ -38,6 +39,11 @@ export function AmountsDialog({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [amountToDelete, setAmountToDelete] = useState<string | null>(null)
   const { toast } = useToast()
+
+  // Historial
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -133,6 +139,13 @@ export function AmountsDialog({
     setAmountToDelete(null)
   }
 
+  const handleHistorial = (item: VisitaCantidad) => {
+    setSelectedAmount(item);
+    setHistorialId(item.id || "");
+    setHistorialLabel(`Cantidad [${item.tResiduoNombre} - ${item.cantidadUnidad}]`);
+    setHistorialOpen(true);
+  };
+
   const columns: ColumnDef<VisitaCantidad>[] = [
     {
       accessorKey: "tResiduoNombre",
@@ -157,7 +170,7 @@ export function AmountsDialog({
     {
       id: "actions",
       header: "Acciones",
-      width: "120px",
+      width: "160px",
       cell: ({ row }) => {
         const obj = row.original
         return (
@@ -175,6 +188,11 @@ export function AmountsDialog({
               ) : (
                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(obj)} tooltipContent="Ver">
                   <Eye className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+              {hasPermission("users.historial") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(obj)} tooltipContent="Historial">
+                  <History className="h-4 w-4" />
                 </ButtonTooltip>
               )}
             </div>
@@ -244,6 +262,14 @@ export function AmountsDialog({
         description="¿Estás seguro de que deseas eliminar esta cantidad?"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="VisitaCantidad"
+        id={historialId}
+        label={historialLabel}
       />
     </>
   )
