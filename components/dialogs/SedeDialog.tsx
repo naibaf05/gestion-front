@@ -48,6 +48,7 @@ export function SedeDialog({
   const [formData, setFormData] = useState({
     nombre: "",
     clienteId: "",
+    nit: "",
     barrio: "",
     direccion: "",
     pobladoId: "",
@@ -65,6 +66,7 @@ export function SedeDialog({
       setFormData({
         nombre: sede.nombre,
         clienteId: sede.clienteId,
+        nit: sede.nit,
         barrio: sede.barrio,
         direccion: sede.direccion,
         pobladoId: sede.pobladoId,
@@ -79,6 +81,7 @@ export function SedeDialog({
       setFormData({
         nombre: "",
         clienteId: "",
+        nit: "",
         barrio: "",
         direccion: "",
         pobladoId: "",
@@ -165,17 +168,31 @@ export function SedeDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="direccion" required>Dirección</Label>
-              <Input
-                id="direccion"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                required
-                disabled={readOnly}
-                readOnly={readOnly}
-                placeholder="Dirección completa de la sede"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nit">Nit</Label>
+                <Input
+                  id="nit"
+                  value={formData.nit}
+                  onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Nit de la sede"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="direccion" required>Dirección</Label>
+                <Input
+                  id="direccion"
+                  value={formData.direccion}
+                  onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                  required
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  placeholder="Dirección completa de la sede"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

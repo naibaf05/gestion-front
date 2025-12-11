@@ -95,6 +95,7 @@ export interface Sede {
   nombre: string
   clienteId: string
   clienteNombre: string
+  nit: string
   barrio: string
   direccion: string
   pobladoId: string
