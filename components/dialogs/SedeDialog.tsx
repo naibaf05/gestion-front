@@ -279,7 +279,7 @@ export function SedeDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="periodo" required>Periodo</Label>
+                <Label htmlFor="periodo">Periodo</Label>
                 <SelectSingle
                   id="periodoId"
                   placeholder="Selecciona un periodo"
