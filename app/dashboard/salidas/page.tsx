@@ -129,20 +129,6 @@ export default function SalidasPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: 'America/Bogota'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   const formatPeso = (peso: number) => {
     return `${peso.toFixed(2)} kg`;
   };
@@ -153,12 +139,12 @@ export default function SalidasPage() {
       header: "Fecha"
     },
     {
-      accessorKey: "sedeNombre",
-      header: "Sede"
+      accessorKey: "salida",
+      header: "Salida"
     },
     {
-      accessorKey: "clienteNombre",
-      header: "Cliente"
+      accessorKey: "destino",
+      header: "Destino"
     },
     {
       accessorKey: "conductorNombre",

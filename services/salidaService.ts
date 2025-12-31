@@ -5,6 +5,11 @@ export class SalidaService {
   // Obtener todas las salidas
   async getSalidas(): Promise<Salida[]> {
     const response = await apiService.get<ApiResponse<Salida[]>>(`/salidas`)
+
+    response.data.forEach((salida) => {
+      salida.salida = salida.plantaNombre || salida.sedeSalidaNombre || ""
+      salida.destino = salida.sedeNombre || salida.plantaDestinoNombre || ""
+    });
     return response.data
   }
 

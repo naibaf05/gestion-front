@@ -339,10 +339,14 @@ export interface Salida {
   id: string
   plantaId: string
   plantaNombre?: string
+  plantaDestinoId?: string
+  plantaDestinoNombre?: string
   clienteId: string
   clienteNombre?: string
   sedeId: string
   sedeNombre?: string
+  sedeSalidaId?: string
+  sedeSalidaNombre?: string
   vehiculoId: string
   vehiculoPlaca?: string
   conductorId: string
@@ -357,6 +361,8 @@ export interface Salida {
   sede?: Sede
   conductor?: User
   producto?: Parametrizacion
+  salida?: string
+  destino?: string
 }
 
 // Tipos para Dashboard Stats
