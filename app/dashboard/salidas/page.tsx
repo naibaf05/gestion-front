@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -19,9 +19,41 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { certificatesService } from "@/services/certificatesService";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { vehicleService } from "@/services/vehicleService";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function SalidasPage() {
   const { user } = useAuth();
+
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today;
+  });
+  const [fechaFin, setFechaFin] = useState(() => {
+    const today = new Date();
+    return today;
+  });
+  const [dateString, setDateString] = useState(() => {
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
+  });
+  const [fechaFinString, setFechaFinString] = useState(() => {
+    const today = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(today);
+  });
+
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>()
 
   const [base64, setBase64] = useState<string | null>(null);
   const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
@@ -47,9 +79,66 @@ export default function SalidasPage() {
     if (user.perfil?.nombre === "ADMIN") return true
     return user.permisos[permission] === true
   }
+
   useEffect(() => {
-    loadData();
-  }, []);
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current)
+    }
+
+    loadingTimeoutRef.current = setTimeout(() => {
+      loadData()
+    }, 100)
+
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+    }
+  }, [dateString, fechaFinString])
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (newDate && !isNaN(newDate.getTime())) {
+      if (fechaFin && newDate > fechaFin) {
+        toast({
+          title: "Fecha inválida",
+          description: "La fecha inicio no puede ser mayor que la fecha fin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedDate(newDate);
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      setDateString(formatter.format(newDate));
+    }
+  };
+
+  const handleFechaFinChange = (newDate: Date | undefined) => {
+    if (newDate && !isNaN(newDate.getTime())) {
+      if (selectedDate && newDate < selectedDate) {
+        toast({
+          title: "Fecha inválida",
+          description: "La fecha fin no puede ser menor que la fecha inicio",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFechaFin(newDate);
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      setFechaFinString(formatter.format(newDate));
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -61,7 +150,7 @@ export default function SalidasPage() {
         productosData,
         plantasData
       ] = await Promise.all([
-        salidaService.getSalidas(),
+        salidaService.getSalidas(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         parametrizationService.getListaActivos("t_residuo"),
@@ -229,15 +318,40 @@ export default function SalidasPage() {
           <h1 className="text-3xl font-bold text-gray-900">Salidas</h1>
           <p className="text-gray-600">Gestiona las salidas de residuos</p>
         </div>
-        {hasPermission("salida.edit") && (
-          <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-            <Plus className="mr-2 h-4 w-4" />Nueva Salida
-          </Button>
-        )}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Inicio:</label>
+            <DatePicker
+              date={selectedDate}
+              onDateChange={handleDateChange}
+              placeholder="dd/mm/aaaa"
+              className="w-40"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Fin:</label>
+            <DatePicker
+              date={fechaFin}
+              onDateChange={handleFechaFinChange}
+              placeholder="dd/mm/aaaa"
+              className="w-40"
+            />
+          </div>
+        </div>
       </div>
 
       <Card>
         <CardContent>
+          {hasPermission("salida.edit") && (
+            <div className="flex justify-between items-center">
+              <div></div>
+              <div className="flex items-center gap-2">
+                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                  <Plus className="mr-2 h-4 w-4" />Nueva Salida
+                </Button>
+              </div>
+            </div>
+          )}
           <DataTable
             columns={columns}
             data={salidas}

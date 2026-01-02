@@ -40,6 +40,7 @@ export interface DashboardBarChartProps {
   selectedPeriod?: string
   onPeriodChange?: (period: string) => void
   onSourceChange?: (source: string) => void
+  periodStartYear?: number
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -83,7 +84,8 @@ export function DashboardBarChart({
   onMetricChange,
   selectedPeriod,
   onPeriodChange,
-  onSourceChange
+  onSourceChange,
+  periodStartYear = 2025
 }: DashboardBarChartProps) {
 
   // Mostrar solo las primeras 5 sedes seleccionadas por defecto (solo inicializar una vez)
@@ -114,15 +116,17 @@ export function DashboardBarChart({
     setVisibleSedes(ids)
   }
 
-  // Opciones de periodo (año-semestre) dinámicas basadas en el año actual
+  // Opciones de periodo (año-semestre) dinámicas desde un año configurable hasta el actual
   const currentYear = React.useMemo(() => new Date().getFullYear(), [])
-  const periodOptions = React.useMemo(
-    () => [
-      { value: `${currentYear}-1`, label: `${currentYear}-1` },
-      { value: `${currentYear}-2`, label: `${currentYear}-2` },
-    ],
-    [currentYear]
-  )
+  const periodOptions = React.useMemo(() => {
+    const start = periodStartYear ?? 2025
+    const opts: Array<{ value: string; label: string }> = []
+    for (let y = start; y <= currentYear; y++) {
+      opts.push({ value: `${y}-1`, label: `${y}-1` })
+      opts.push({ value: `${y}-2`, label: `${y}-2` })
+    }
+    return opts
+  }, [currentYear, periodStartYear])
 
   // Selector de fuente (Plantas/Sedes)
   const sourceOptions = React.useMemo(

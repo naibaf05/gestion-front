@@ -3,8 +3,8 @@ import type { Salida, ApiResponse } from "@/types"
 
 export class SalidaService {
   // Obtener todas las salidas
-  async getSalidas(): Promise<Salida[]> {
-    const response = await apiService.get<ApiResponse<Salida[]>>(`/salidas`)
+  async getSalidas(inicio: string, fin: string): Promise<Salida[]> {
+    const response = await apiService.get<ApiResponse<Salida[]>>(`/salidas?inicio=${inicio}&fin=${fin}`)
 
     response.data.forEach((salida) => {
       salida.salida = salida.plantaNombre || salida.sedeSalidaNombre || ""

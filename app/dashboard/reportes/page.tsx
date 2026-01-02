@@ -114,22 +114,23 @@ export default function ReportesPage() {
             }
             case "reporte3": {
                 const cols = [
-                    { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
-                    { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
-                    { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
-                    { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
-                    { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
-                    { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true },
+                    { key: "nombreSalida", label: "Nombre Salida", category: "salida", enabled: true },
+                    { key: "nitSalida", label: "Nit Salida", category: "salida", enabled: true },
+                    { key: "direccionSalida", label: "Dirección Salida", category: "salida", enabled: false },
+                    { key: "ciudadSalida", label: "Ciudad Salida", category: "salida", enabled: false },
+                    { key: "nitDestino", label: "Nit Destino", category: "destino", enabled: true },
+                    { key: "nombreDestino", label: "Nombre Destino", category: "destino", enabled: true },
+                    { key: "direccionDestino", label: "Direccion Destino", category: "destino", enabled: false },
+                    { key: "ciudadDestino", label: "Ciudad Destino", category: "destino", enabled: false },
                     { key: "fecha", label: "Fecha", category: "visita", enabled: true },
                     { key: "peso", label: "Peso (KG)", category: "visita", enabled: true },
-                    { key: "conductor", label: "Conductor", category: "visita", enabled: true },
-                    { key: "placa", label: "Placa", category: "visita", enabled: true },
+                    { key: "conductor", label: "Conductor", category: "visita", enabled: false },
+                    { key: "placa", label: "Placa", category: "visita", enabled: false },
                     { key: "remision", label: "Remisión", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
-                    { key: "planta", label: "Planta", category: "visita", enabled: true },
                 ];
                 return cols;
             }
@@ -179,17 +180,16 @@ export default function ReportesPage() {
             case "reporte3": {
                 const defaultCols = [
                     { key: "fecha", label: "Fecha", width: "120px" },
-                    { key: "sedeNombre", label: "Nombre Sede", width: "200px" },
-                    { key: "sedeDireccion", label: "Dirección Sede", width: "350px" },
-                    { key: "clienteNombre", label: "Nombre Cliente", width: "250px" },
-                    { key: "clienteNit", label: "NIT Cliente", width: "180px" },
+                    { key: "nitSalida", label: "Nit Salida", width: "180px" },
+                    { key: "nombreSalida", label: "Nombre Salida", width: "300px" },
+                    { key: "nitDestino", label: "Nit Destino", width: "180px" },
+                    { key: "nombreDestino", label: "Nombre Destino", width: "300px" },
                     { key: "peso", label: "Peso (KG)", width: "120px" },
                     { key: "remision", label: "Remisión", width: "150px" },
                     { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
-                    { key: "planta", label: "Planta", width: "350px" },
                 ];
                 return defaultCols;
             }
