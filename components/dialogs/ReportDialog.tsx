@@ -8,6 +8,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +32,7 @@ interface ReportDialogProps<TData, TValue> {
     maxWidth?: string; // ancho máximo configurable (ej: "1200px", "95vw", "90%")
     showCheckboxes?: boolean; // nueva prop para mostrar checkboxes
     showAssignInvoice?: boolean; // nueva prop para mostrar botón de asignar factura
-    onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string) => void; // callback para asignar factura
+    onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void; // callback para asignar factura con fecha
     rowIdField?: string; // campo que actúa como ID único para cada fila (ej: "id", "codigo")
     checkboxColumnWidth?: string; // ancho de la columna de selección (ej: "40px")
 }
@@ -53,6 +54,7 @@ export function ReportDialog<TData, TValue>({
     rowIdField = "id",
     checkboxColumnWidth,
 }: ReportDialogProps<TData, TValue>) {
+    const { toast } = useToast();
     // Constante configurable para el ancho de la columna de checks
     const DEFAULT_CHECK_COL_WIDTH = "100px";
     const checkColWidth = checkboxColumnWidth || DEFAULT_CHECK_COL_WIDTH;
@@ -71,8 +73,11 @@ export function ReportDialog<TData, TValue>({
     // Estados para el diálogo de asignar factura
     const [invoiceDialogOpen, setInvoiceDialogOpen] = React.useState(false);
     const [invoiceNumber, setInvoiceNumber] = React.useState("");
+    const [invoiceDate, setInvoiceDate] = React.useState("");
     // Filtro para mostrar sólo registros sin número de factura
     const [showOnlyWithoutFactura, setShowOnlyWithoutFactura] = React.useState(false);
+    // Filtro para mostrar sólo registros sin fecha de factura
+    const [showOnlyWithoutFecFactura, setShowOnlyWithoutFecFactura] = React.useState(false);
 
     // Estado para sumar columnas
     const [summaryKeys, setSummaryKeys] = React.useState<string[]>([]);
@@ -214,19 +219,40 @@ export function ReportDialog<TData, TValue>({
                     )
                 };
             }
+            if (key === 'fecFactura') {
+                return {
+                    ...col,
+                    header: () => (
+                        <div className="flex flex-col gap-1 py-1">
+                            <span className="text-xs font-medium">Fecha Factura</span>
+                            <label className="flex items-center gap-1 text-[10px] font-normal">
+                                <Checkbox
+                                    checked={showOnlyWithoutFecFactura}
+                                    onCheckedChange={(checked) => setShowOnlyWithoutFecFactura(!!checked)}
+                                    aria-label="Filtrar vacíos"
+                                />
+                                <span className="select-none">Vacíos</span>
+                            </label>
+                        </div>
+                    )
+                };
+            }
             return col;
         });
         return working;
-    }, [columns, showCheckboxes, selectedRows, selectAll, data, rowIdField, showOnlyWithoutFactura, checkColWidth]);
+    }, [columns, showCheckboxes, selectedRows, selectAll, data, rowIdField, showOnlyWithoutFactura, showOnlyWithoutFecFactura, checkColWidth]);
 
     // Data filtrada según toggle de facturas vacías
     const dataForTable = React.useMemo(() => {
-        if (!showOnlyWithoutFactura) return data;
+        const isEmpty = (v: any) => v == null || String(v).trim() === "";
+        if (!showOnlyWithoutFactura && !showOnlyWithoutFecFactura) return data;
         return data.filter((r: any) => {
-            const v = r?.numFactura;
-            return v == null || String(v).trim() === "";
+            let pass = true;
+            if (showOnlyWithoutFactura) pass = pass && isEmpty(r?.numFactura);
+            if (showOnlyWithoutFecFactura) pass = pass && isEmpty(r?.fecFactura);
+            return pass;
         });
-    }, [data, showOnlyWithoutFactura]);
+    }, [data, showOnlyWithoutFactura, showOnlyWithoutFecFactura]);
 
     // Mantener filteredRows sincronizado con dataForTable cuando cambia el filtro de factura vacía
     React.useEffect(() => {
@@ -306,7 +332,7 @@ export function ReportDialog<TData, TValue>({
     // Manejar asignación de factura
     const handleAssignInvoiceClick = () => {
         if (selectedRows.size === 0) {
-            alert("Por favor selecciona al menos una fila para asignar factura.");
+            message("Error", "Por favor selecciona al menos una fila para asignar factura.", "error");
             return;
         }
         setInvoiceDialogOpen(true);
@@ -315,7 +341,11 @@ export function ReportDialog<TData, TValue>({
     // Confirmar asignación de factura
     const handleConfirmAssignInvoice = () => {
         if (!invoiceNumber.trim()) {
-            alert("Por favor ingresa un número de factura.");
+            message("Error", "Por favor ingresa un número de factura.", "error");
+            return;
+        }
+        if (!invoiceDate.trim()) {
+            message("Error", "Por favor selecciona la fecha de la factura.", "error");
             return;
         }
 
@@ -325,10 +355,11 @@ export function ReportDialog<TData, TValue>({
         );
 
         // Llamar al callback
-        onAssignInvoice?.(selectedRowsData, invoiceNumber.trim());
+        onAssignInvoice?.(selectedRowsData, invoiceNumber.trim(), invoiceDate.trim());
 
         // Limpiar y cerrar
         setInvoiceNumber("");
+        setInvoiceDate("");
         setInvoiceDialogOpen(false);
         setSelectedRows(new Set());
         setSelectAll(false);
@@ -407,6 +438,14 @@ export function ReportDialog<TData, TValue>({
             filteredTotal: filteredIds.length
         };
     };
+
+    const message = (title: string, description: string, variant: "default" | "destructive" | "success" | "warning" | "error") => {
+        toast({
+            title: title,
+            description: description,
+            variant: variant,
+        });
+    }
 
     return (
         <>
@@ -534,11 +573,16 @@ export function ReportDialog<TData, TValue>({
                                 placeholder="Ej: FAC-2025-001"
                                 value={invoiceNumber}
                                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleConfirmAssignInvoice();
-                                    }
-                                }}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="invoice-date">Fecha de Factura</Label>
+                            <Input
+                                id="invoice-date"
+                                type="date"
+                                value={invoiceDate}
+                                onChange={(e) => setInvoiceDate(e.target.value)}
                             />
                         </div>
                     </div>

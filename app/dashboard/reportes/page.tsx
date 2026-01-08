@@ -102,6 +102,7 @@ export default function ReportesPage() {
                     { key: "recolNombre", label: "Nombre Recolector", category: "visita", enabled: true },
                     { key: "unidad", label: "Unidad", category: "visita", enabled: true },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
+                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
                     { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true },
@@ -129,6 +130,7 @@ export default function ReportesPage() {
                     { key: "remision", label: "Remisión", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
+                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
                 ];
@@ -172,6 +174,7 @@ export default function ReportesPage() {
                     { key: "cantidadM3", label: "Cantidad M3", width: "120px" },
                     { key: "recolNombre", label: "Nombre Recolector", width: "200px" },
                     { key: "numFactura", label: "Número Factura", width: "150px" },
+                    { key: "fecFactura", label: "Fecha Factura", width: "120px" },
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                 ];
@@ -186,8 +189,9 @@ export default function ReportesPage() {
                     { key: "nombreDestino", label: "Nombre Destino", width: "300px" },
                     { key: "peso", label: "Peso (KG)", width: "120px" },
                     { key: "remision", label: "Remisión", width: "150px" },
-                    { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
-                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
+                    { key: "tipoResiduo", label: "Producto", width: "180px" },
+                    { key: "numFactura", label: "Número Factura", width: "150px" },
+                    { key: "fecFactura", label: "Fecha Factura", width: "120px" },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
                 ];
@@ -252,7 +256,7 @@ export default function ReportesPage() {
     // Estado para almacenar la configuración de columnas del usuario
     const [userColumnConfig, setUserColumnConfig] = useState<any[] | null>(null);
 
-    const asignarFactura = async (selectedRows: any[], invoiceNumber: string) => {
+    const asignarFactura = async (selectedRows: any[], invoiceNumber: string, invoiceDate?: string) => {
         console.log("Filas seleccionadas:", selectedRows);
         console.log("Número de factura:", invoiceNumber);
         setLoading(true);
@@ -261,6 +265,7 @@ export default function ReportesPage() {
             const data = {
                 ids,
                 numeroFactura: invoiceNumber,
+                fecFactura: invoiceDate,
                 tipo: tipoReporte
             };
             const resp = await reportesService.asignarFactura(data);
@@ -526,7 +531,7 @@ export default function ReportesPage() {
                 showCheckboxes={hasPermission("reportes.assign")}
                 showAssignInvoice={hasPermission("reportes.assign")}
                 rowIdField="id"
-                onAssignInvoice={(selectedRows, invoiceNumber) => asignarFactura(selectedRows, invoiceNumber)}
+                onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
             />
 
             <ColumnConfigDialog
