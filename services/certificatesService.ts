@@ -41,11 +41,17 @@ export class CertificatesService {
     // Certificados
     async getCertificados(tipo: string): Promise<Certificados[]> {
         const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/${tipo}`);
+        response.data.forEach(cert => {
+            cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
+        });
         return response.data;
     }
 
     async getCertificadosCliente(tipo: string, clienteId: string): Promise<Certificados[]> {
         const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/cliente/${tipo}/${clienteId}`);
+        response.data.forEach(cert => {
+            cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
+        });
         return response.data;
     }
 

@@ -332,6 +332,7 @@ export interface Certificados {
   notas?: string
   noFactura?: number
   tieneCartera?: number
+  numMostrar?: string
 }
 
 // Tipos para salidas
