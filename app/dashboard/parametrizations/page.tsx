@@ -363,14 +363,17 @@ export default function ParametrizationsPage() {
       {
         accessorKey: "codigo",
         header: "Codigo",
+        width: "100px",
       },
       {
         accessorKey: "nombre",
         header: "Nombre",
+        width: "300px",
       },
       {
         accessorKey: "descripcion",
         header: "Descripción",
+        width: "350px",
       },
     ]
 
@@ -378,6 +381,7 @@ export default function ParametrizationsPage() {
     baseColumns.push({
       accessorKey: "activo",
       header: "Estado",
+      width: "100px",
       cell: ({ row }) => {
         return (
           <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
@@ -391,6 +395,7 @@ export default function ParametrizationsPage() {
     baseColumns.push({
       id: "actions",
       header: "Acciones",
+      width: "180px",
       cell: ({ row }) => {
         const item = row.original
         return (

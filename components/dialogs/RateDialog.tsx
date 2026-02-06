@@ -42,6 +42,7 @@ export function RateDialog({
   readOnly = false,
 }: RateDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [viewDensidad, setViewDensidad] = useState(false);
   const [formData, setFormData] = useState({
     sedeId: "",
     undMedidaId: "",
@@ -49,12 +50,20 @@ export function RateDialog({
     tarifa: "",
     fechaInicio: "",
     fechaFin: "",
-    puestoPlanta: false
+    puestoPlanta: false,
+    densidad: ""
   });
   const { toast } = useToast();
 
   useEffect(() => {
     if (rate) {
+      const unidadEncontrada = undMedidas.find(un => parseInt(un.id) === parseInt(rate.undMedidaId));
+      if (unidadEncontrada) {
+        setViewDensidad(unidadEncontrada.codigo === 'M3');
+        if (unidadEncontrada.codigo !== 'M3') {
+          rate.densidad = "";
+        }
+      }
       setFormData({
         sedeId: sede ? sede.id : "",
         undMedidaId: rate.undMedidaId,
@@ -63,6 +72,7 @@ export function RateDialog({
         fechaInicio: rate.fechaInicio,
         fechaFin: rate.fechaFin ?? "",
         puestoPlanta: rate.puestoPlanta ?? false,
+        densidad: rate.densidad ?? "",
       });
     } else {
       setFormData({
@@ -72,10 +82,24 @@ export function RateDialog({
         tarifa: "",
         fechaInicio: "",
         fechaFin: "",
-        puestoPlanta: false
+        puestoPlanta: false,
+        densidad: ""
       });
     }
   }, [rate, open]);
+
+  const handleUnidadMedidaChange = async (v: string) => {
+    const newFormData = { ...formData };
+    const unidadEncontrada = undMedidas.find(un => parseInt(un.id) === parseInt(v));
+    if (unidadEncontrada) {
+      newFormData.undMedidaId = unidadEncontrada.id;
+      setViewDensidad(unidadEncontrada.codigo === 'M3');
+      if (unidadEncontrada.codigo !== 'M3') {
+        newFormData.densidad = "";
+      }
+    }
+    setFormData(newFormData);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +110,7 @@ export function RateDialog({
     setLoading(true);
 
     try {
+      console.log("Form Data to submit:", formData);
       if (rate) {
         const response = await rateService.update(rate.id, formData);
         toast({
@@ -130,7 +155,7 @@ export function RateDialog({
                   placeholder="Selecciona una unidad de medida"
                   options={undMedidas}
                   value={formData.undMedidaId}
-                  onChange={(value) => setFormData({ ...formData, undMedidaId: value })}
+                  onChange={handleUnidadMedidaChange}
                   valueKey="id"
                   labelKey="nombre"
                   disabled={readOnly}
@@ -183,6 +208,20 @@ export function RateDialog({
                   readOnly={readOnly}
                 />
               </div>
+              {viewDensidad && (
+                <div className="space-y-2">
+                  <Label htmlFor="densidad">Densidad (kg/m3)</Label>
+                  <InputDecimal
+                    id="densidad"
+                    value={formData.densidad}
+                    onChange={(e) => setFormData({ ...formData, densidad: e.target.value })}
+                    decimalPlaces={2}
+                    placeholder="Ingrese la densidad"
+                    disabled={readOnly}
+                    readOnly={readOnly}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <br></br>
                 <InputCheck

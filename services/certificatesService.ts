@@ -18,13 +18,13 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoRecoleccionPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
+    async getCertificadoRecoleccionPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
-    async getCertificadoRecoleccionLlantasPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string): Promise<string> {
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}`);
+    async getCertificadoRecoleccionLlantasPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
@@ -39,16 +39,16 @@ export class CertificatesService {
     }
 
     // Certificados
-    async getCertificados(tipo: string): Promise<Certificados[]> {
-        const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/${tipo}`);
+    async getCertificados(tipo: string, inicio: string, fin: string): Promise<Certificados[]> {
+        const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/${tipo}/${inicio}/${fin}`);
         response.data.forEach(cert => {
             cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
         });
         return response.data;
     }
 
-    async getCertificadosCliente(tipo: string, clienteId: string): Promise<Certificados[]> {
-        const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/cliente/${tipo}/${clienteId}`);
+    async getCertificadosCliente(tipo: string, clienteId: string, inicio: string, fin: string): Promise<Certificados[]> {
+        const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/cliente/${tipo}/${clienteId}/${inicio}/${fin}`);
         response.data.forEach(cert => {
             cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
         });
@@ -67,6 +67,11 @@ export class CertificatesService {
 
     async toggleStatus(id: string): Promise<void> {
         await apiService.patch(`/certificado/${id}/toggle-status`);
+    }
+
+    async updateNotas(id: string, notas: string): Promise<Certificados> {
+        const response = await apiService.patch<ApiResponse<Certificados>>(`/certificado/${id}/notas`, { notas });
+        return response.data;
     }
 }
 

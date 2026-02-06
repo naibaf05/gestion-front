@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -8,6 +8,7 @@ import { Edit, FileText, Plus, PowerSquare, Table, Trash2, History } from "lucid
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
+import { NotasDialog } from "@/components/dialogs/NotasDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { certificatesService } from "@/services/certificatesService";
 import { clientService } from "@/services/clientService";
@@ -19,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/toolti
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function CertificadosPage() {
     const { user, logout } = useAuth()
@@ -43,6 +45,10 @@ export default function CertificadosPage() {
     const [historialId, setHistorialId] = useState<string>("");
     const [historialLabel, setHistorialLabel] = useState<string>("");
 
+    // Notas
+    const [notasDialogOpen, setNotasDialogOpen] = useState(false);
+    const [selectedCertificadoNotas, setSelectedCertificadoNotas] = useState<Certificados | null>(null);
+
     // Estados para mensajes de confirmación similares a progs-admin
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [tipoConfirm, setTipoConfirm] = useState<string | null>(null);
@@ -51,6 +57,37 @@ export default function CertificadosPage() {
     const [confirmText, setConfirmText] = useState<string | null>(null);
     const [cancelText, setCancelText] = useState<string | null>(null);
     const [hideCancelConfirm, setHideCancelConfirm] = useState<boolean>(false);
+    const loadingTimeoutRef = useRef<NodeJS.Timeout>()
+
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const today = new Date();
+        return today;
+    });
+    const [fechaFin, setFechaFin] = useState(() => {
+        const today = new Date();
+        return today;
+    });
+
+    const [dateString, setDateString] = useState(() => {
+        const today = new Date();
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Bogota',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+        return formatter.format(today);
+    });
+    const [fechaFinString, setFechaFinString] = useState(() => {
+        const today = new Date();
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Bogota',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+        return formatter.format(today);
+    });
 
     if (user && user.permisos && typeof user.permisos === "string") {
         user.permisos = JSON.parse(user.permisos);
@@ -63,17 +100,29 @@ export default function CertificadosPage() {
     }
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current)
+        }
+
+        loadingTimeoutRef.current = setTimeout(() => {
+            loadData()
+        }, 100)
+
+        return () => {
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current)
+            }
+        }
+    }, [dateString, fechaFinString])
 
     const loadData = async () => {
         try {
             setLoading(true);
             if (user?.perfil?.nombre === "CLIENTE") {
                 const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
-                    certificatesService.getCertificadosCliente("1", user.id || ""),
-                    certificatesService.getCertificadosCliente("2", user.id || ""),
-                    certificatesService.getCertificadosCliente("3", user.id || ""),
+                    certificatesService.getCertificadosCliente("1", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("2", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("3", user.id || "", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos()
                 ]);
@@ -84,9 +133,9 @@ export default function CertificadosPage() {
                 setClientes(clientesData);
             } else {
                 const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
-                    certificatesService.getCertificados("1"),
-                    certificatesService.getCertificados("2"),
-                    certificatesService.getCertificados("3"),
+                    certificatesService.getCertificados("1", dateString, fechaFinString),
+                    certificatesService.getCertificados("2", dateString, fechaFinString),
+                    certificatesService.getCertificados("3", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos()
                 ]);
@@ -155,10 +204,10 @@ export default function CertificadosPage() {
 
         switch (tipoString) {
             case "1":
-                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha, obj.notas || "");
                 break;
             case "2":
-                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha);
+                base64 = await certificatesService.getCertificadoRecoleccionPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha, obj.notas || "");
                 break;
             case "3":
                 base64 = await certificatesService.getCertificadoProformaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
@@ -204,6 +253,50 @@ export default function CertificadosPage() {
         }
         handleExcelNoValidate(obj);
     }
+
+    const handleDateChange = (newDate: Date | undefined) => {
+        if (newDate && !isNaN(newDate.getTime())) {
+            if (fechaFin && newDate > fechaFin) {
+                toast({
+                    title: "Fecha inválida",
+                    description: "La fecha inicio no puede ser mayor que la fecha fin",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            setSelectedDate(newDate);
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Bogota',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
+            setDateString(formatter.format(newDate));
+        }
+    };
+
+    const handleFechaFinChange = (newDate: Date | undefined) => {
+        if (newDate && !isNaN(newDate.getTime())) {
+            if (selectedDate && newDate < selectedDate) {
+                toast({
+                    title: "Fecha inválida",
+                    description: "La fecha fin no puede ser menor que la fecha inicio",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            setFechaFin(newDate);
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Bogota',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
+            setFechaFinString(formatter.format(newDate));
+        }
+    };
 
     const handleExcelNoValidate = async (obj: Certificados) => {
         let base64;
@@ -309,30 +402,43 @@ export default function CertificadosPage() {
         setHistorialOpen(true);
     };
 
+    const handleEditNotas = (item: Certificados) => {
+        setSelectedCertificadoNotas(item);
+        setNotasDialogOpen(true);
+    };
+
     const columns: ColumnDef<Certificados>[] = [
         {
             accessorKey: "numMostrar",
             header: "Número",
+            width: "120px",
         },
         {
             accessorKey: "clienteNombre",
             header: "Cliente",
+            width: "280px",
+            enableColumnFilter: true
         },
         {
             accessorKey: "sedeNombre",
             header: "Sede",
+            width: "280px",
+            enableColumnFilter: true
         },
         {
             accessorKey: "inicio",
             header: "Fecha Inicio",
+            width: "120px",
         },
         {
             accessorKey: "fin",
             header: "Fecha Fin",
+            width: "120px",
         },
         {
             accessorKey: "activo",
             header: "Estado",
+            width: "100px",
             cell: ({ row }) => (
                 <span className={`px-2 py-1 rounded text-xs ${row.original.activo
                     ? 'bg-green-100 text-green-800'
@@ -345,6 +451,7 @@ export default function CertificadosPage() {
         {
             id: "actions",
             header: "Acciones",
+            width: "160px",
             cell: ({ row }) => {
                 const item = row.original;
                 return (
@@ -356,6 +463,11 @@ export default function CertificadosPage() {
                             {hasPermission("users.historial") && (
                                 <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
                                     <History className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNotas(item)} tooltipContent="Editar Notas">
+                                    <Edit className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
                             {hasPermission("certificados.edit") && (
@@ -380,10 +492,12 @@ export default function CertificadosPage() {
         {
             accessorKey: "clienteNombre",
             header: "Cliente",
+            enableColumnFilter: true
         },
         {
             accessorKey: "sedeNombre",
             header: "Sede",
+            enableColumnFilter: true
         },
         {
             accessorKey: "inicio",
@@ -474,6 +588,26 @@ export default function CertificadosPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Certificados</h1>
                 </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium">Inicio:</label>
+                        <DatePicker
+                            date={selectedDate}
+                            onDateChange={handleDateChange}
+                            placeholder="dd/mm/aaaa"
+                            className="w-40"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium">Fin:</label>
+                        <DatePicker
+                            date={fechaFin}
+                            onDateChange={handleFechaFinChange}
+                            placeholder="dd/mm/aaaa"
+                            className="w-40"
+                        />
+                    </div>
+                </div>
             </div>
 
             <Card>
@@ -498,7 +632,7 @@ export default function CertificadosPage() {
                             <DataTable
                                 columns={columns}
                                 data={certificadosLlantas}
-                                searchKey={["sedeNombre", "clienteNombre"]}
+                                searchKey={["numMostrar", "sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
@@ -516,7 +650,7 @@ export default function CertificadosPage() {
                             <DataTable
                                 columns={columns}
                                 data={certificadosOtros}
-                                searchKey={["sedeNombre", "clienteNombre"]}
+                                searchKey={["numMostrar", "sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
@@ -578,6 +712,14 @@ export default function CertificadosPage() {
                 tipo="Certificado"
                 id={historialId}
                 label={historialLabel}
+            />
+
+            <NotasDialog
+                open={notasDialogOpen}
+                onOpenChange={setNotasDialogOpen}
+                certificadoId={selectedCertificadoNotas?.id || ""}
+                notasActuales={selectedCertificadoNotas?.notas || ""}
+                onSuccess={loadData}
             />
         </div>
     );

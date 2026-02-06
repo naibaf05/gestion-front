@@ -147,10 +147,10 @@ export function CertificadoDialog({
 
       switch (tipoString) {
         case "1":
-          base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          base64 = await certificatesService.getCertificadoRecoleccionLlantasPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
           break;
         case "2":
-          base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha);
+          base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
           break;
         case "3":
           base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);

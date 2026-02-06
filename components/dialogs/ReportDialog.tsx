@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/data-table";
-import { FileSpreadsheet, Receipt } from "lucide-react";
+import { FileSpreadsheet, History, Receipt } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectMultiple } from "@/components/ui/select-multiple";
+import { HistorialDialog } from "./HistorialDialog";
+import { hi } from "date-fns/locale";
 
 interface ReportDialogProps<TData, TValue> {
     open: boolean;
@@ -35,6 +37,7 @@ interface ReportDialogProps<TData, TValue> {
     onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void; // callback para asignar factura con fecha
     rowIdField?: string; // campo que actúa como ID único para cada fila (ej: "id", "codigo")
     checkboxColumnWidth?: string; // ancho de la columna de selección (ej: "40px")
+    tipoReporte?: string; // nuevo campo para identificar el tipo de reporte en el historial
 }
 
 export function ReportDialog<TData, TValue>({
@@ -53,6 +56,7 @@ export function ReportDialog<TData, TValue>({
     onAssignInvoice,
     rowIdField = "id",
     checkboxColumnWidth,
+    tipoReporte,
 }: ReportDialogProps<TData, TValue>) {
     const { toast } = useToast();
     // Constante configurable para el ancho de la columna de checks
@@ -82,6 +86,10 @@ export function ReportDialog<TData, TValue>({
     // Estado para sumar columnas
     const [summaryKeys, setSummaryKeys] = React.useState<string[]>([]);
     const [filteredRows, setFilteredRows] = React.useState<any[]>(data);
+
+    const [historialOpen, setHistorialOpen] = React.useState(false);
+    const [historialId, setHistorialId] = React.useState<string>("");
+    const [historialLabel, setHistorialLabel] = React.useState<string>("");
 
     // Efecto para limpiar selecciones cuando se cierra el diálogo
     React.useEffect(() => {
@@ -439,6 +447,20 @@ export function ReportDialog<TData, TValue>({
         };
     };
 
+    const handleHistorial = () => {
+        var historialId = "";
+        if (tipoReporte === 'reporte1') {
+            historialId = "1";
+        } else if (tipoReporte === 'reporte2') {
+            historialId = "2";
+        } else if (tipoReporte === 'reporte3') {
+            historialId = "3";
+        }
+        setHistorialId(historialId);
+        setHistorialLabel(`Asignar Factura`);
+        setHistorialOpen(true);
+    };
+
     const message = (title: string, description: string, variant: "default" | "destructive" | "success" | "warning" | "error") => {
         toast({
             title: title,
@@ -493,6 +515,16 @@ export function ReportDialog<TData, TValue>({
                                 <FileSpreadsheet className="h-5 w-5" />
                                 Descargar Excel
                             </Button>
+
+                            {showAssignInvoice && (
+                                <Button
+                                    type="button"
+                                    onClick={handleHistorial}
+                                    variant="outline"
+                                >
+                                    <History className="h-5 w-5" />
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -608,6 +640,14 @@ export function ReportDialog<TData, TValue>({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <HistorialDialog
+                open={historialOpen}
+                onOpenChange={setHistorialOpen}
+                tipo="AsignarFactura"
+                id={historialId}
+                label={historialLabel}
+            />
         </>
     );
 }

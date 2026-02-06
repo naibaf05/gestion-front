@@ -532,6 +532,7 @@ export default function ReportesPage() {
                 showAssignInvoice={hasPermission("reportes.assign")}
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
+                tipoReporte={tipoReporte}
             />
 
             <ColumnConfigDialog

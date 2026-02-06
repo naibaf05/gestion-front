@@ -197,7 +197,8 @@ export interface Rate {
   fechaInicio: string
   fechaFin?: string
   activo: boolean
-  puestoPlanta: boolean
+  puestoPlanta: boolean,
+  densidad?: string
 }
 
 export interface ProgPath {
