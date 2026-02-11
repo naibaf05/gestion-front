@@ -14,11 +14,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Sede, Parametrizacion, VisitaRecol, Vehicle, User, ProgVisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { visitService } from "@/services/visitService"
 import { SelectSingle } from "../ui/select-single"
 import { Textarea } from "../ui/textarea"
 import { getTipoVisita } from "@/utils/utils"
+import { VehicleManualDialog } from "./VehicleManualDialog"
 
 interface VisitDialogProps {
   open: boolean
@@ -33,6 +34,7 @@ interface VisitDialogProps {
   comerciales: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
+  onVehiclesUpdate?: () => void
   readOnly?: boolean
 }
 
@@ -49,9 +51,11 @@ export function VisitDialog({
   comerciales,
   plantas,
   onSuccess,
+  onVehiclesUpdate,
   readOnly = false,
 }: VisitDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [openManualDialog, setOpenManualDialog] = useState(false)
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null)
   const [formData, setFormData] = useState({
     tipo: "",
@@ -300,7 +304,20 @@ export function VisitDialog({
               </div>
               {formData.tipo !== 'puesto' ?
                 <div className="space-y-2">
-                  <Label htmlFor="vehiculo">Vehículo</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="vehiculo">Vehículo</Label>
+                    {!readOnly && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOpenManualDialog(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Crear Manual
+                      </Button>
+                    )}
+                  </div>
                   <SelectSingle
                     id="vehiculo"
                     placeholder="Seleccione un vehículo"
@@ -373,6 +390,15 @@ export function VisitDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      <VehicleManualDialog
+        open={openManualDialog}
+        onOpenChange={setOpenManualDialog}
+        onSuccess={() => {
+          if (onVehiclesUpdate) {
+            onVehiclesUpdate()
+          }
+        }}
+      />
     </Dialog >
   )
 }

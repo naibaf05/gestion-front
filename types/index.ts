@@ -167,6 +167,7 @@ export interface Vehicle {
   activo: boolean;
   datosJson?: any
   datosJsonString?: string;
+  labelConductor?: string;
 }
 
 export interface AlertaVehiculo {

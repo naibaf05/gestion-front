@@ -14,9 +14,12 @@ export class VehicleService {
     }
 
     async getVehiclesActivos(): Promise<Vehicle[]> {
-        const response = await apiService.get<ApiResponse<Vehicle[]>>('/vehicles/activos')
-        return response.data
-      }
+        const response = await apiService.get<ApiResponse<Vehicle[]>>('/vehicles/activos');
+        response.data.forEach((element) => {
+            element.labelConductor = `${element.placa} - (${element.conductorNombre})`;
+        });
+        return response.data;
+    }
 
     async createVehicle(vehicle: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
         vehicle.datosJsonString = JSON.stringify(vehicle.datosJson);
@@ -33,6 +36,11 @@ export class VehicleService {
     async toggleVehicleStatus(id: string): Promise<Vehicle> {
         const response = await apiService.patch<ApiResponse<Vehicle>>(`/vehicles/${id}/toggle-status`);
         return response.data;
+    }
+
+    async guardarManual(data: { nombre: string; apellido: string; documento: string; placa: string }): Promise<ApiResponse<any>> {
+        const response = await apiService.post<ApiResponse<any>>("/vehicles/guardarManual", data);
+        return response;
     }
 }
 

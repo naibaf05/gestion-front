@@ -579,6 +579,7 @@ export default function ProgsAdminPage() {
         plantas={plantas}
         onSuccess={loadData}
         readOnly={dialogReadOnly}
+        onVehiclesUpdate={loadData}
       />
 
       {visitaRecol && (

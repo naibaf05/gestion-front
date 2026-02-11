@@ -96,6 +96,7 @@ export default function ReportesPage() {
                     { key: "nombreComCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false },
 
                     // ======= SECCIÓN VISITA =======
+                    { key: "tipo", label: "Tipo Recolección", category: "visita", enabled: true },
                     { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
                     { key: "cantidad", label: "Cantidad", category: "visita", enabled: true },
@@ -168,6 +169,7 @@ export default function ReportesPage() {
                     { key: "clienteDireccion", label: "Dirección Cliente", width: "350px" },
 
                     // VISITA (8 columnas principales)
+                    { key: "tipo", label: "Tipo Recolección", width: "180px" },
                     { key: "fechaVisita", label: "Fecha Visita", width: "120px" },
                     { key: "tipoResiduo", label: "Tipo Residuo", width: "180px" },
                     { key: "cantidadKg", label: "Cantidad KG", width: "120px" },

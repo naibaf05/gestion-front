@@ -371,6 +371,7 @@ export default function SalidasPage() {
         plantas={plantas}
         onSuccess={loadData}
         readOnly={dialogReadOnly}
+        onVehiclesUpdate={loadData}
       />
 
       {base64 && (

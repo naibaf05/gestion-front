@@ -15,10 +15,11 @@ import { Label } from "@/components/ui/label"
 import { salidaService } from "@/services/salidaService"
 import type { Salida, Parametrizacion, Vehicle, Sede } from "@/types"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { InputDecimal } from "@/components/ui/input-decimal"
 import { SelectSingle } from "../ui/select-single"
 import { InputCheck } from "../ui/input-check"
+import { VehicleManualDialog } from "./VehicleManualDialog"
 
 interface SalidaDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ interface SalidaDialogProps {
   productos: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
+  onVehiclesUpdate?: () => void
   readOnly?: boolean
 }
 
@@ -41,9 +43,11 @@ export function SalidaDialog({
   productos,
   plantas,
   onSuccess,
+  onVehiclesUpdate,
   readOnly = false,
 }: SalidaDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [openManualDialog, setOpenManualDialog] = useState(false)
   const [formData, setFormData] = useState({
     plantaId: "",
     plantaDestinoId: "",
@@ -204,7 +208,20 @@ export function SalidaDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehiculo" required>Vehículo</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="vehiculo" required>Vehículo</Label>
+                {!readOnly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOpenManualDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Crear Manual
+                  </Button>
+                )}
+              </div>
               <SelectSingle
                 id="vehiculo"
                 placeholder="Selecciona un vehículo"
@@ -212,7 +229,7 @@ export function SalidaDialog({
                 value={formData.vehiculoId}
                 onChange={(value) => setFormData({ ...formData, vehiculoId: value })}
                 valueKey="id"
-                labelKey="placa"
+                labelKey="labelConductor"
                 disabled={readOnly}
               />
             </div>
@@ -271,6 +288,15 @@ export function SalidaDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      <VehicleManualDialog
+        open={openManualDialog}
+        onOpenChange={setOpenManualDialog}
+        onSuccess={() => {
+          if (onVehiclesUpdate) {
+            onVehiclesUpdate()
+          }
+        }}
+      />
     </Dialog>
   )
 }
