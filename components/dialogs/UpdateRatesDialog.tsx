@@ -14,11 +14,13 @@ import { rateService } from "@/services/rateService"
 interface UpdateRatesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  tipo?: "recoleccion" | "salida"
 }
 
 export function UpdateRatesDialog({
   open,
-  onOpenChange
+  onOpenChange,
+  tipo = "recoleccion"
 }: UpdateRatesDialogProps) {
   const { toast } = useToast()
 
@@ -75,7 +77,9 @@ export function UpdateRatesDialog({
   const loadSedes = async (inicio: string, fin: string) => {
     try {
       setLoadingSedes(true)
-      const sedesData = await clientService.getSedesUpdateTarifas(inicio, fin)
+      const sedesData = tipo === "salida" 
+        ? await clientService.getSedesUpdateTarifasSalida(inicio, fin)
+        : await clientService.getSedesUpdateTarifas(inicio, fin)
       setSedesOptions(sedesData)
     } catch (error) {
       toast({
@@ -134,7 +138,11 @@ export function UpdateRatesDialog({
     }
     try {
       setSaving(true)
-      await rateService.updateTarifas(startString, endString, selectedIds)
+      if (tipo === "salida") {
+        await rateService.updateTarifasSalida(startString, endString, selectedIds)
+      } else {
+        await rateService.updateTarifas(startString, endString, selectedIds)
+      }
       toast({
         title: "Actualización realizada",
         description: "Las tarifas se han actualizado correctamente",

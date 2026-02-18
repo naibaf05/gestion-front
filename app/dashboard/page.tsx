@@ -41,6 +41,7 @@ export default function DashboardPage() {
   }
   const [selectedPeriod, setSelectedPeriod] = useState<string>(getDefaultPeriod())
   const [selectedSource, setSelectedSource] = useState<string>("plantas")
+  const [selectedSourceClient, setSelectedSourceClient] = useState<string>("sedes")
 
   const loadRecentActivities = async () => {
     try {
@@ -146,7 +147,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadChartData(true)
-  }, [selectedSource])
+  }, [selectedSource, selectedSourceClient])
 
   // Función para cargar datos del gráfico
   const loadChartData = async (force: boolean = false) => {
@@ -156,7 +157,9 @@ export default function DashboardPage() {
       const [anioStr, semestreStr] = selectedPeriod.split("-")
       const anio = parseInt(anioStr, 10)
       const semestre = parseInt(semestreStr, 10)
-      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric, anio, semestre, force, selectedSource)
+      const source = isClient ? selectedSourceClient : selectedSource
+      const clienteId = isClient ? user?.id : undefined
+      const response = await reportesService.getGroupedChartDataByMetric(selectedMetric, anio, semestre, force, source, clienteId)
       setChartData(response.data)
       setSedesData(response.sedes)
     } catch (err) {
@@ -273,12 +276,22 @@ export default function DashboardPage() {
       )}
 
       {isClient && (
-        <div className="flex items-center justify-center flex-1">
-          <img
-            src={config?.logo || "/placeholder.svg"}
-            alt={config?.companyName || "Logo"}
-            className="h-56 w-auto opacity-40 select-none"
-            draggable={false}
+        <div className="w-full">
+          <DashboardBarChart
+            data={chartData}
+            sedes={sedesData}
+            config={chartConfig}
+            loading={chartLoading}
+            error={chartError}
+            onRefresh={handleChartRetry}
+            metricOptions={metricOptions}
+            selectedMetric={selectedMetric}
+            onMetricChange={setSelectedMetric}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            onSourceChange={setSelectedSourceClient}
+            height={400}
+            hideSourceSelector={true}
           />
         </div>
       )}

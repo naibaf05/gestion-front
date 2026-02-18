@@ -14,12 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/data-table";
 import { FileSpreadsheet, History, Receipt } from "lucide-react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectMultiple } from "@/components/ui/select-multiple";
 import { HistorialDialog } from "./HistorialDialog";
-import { hi } from "date-fns/locale";
 
 interface ReportDialogProps<TData, TValue> {
     open: boolean;
@@ -268,7 +267,8 @@ export function ReportDialog<TData, TValue>({
     }, [dataForTable]);
 
     // Manejar exportación a Excel
-    const handleExportExcel = () => {
+    // Manejar exportación a Excel
+    const handleExportExcel = async () => {
         const keys = exportColumns && exportColumns.length > 0
             ? exportColumns
             : columns.filter((col: any) => col.id !== "actions").map((col: any) => col.accessorKey || col.id);
@@ -277,64 +277,196 @@ export function ReportDialog<TData, TValue>({
             ? exportHeaders
             : keys;
 
-        // Columns to treat as dates (customize as needed)
-        const DATE_KEYS = ["fecha", "clienteFechaRenovacion", "fechaCierreFacCliente", "fechaVisita"];
+        // Columns to treat as dates
+        const DATE_KEYS = ["fecha", "clienteFechaRenovacion", "fechaCierreFacCliente", "fechaVisita", "fechaInicio", "fechaFin", "fecFactura"];
 
         // Helper: parse DD/MM/YYYY or YYYY-MM-DD to JS Date
         function parseDate(val: string): Date | null {
             if (!val || typeof val !== "string") return null;
-            // Try DD/MM/YYYY
             const m = val.match(/^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/);
             if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}`);
-            // Try YYYY-MM-DD
             const m2 = val.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/);
             if (m2) return new Date(`${m2[1]}-${m2[2]}-${m2[3]}`);
             return null;
         }
 
-        // Build export data and track date cells
-        const exportData = (showOnlyWithoutFactura ? dataForTable : data).map((row: any) => {
-            const obj: any = {};
-            keys.forEach((key: string, idx: number) => {
+        // Create workbook and worksheet
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Datos');
+
+        // Column widths
+        var colWidths: any[] = [];
+        keys.forEach((key: string, idx: number) => {
+            const keyLower = key.toLowerCase();
+            const headerText = (headers[idx] || key).toLowerCase();
+            const combinedText = `${keyLower} ${headerText}`;
+
+            if (combinedText.includes('correo') || combinedText.includes('mail') || combinedText.includes('email')) {
+                colWidths.push({ width: 30 });
+            } else if (combinedText.includes('direccion') || combinedText.includes('dirección')) {
+                colWidths.push({ width: 35 });
+            } else if (combinedText.includes('planta')) {
+                colWidths.push({ width: 40 });
+            } else if (combinedText.includes('nombre') || combinedText.includes('cliente') || combinedText.includes('sede') || combinedText.includes('salida') || combinedText.includes('destino')) {
+                colWidths.push({ width: 25 });
+            } else if (combinedText.includes('fecha') || combinedText.includes('fec') || DATE_KEYS.includes(key)) {
+                colWidths.push({ width: 12 });
+            } else if (combinedText.includes('nit')) {
+                colWidths.push({ width: 15 });
+            } else if (combinedText.includes('telefono') || combinedText.includes('teléfono')) {
+                colWidths.push({ width: 15 });
+            } else if (combinedText.includes('valor') || combinedText.includes('tarifa') || combinedText.includes('peso')) {
+                colWidths.push({ width: 14 });
+            } else if (combinedText.includes('cantidad') || combinedText.includes('kg') || combinedText.includes('m3')) {
+                colWidths.push({ width: 12 });
+            } else if (combinedText.includes('factura') || combinedText.includes('remision') || combinedText.includes('remisión')) {
+                colWidths.push({ width: 16 });
+            } else if (combinedText.includes('tipo') || combinedText.includes('unidad') || combinedText.includes('residuo') || combinedText.includes('producto') || combinedText.includes('recolector')) {
+                colWidths.push({ width: 20 });
+            } else if (combinedText.includes('barrio') || combinedText.includes('ciudad') || combinedText.includes('contacto')) {
+                colWidths.push({ width: 18 });
+            } else if (combinedText.includes('certificado') || combinedText.includes('cert')) {
+                colWidths.push({ width: 16 });
+            } else {
+                colWidths.push({ width: 15 });
+            }
+        });
+        worksheet.columns = colWidths;
+
+        // Load and add logo
+        try {
+            const logoResponse = await fetch('/logo.png');
+            const logoBlob = await logoResponse.blob();
+            const logoArrayBuffer = await logoBlob.arrayBuffer();
+
+            const imageId = workbook.addImage({
+                buffer: logoArrayBuffer,
+                extension: 'png',
+            });
+
+            // Position with margins using editAs absolute
+            worksheet.addImage(imageId, {
+                tl: { col: 1, row: 0.8 },
+                ext: { width: 90, height: 40 },
+                editAs: 'oneCell'
+            });
+        } catch (error) {
+            console.error('Error loading logo:', error);
+        }
+
+        const logoCell = worksheet.getCell('A1');
+        logoCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'DEE6E6' }
+        };
+
+        // Add and style title (B1 merged to last column)
+        worksheet.mergeCells(1, 2, 1, keys.length);
+        const titleCell = worksheet.getCell('B1');
+        titleCell.value = title;
+        titleCell.font = { name: 'Calibri', size: 18, bold: true, color: { argb: '000000' } };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'DEE6E6' }
+        };
+        worksheet.getRow(1).height = 50;
+
+        // Empty rows for spacing
+        worksheet.getRow(2).height = 5;
+        worksheet.getRow(3).height = 5;
+
+        // Add headers (row 4)
+        const headerRow = worksheet.getRow(4);
+        headerRow.height = 30;
+
+        // Style logo column header
+        const logoHeaderCell = headerRow.getCell(1);
+        logoHeaderCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'DEE6E6' }
+        };
+        logoHeaderCell.border = {
+            top: { style: 'medium', color: { argb: 'FF1F4E78' } },
+            left: { style: 'medium', color: { argb: 'FF1F4E78' } },
+            bottom: { style: 'medium', color: { argb: 'FF1F4E78' } },
+            right: { style: 'thin', color: { argb: '000000' } }
+        };
+
+        // Add data headers
+        headers.forEach((header, idx) => {
+            const cell = headerRow.getCell(idx + 1);
+            cell.value = header;
+            cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: '000000' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'DEE6E6' }
+            };
+            cell.border = {
+                top: { style: 'medium', color: { argb: 'FF1F4E78' } },
+                left: { style: 'thin', color: { argb: '000000' } },
+                bottom: { style: 'medium', color: { argb: 'FF1F4E78' } },
+                right: { style: 'thin', color: { argb: '000000' } }
+            };
+        });
+
+        // Add data rows
+        const exportData = showOnlyWithoutFactura || showOnlyWithoutFecFactura ? dataForTable : data;
+        exportData.forEach((row: any, rowIdx: number) => {
+            const excelRow = worksheet.getRow(rowIdx + 5);
+
+            keys.forEach((key: string, colIdx: number) => {
+                const cell = excelRow.getCell(colIdx + 1);
                 let value = key.split(".").reduce((acc: any, k: string) => acc?.[k], row);
-                // If key is a date column, parse and convert to Excel date
+
+                // Handle dates
                 if (DATE_KEYS.includes(key) && typeof value === "string") {
                     const d = parseDate(value);
                     if (d) {
-                        // Excel date: days since 1899-12-30
-                        value = (d.getTime() - new Date("1899-12-30").getTime()) / (1000 * 60 * 60 * 24);
-                        obj[headers[idx]] = value;
+                        cell.value = d;
+                        cell.numFmt = 'dd/mm/yyyy';
                     } else {
-                        obj[headers[idx]] = value;
+                        cell.value = value;
                     }
                 } else {
-                    obj[headers[idx]] = value;
+                    cell.value = value;
+                }
+
+                // Format currency
+                if (CURRENCY_KEYS.has(key)) {
+                    cell.numFmt = '"$"#,##0.00';
+                    cell.alignment = { horizontal: 'right', vertical: 'middle' };
+                } else {
+                    cell.alignment = { horizontal: 'left', vertical: 'middle' };
+                }
+
+                cell.font = { name: 'Calibri', size: 10 };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+                    right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+                };
+
+                // Alternate row colors
+                if (rowIdx % 2 === 1) {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFF8F9FA' }
+                    };
                 }
             });
-            return obj;
         });
 
-        const ws = XLSX.utils.json_to_sheet(exportData);
-
-        // Set cell type to date for date columns
-        keys.forEach((key, idx) => {
-            if (DATE_KEYS.includes(key)) {
-                const colLetter = XLSX.utils.encode_col(idx);
-                for (let rowIdx = 1; rowIdx <= exportData.length; rowIdx++) {
-                    const cellRef = `${colLetter}${rowIdx + 1}`; // +1 for header
-                    const cell = ws[cellRef];
-                    if (cell && typeof cell.v === "number") {
-                        cell.t = "n";
-                        cell.z = "dd/mm/yyyy";
-                    }
-                }
-            }
-        });
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Datos");
-        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-        saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), `${title.toLocaleLowerCase().replace(/\s+/g, "_")}.xlsx`);
+        // Generate and download file
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer], { type: "application/octet-stream" }), `${title.toLocaleLowerCase().replace(/\s+/g, "_")}.xlsx`);
     };
 
     // Manejar asignación de factura

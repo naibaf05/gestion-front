@@ -133,6 +133,15 @@ export function ProgDialog({
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="fechaInicio" required>Fecha Inicio</Label>
+                <Input
+                  id="fechaInicio"
+                  type="date"
+                  value={formData.fecha}
+                  onChange={e => setFormData({ ...formData, fecha: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="fechaFin" required>Fecha Fin</Label>
                 <Input
                   id="fechaFin"

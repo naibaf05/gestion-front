@@ -28,6 +28,7 @@ import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
+import { Input } from "@/components/ui/input"
 
 export default function ProgsAdminPage() {
   const { user, logout } = useAuth();
@@ -129,8 +130,11 @@ export default function ProgsAdminPage() {
     }
   }, [dateString, fechaFinString])
 
-  const handleDateChange = (newDate: Date | undefined) => {
-    if (newDate && !isNaN(newDate.getTime())) {
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value) {
+      const newDate = new Date(value + 'T00:00:00');
+
       if (fechaFin && newDate > fechaFin) {
         toast({
           title: "Fecha inválida",
@@ -141,18 +145,15 @@ export default function ProgsAdminPage() {
       }
 
       setSelectedDate(newDate);
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Bogota',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-      setDateString(formatter.format(newDate));
+      setDateString(value);
     }
   };
 
-  const handleFechaFinChange = (newDate: Date | undefined) => {
-    if (newDate && !isNaN(newDate.getTime())) {
+  const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value) {
+      const newDate = new Date(value + 'T00:00:00');
+
       if (selectedDate && newDate < selectedDate) {
         toast({
           title: "Fecha inválida",
@@ -163,13 +164,7 @@ export default function ProgsAdminPage() {
       }
 
       setFechaFin(newDate);
-      const formatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Bogota',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-      setFechaFinString(formatter.format(newDate));
+      setFechaFinString(value);
     }
   };
 
@@ -501,20 +496,18 @@ export default function ProgsAdminPage() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Inicio:</label>
-            <DatePicker
-              date={selectedDate}
-              onDateChange={handleDateChange}
-              placeholder="dd/mm/aaaa"
-              className="w-40"
+            <Input
+              type="date"
+              value={dateString}
+              onChange={handleDateChange}
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Fin:</label>
-            <DatePicker
-              date={fechaFin}
-              onDateChange={handleFechaFinChange}
-              placeholder="dd/mm/aaaa"
-              className="w-40"
+            <Input
+              type="date"
+              value={fechaFinString}
+              onChange={handleFechaFinChange}
             />
           </div>
         </div>

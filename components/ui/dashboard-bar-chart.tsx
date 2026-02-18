@@ -41,6 +41,7 @@ export interface DashboardBarChartProps {
   onPeriodChange?: (period: string) => void
   onSourceChange?: (source: string) => void
   periodStartYear?: number
+  hideSourceSelector?: boolean
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -85,7 +86,8 @@ export function DashboardBarChart({
   selectedPeriod,
   onPeriodChange,
   onSourceChange,
-  periodStartYear = 2025
+  periodStartYear = 2025,
+  hideSourceSelector = false
 }: DashboardBarChartProps) {
 
   // Mostrar solo las primeras 5 sedes seleccionadas por defecto (solo inicializar una vez)
@@ -159,16 +161,18 @@ export function DashboardBarChart({
             </div>
             {config.title}
           </CardTitle>
-          <SelectSingle
-            id="source-select"
-            className="w-[140px] h-9"
-            options={sourceOptions}
-            value={selectedSource}
-            onChange={handleSourceChange}
-            valueKey="value"
-            labelKey="label"
-            placeholder="Fuente"
-          />
+          {!hideSourceSelector && (
+            <SelectSingle
+              id="source-select"
+              className="w-[140px] h-9"
+              options={sourceOptions}
+              value={selectedSource}
+              onChange={handleSourceChange}
+              valueKey="value"
+              labelKey="label"
+              placeholder="Fuente"
+            />
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Selector múltiple de sedes con scroll horizontal */}

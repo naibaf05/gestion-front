@@ -97,6 +97,7 @@ export default function ReportesPage() {
 
                     // ======= SECCIÓN VISITA =======
                     { key: "tipo", label: "Tipo Recolección", category: "visita", enabled: true },
+                    { key: "plantaEntrega", label: "Planta Entrega", category: "visita", enabled: true },
                     { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
                     { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
                     { key: "cantidad", label: "Cantidad", category: "visita", enabled: true },
@@ -137,6 +138,19 @@ export default function ReportesPage() {
                 ];
                 return cols;
             }
+            case "reporte4": {
+                const cols = [
+                    { key: "cliente", label: "Cliente", category: "cliente", enabled: true },
+                    { key: "sede", label: "Sede", category: "sede", enabled: true },
+                    { key: "residuo", label: "Residuo", category: "residuo", enabled: true },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "tarifa", enabled: true }] : []),
+                    { key: "fechaInicio", label: "Fecha Inicio", category: "fecha", enabled: true },
+                    { key: "fechaFin", label: "Fecha Fin", category: "fecha", enabled: true },
+                    { key: "correoCliente", label: "Correo Cliente", category: "contacto", enabled: true },
+                    { key: "correoSede", label: "Correo Sede", category: "contacto", enabled: true },
+                ];
+                return cols;
+            }
             default:
                 return [];
         }
@@ -170,6 +184,7 @@ export default function ReportesPage() {
 
                     // VISITA (8 columnas principales)
                     { key: "tipo", label: "Tipo Recolección", width: "180px" },
+                    { key: "plantaEntrega", label: "Planta Entrega", width: "350px" },
                     { key: "fechaVisita", label: "Fecha Visita", width: "120px" },
                     { key: "tipoResiduo", label: "Tipo Residuo", width: "180px" },
                     { key: "cantidadKg", label: "Cantidad KG", width: "120px" },
@@ -196,6 +211,19 @@ export default function ReportesPage() {
                     { key: "fecFactura", label: "Fecha Factura", width: "120px" },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
+                ];
+                return defaultCols;
+            }
+            case "reporte4": {
+                const defaultCols = [
+                    { key: "cliente", label: "Cliente", width: "250px" },
+                    { key: "sede", label: "Sede", width: "250px" },
+                    { key: "residuo", label: "Residuo", width: "180px" },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
+                    { key: "fechaInicio", label: "Fecha Inicio", width: "120px" },
+                    { key: "fechaFin", label: "Fecha Fin", width: "120px" },
+                    { key: "correoCliente", label: "Correo Cliente", width: "250px" },
+                    { key: "correoSede", label: "Correo Sede", width: "250px" },
                 ];
                 return defaultCols;
             }
@@ -248,6 +276,7 @@ export default function ReportesPage() {
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
         { value: "reporte2", label: "Reporte Recolecciones y/o entregas en plantas (Llantas)" },
         { value: "reporte3", label: "Reporte Salidas" },
+        { value: "reporte4", label: "Reporte Información Clientes" },
     ];
 
     const [exportColumns, setExportColumns] = useState<string[]>([]);
@@ -299,22 +328,25 @@ export default function ReportesPage() {
             return;
         }
 
-        if (!fechaInicio || !fechaFin) {
-            toast({
-                title: "Error",
-                description: "Debe seleccionar las fechas de inicio y fin",
-                variant: "error",
-            });
-            return;
-        }
+        // Validar fechas solo para reportes que no sean reporte4
+        if (tipoReporte !== "reporte4") {
+            if (!fechaInicio || !fechaFin) {
+                toast({
+                    title: "Error",
+                    description: "Debe seleccionar las fechas de inicio y fin",
+                    variant: "error",
+                });
+                return;
+            }
 
-        if (new Date(fechaInicio) > new Date(fechaFin)) {
-            toast({
-                title: "Error",
-                description: "La fecha de inicio no puede ser mayor que la fecha de fin",
-                variant: "error",
-            });
-            return;
+            if (new Date(fechaInicio) > new Date(fechaFin)) {
+                toast({
+                    title: "Error",
+                    description: "La fecha de inicio no puede ser mayor que la fecha de fin",
+                    variant: "error",
+                });
+                return;
+            }
         }
 
         setLoading(true);
@@ -462,27 +494,31 @@ export default function ReportesPage() {
                             </Select>
                         </div>
 
-                        <div>
-                            <Label htmlFor="fechaInicio">Fecha Inicio</Label>
-                            <Input
-                                id="fechaInicio"
-                                type="date"
-                                value={fechaInicio}
-                                onChange={(e) => setFechaInicio(e.target.value)}
-                                required
-                            />
-                        </div>
+                        {tipoReporte !== "reporte4" && (
+                            <>
+                                <div>
+                                    <Label htmlFor="fechaInicio">Fecha Inicio</Label>
+                                    <Input
+                                        id="fechaInicio"
+                                        type="date"
+                                        value={fechaInicio}
+                                        onChange={(e) => setFechaInicio(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                        <div>
-                            <Label htmlFor="fechaFin">Fecha Fin</Label>
-                            <Input
-                                id="fechaFin"
-                                type="date"
-                                value={fechaFin}
-                                onChange={(e) => setFechaFin(e.target.value)}
-                                required
-                            />
-                        </div>
+                                <div>
+                                    <Label htmlFor="fechaFin">Fecha Fin</Label>
+                                    <Input
+                                        id="fechaFin"
+                                        type="date"
+                                        value={fechaFin}
+                                        onChange={(e) => setFechaFin(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="flex justify-between items-center pt-4">
@@ -530,8 +566,8 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
-                showCheckboxes={hasPermission("reportes.assign")}
-                showAssignInvoice={hasPermission("reportes.assign")}
+                showCheckboxes={hasPermission("reportes.assign") && tipoReporte !== "reporte4"}
+                showAssignInvoice={hasPermission("reportes.assign") && tipoReporte !== "reporte4"}
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
                 tipoReporte={tipoReporte}

@@ -52,12 +52,15 @@ export class ReportesService {
     return response.data;
   }
 
-  async getSedes(anio: number, semestre: number, force: boolean = false): Promise<SedeChart[]> {
-    const key = `${anio}-${semestre}`
+  async getSedes(anio: number, semestre: number, force: boolean = false, clienteId?: string): Promise<SedeChart[]> {
+    const key = clienteId ? `${anio}-${semestre}-${clienteId}` : `${anio}-${semestre}`
     if (!force && this.sedesCache[key]) {
       return this.sedesCache[key]
     }
-    const response = await apiService.get<ApiResponse<SedeChart[]>>(`/reportes/sedes-chart?anio=${anio}&semestre=${semestre}`)
+    const url = clienteId 
+      ? `/reportes/sedes-chart-by-cliente?anio=${anio}&semestre=${semestre}&clienteId=${clienteId}`
+      : `/reportes/sedes-chart?anio=${anio}&semestre=${semestre}`
+    const response = await apiService.get<ApiResponse<SedeChart[]>>(url)
     this.sedesCache[key] = response.data;
     return response.data;
   }
@@ -72,14 +75,14 @@ export class ReportesService {
     return response.data;
   }
 
-  async getGroupedChartDataByMetric(metric: string, anio: number, semestre: number, force: boolean = false, source: string): Promise<GroupedChartResponse> {
+  async getGroupedChartDataByMetric(metric: string, anio: number, semestre: number, force: boolean = false, source: string, clienteId?: string): Promise<GroupedChartResponse> {
     try {
       let sedesRaw;
       console.log("Source selected:", source);
       if (source === "plantas") {
         sedesRaw = await this.getPlantas(anio, semestre, force);
       } else {
-        sedesRaw = await this.getSedes(anio, semestre, force);
+        sedesRaw = await this.getSedes(anio, semestre, force, clienteId);
       }
 
       // Filtrar por sedes con valores > 0 según la métrica seleccionada

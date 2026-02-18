@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, FileText, Eye } from "lucide-react";
+import { Plus, Edit, PowerSquare, FileText, Eye, CircleDollarSign } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import { salidaService } from "@/services/salidaService";
@@ -20,6 +20,7 @@ import { certificatesService } from "@/services/certificatesService";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { vehicleService } from "@/services/vehicleService";
 import { DatePicker } from "@/components/ui/date-picker";
+import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog";
 
 export default function SalidasPage() {
   const { user } = useAuth();
@@ -68,6 +69,7 @@ export default function SalidasPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSalida, setSelectedSalida] = useState<Salida | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
+  const [ratesDialogOpen, setRatesDialogOpen] = useState(false);
   const { toast } = useToast();
 
   if (user && user.permisos && typeof user.permisos === "string") {
@@ -218,6 +220,8 @@ export default function SalidasPage() {
     }
   };
 
+  const openRatesDialog = () => setRatesDialogOpen(true);
+
   const formatPeso = (peso: number) => {
     return `${peso.toFixed(2)} kg`;
   };
@@ -342,16 +346,22 @@ export default function SalidasPage() {
 
       <Card>
         <CardContent>
-          {hasPermission("salida.edit") && (
-            <div className="flex justify-between items-center">
-              <div></div>
-              <div className="flex items-center gap-2">
+          <div className="flex justify-between items-center">
+            <div></div>
+            <div className="flex items-center gap-2">
+              {hasPermission("rates.edit") && (
+                <Button onClick={openRatesDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <CircleDollarSign className="mr-2 h-4 w-4" />
+                  Actualizar Tarifas
+                </Button>
+              )}
+              {hasPermission("salida.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
                   <Plus className="mr-2 h-4 w-4" />Nueva Salida
                 </Button>
-              </div>
+              )}
             </div>
-          )}
+          </div>
           <DataTable
             columns={columns}
             data={salidas}
@@ -381,6 +391,12 @@ export default function SalidasPage() {
           base64={base64}
         />
       )}
+
+      <UpdateRatesDialog
+        open={ratesDialogOpen}
+        onOpenChange={setRatesDialogOpen}
+        tipo="salida"
+      />
     </div>
   );
 }
