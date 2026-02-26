@@ -71,83 +71,109 @@ export default function ReportesPage() {
             case "reporte2": {
                 const cols = [
                     // ======= SECCIÓN SEDE =======
-                    { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true },
-                    { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: true },
-                    { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true },
-                    { key: "sedeMail", label: "Email Sede", category: "sede", enabled: true },
-                    { key: "sedeTelefono", label: "Teléfono Sede", category: "sede", enabled: true },
-                    { key: "sedeAtencion", label: "Atención Sede", category: "sede", enabled: true },
-                    { key: "sedeLat", label: "Latitud Sede", category: "sede", enabled: false },
-                    { key: "sedeLon", label: "Longitud Sede", category: "sede", enabled: false },
-                    { key: "ciudadSede", label: "Ciudad Sede", category: "sede", enabled: true },
-                    { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true },
+                    { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true, width: "350px" },
+                    { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true, width: "250px" },
+                    { key: "ciudadSede", label: "Ciudad Sede", category: "sede", enabled: true, width: "150px" },
+                    { key: "sedeDireccion", label: "Dirección Sede", category: "sede", enabled: true, width: "350px" },
+                    { key: "sedeBarrio", label: "Barrio Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "sedeMail", label: "Email Sede", category: "sede", enabled: false, width: "250px" },
+                    { key: "sedeTelefono", label: "Teléfono Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "sedeAtencion", label: "Atención Sede", category: "sede", enabled: false, width: "200px" },
+                    { key: "sedeLat", label: "Latitud Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "sedeLon", label: "Longitud Sede", category: "sede", enabled: false, width: "150px" },
 
                     // ======= SECCIÓN CLIENTE =======
-                    { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true },
-                    { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: true },
-                    { key: "clienteFechaRenovacion", label: "Fecha Renovación Cliente", category: "cliente", enabled: false },
-                    { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true },
-                    { key: "clienteTelefono", label: "Teléfono Cliente", category: "cliente", enabled: true },
-                    { key: "clienteDireccion", label: "Dirección Cliente", category: "cliente", enabled: true },
-                    { key: "clienteContacto", label: "Contacto Cliente", category: "cliente", enabled: true },
-                    { key: "correoCliente", label: "Correo Cliente", category: "cliente", enabled: true },
-                    { key: "correoFacCliente", label: "Correo Facturación Cliente", category: "cliente", enabled: false },
-                    { key: "fechaCierreFacCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false },
-                    { key: "nombreComCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false },
+                    { key: "clienteNit", label: "NIT Cliente", category: "cliente", enabled: true, width: "200px" },
+                    { key: "clienteNombre", label: "Nombre Cliente", category: "cliente", enabled: true, width: "250px" },
+                    { key: "clienteDireccion", label: "Dirección Cliente", category: "cliente", enabled: true, width: "350px" },
+                    { key: "clienteBarrio", label: "Barrio Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "clienteTelefono", label: "Teléfono Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "clienteContacto", label: "Contacto Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "correoCliente", label: "Correo Cliente", category: "cliente", enabled: false, width: "250px" },
+                    { key: "correoFacCliente", label: "Correo Facturación Cliente", category: "cliente", enabled: false, width: "250px" },
+                    { key: "nombreComCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "clienteFechaRenovacion", label: "Fecha Renovación Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "fechaCierreFacCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false, width: "150px" },
 
                     // ======= SECCIÓN VISITA =======
-                    { key: "tipo", label: "Tipo Recolección", category: "visita", enabled: true },
-                    { key: "plantaEntrega", label: "Planta Entrega", category: "visita", enabled: true },
-                    { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true },
-                    { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true },
-                    { key: "cantidad", label: "Cantidad", category: "visita", enabled: true },
-                    { key: "recolNombre", label: "Nombre Recolector", category: "visita", enabled: true },
-                    { key: "unidad", label: "Unidad", category: "visita", enabled: true },
-                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
-                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true },
-                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
-                    { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true },
-                    { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true },
-                    { key: "numCert", label: "Certificado", category: "visita", enabled: true },
-                    { key: "unidades", label: "Unidades", category: "visita", enabled: true },
-                    { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: true },
+                    { key: "tipo", label: "Tipo Recolección", category: "visita", enabled: true, width: "180px" },
+                    { key: "plantaEntrega", label: "Planta Entrega", category: "visita", enabled: true, width: "350px" },
+                    { key: "fechaVisita", label: "Fecha Visita", category: "visita", enabled: true, width: "120px" },
+                    { key: "tipoResiduo", label: "Tipo Residuo", category: "visita", enabled: true, width: "180px" },
+                    { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true, width: "120px" },
+                    { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true, width: "120px" },
+                    { key: "recolNombre", label: "Nombre Recolector", category: "visita", enabled: true, width: "200px" },
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
+                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
+                    { key: "cantidad", label: "Cantidad", category: "visita", enabled: false, width: "120px" },
+                    { key: "unidad", label: "Unidad", category: "visita", enabled: false, width: "100px" },
+                    { key: "numCert", label: "Certificado", category: "visita", enabled: false, width: "150px" },
+                    { key: "unidades", label: "Unidades", category: "visita", enabled: false, width: "100px" },
+                    { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: false, width: "150px" },
                 ];
                 return cols;
             }
             case "reporte3": {
                 const cols = [
-                    { key: "nombreSalida", label: "Nombre Salida", category: "salida", enabled: true },
-                    { key: "nitSalida", label: "Nit Salida", category: "salida", enabled: true },
-                    { key: "direccionSalida", label: "Dirección Salida", category: "salida", enabled: false },
-                    { key: "ciudadSalida", label: "Ciudad Salida", category: "salida", enabled: false },
-                    { key: "nitDestino", label: "Nit Destino", category: "destino", enabled: true },
-                    { key: "nombreDestino", label: "Nombre Destino", category: "destino", enabled: true },
-                    { key: "direccionDestino", label: "Direccion Destino", category: "destino", enabled: false },
-                    { key: "ciudadDestino", label: "Ciudad Destino", category: "destino", enabled: false },
-                    { key: "fecha", label: "Fecha", category: "visita", enabled: true },
-                    { key: "peso", label: "Peso (KG)", category: "visita", enabled: true },
-                    { key: "conductor", label: "Conductor", category: "visita", enabled: false },
-                    { key: "placa", label: "Placa", category: "visita", enabled: false },
-                    { key: "remision", label: "Remisión", category: "visita", enabled: true },
-                    { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true },
-                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true },
-                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true }] : []),
-                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true }] : []),
+                    { key: "fecha", label: "Fecha", category: "visita", enabled: true, width: "120px" },
+                    { key: "nitSalida", label: "Nit Salida", category: "salida", enabled: true, width: "180px" },
+                    { key: "nombreSalida", label: "Nombre Salida", category: "salida", enabled: true, width: "300px" },
+                    { key: "nitDestino", label: "Nit Destino", category: "destino", enabled: true, width: "180px" },
+                    { key: "nombreDestino", label: "Nombre Destino", category: "destino", enabled: true, width: "300px" },
+                    { key: "peso", label: "Peso (KG)", category: "visita", enabled: true, width: "120px" },
+                    { key: "remision", label: "Remisión", category: "visita", enabled: true, width: "150px" },
+                    { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true, width: "180px" },
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
+                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
+                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
+                    { key: "direccionSalida", label: "Dirección Salida", category: "salida", enabled: false, width: "300px" },
+                    { key: "ciudadSalida", label: "Ciudad Salida", category: "salida", enabled: false, width: "150px" },
+                    { key: "direccionDestino", label: "Direccion Destino", category: "destino", enabled: false, width: "300px" },
+                    { key: "ciudadDestino", label: "Ciudad Destino", category: "destino", enabled: false, width: "150px" },
+                    { key: "conductor", label: "Conductor", category: "visita", enabled: false, width: "200px" },
+                    { key: "placa", label: "Placa", category: "visita", enabled: false, width: "120px" },
                 ];
                 return cols;
             }
             case "reporte4": {
                 const cols = [
-                    { key: "cliente", label: "Cliente", category: "cliente", enabled: true },
-                    { key: "sede", label: "Sede", category: "sede", enabled: true },
-                    { key: "residuo", label: "Residuo", category: "residuo", enabled: true },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "tarifa", enabled: true }] : []),
-                    { key: "fechaInicio", label: "Fecha Inicio", category: "fecha", enabled: true },
-                    { key: "fechaFin", label: "Fecha Fin", category: "fecha", enabled: true },
-                    { key: "correoCliente", label: "Correo Cliente", category: "contacto", enabled: true },
-                    { key: "correoSede", label: "Correo Sede", category: "contacto", enabled: true },
+                    // ======= SECCIÓN CLIENTE =======
+                    { key: "nombreCliente", label: "Nombre Cliente", category: "cliente", enabled: true, width: "250px" },
+                    { key: "nitCliente", label: "NIT Cliente", category: "cliente", enabled: true, width: "150px" },
+                    { key: "nombreComercialCliente", label: "Nombre Comercial Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "direccionCliente", label: "Dirección Cliente", category: "cliente", enabled: false, width: "300px" },
+                    { key: "municipioCliente", label: "Municipio Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "correoCliente", label: "Correo Cliente", category: "cliente", enabled: false, width: "250px" },
+                    { key: "correoFacturacionCliente", label: "Correo Facturación Cliente", category: "cliente", enabled: false, width: "250px" },
+                    { key: "comercialCliente", label: "Comercial Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "tiposCliente", label: "Tipos Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "barrioCliente", label: "Barrio Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "telefonoCliente", label: "Teléfono Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "fechaCierreFacturacionCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false, width: "180px" },
+                    { key: "fechaRenovacionCliente", label: "Fecha Renovación Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "contenedoresComodatoCliente", label: "Contenedores Comodato Cliente", category: "cliente", enabled: false, width: "200px" },
+                    { key: "fechaVencimientoContratoComodatoCliente", label: "Fecha Venc. Comodato Cliente", category: "cliente", enabled: false, width: "180px" },
+
+                    // ======= SECCIÓN SEDE =======
+                    { key: "nombreSede", label: "Nombre Sede", category: "sede", enabled: true, width: "250px" },
+                    { key: "nitSede", label: "NIT Sede", category: "sede", enabled: true, width: "150px" },
+                    { key: "direccionSede", label: "Dirección Sede", category: "sede", enabled: false, width: "300px" },
+                    { key: "municipioSede", label: "Municipio Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "correoSede", label: "Correo Sede", category: "sede", enabled: false, width: "250px" },
+                    { key: "oficinaSede", label: "Planta Sede", category: "sede", enabled: false, width: "300px" },                    
+                    { key: "barrioSede", label: "Barrio Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "telefonoSede", label: "Teléfono Sede", category: "sede", enabled: false, width: "150px" },
+                    { key: "frecuenciaRecoleccionSede", label: "Frecuencia Recolección Sede", category: "sede", enabled: false, width: "180px" },
+                    { key: "periodoSede", label: "Periodo Sede", category: "sede", enabled: false, width: "120px" },
+
+                    // ======= SECCIÓN TARIFA/RESIDUO =======
+                    { key: "residuo", label: "Residuo", category: "tarifa", enabled: true, width: "180px" },
+                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "tarifa", enabled: true, width: "150px" }] : []),
+                    { key: "fechaInicio", label: "Fecha Inicio Tarifa", category: "tarifa", enabled: true, width: "150px" },
+                    { key: "fechaFin", label: "Fecha Fin Tarifa", category: "tarifa", enabled: true, width: "150px" },
                 ];
                 return cols;
             }
@@ -159,77 +185,20 @@ export default function ReportesPage() {
     // Función helper para obtener la configuración de columnas a usar
     const getEffectiveColumnConfig = (tipoReporte: TipoReporte) => {
         const canViewTarifa = hasPermission("rates.view");
+
         if (userColumnConfig) {
-            // Filtrar según permiso tarifa
+            // Filtrar según permiso tarifa y enabled
             return userColumnConfig.filter(col => col.enabled && (canViewTarifa || col.key !== "tarifa"));
         }
 
-        // Configuración por defecto filtrando tarifa si no hay permiso
-        switch (tipoReporte) {
-            case "reporte1":
-            case "reporte2": {
-                const defaultCols = [
-                    // === COLUMNAS POR DEFECTO ORGANIZADAS POR SECCIÓN ===
+        // Obtener todas las columnas disponibles y filtrar solo las habilitadas por defecto
+        const allColumns = getColumnConfig(tipoReporte);
+        const enabledColumns = allColumns.filter(col => {
+            // Filtrar por enabled y permisos de tarifa
+            return col.enabled && (canViewTarifa || col.key !== "tarifa");
+        });
 
-                    // SEDE (4 columnas principales)
-                    { key: "plantaSede", label: "Planta Sede", width: "350px" },
-                    { key: "sedeNombre", label: "Nombre Sede", width: "250px" },
-                    { key: "ciudadSede", label: "Ciudad Sede", width: "150px" },
-                    { key: "sedeDireccion", label: "Dirección Sede", width: "350px" },
-
-                    // CLIENTE (3 columnas principales)
-                    { key: "clienteNit", label: "NIT Cliente", width: "200px" },
-                    { key: "clienteNombre", label: "Nombre Cliente", width: "250px" },
-                    { key: "clienteDireccion", label: "Dirección Cliente", width: "350px" },
-
-                    // VISITA (8 columnas principales)
-                    { key: "tipo", label: "Tipo Recolección", width: "180px" },
-                    { key: "plantaEntrega", label: "Planta Entrega", width: "350px" },
-                    { key: "fechaVisita", label: "Fecha Visita", width: "120px" },
-                    { key: "tipoResiduo", label: "Tipo Residuo", width: "180px" },
-                    { key: "cantidadKg", label: "Cantidad KG", width: "120px" },
-                    { key: "cantidadM3", label: "Cantidad M3", width: "120px" },
-                    { key: "recolNombre", label: "Nombre Recolector", width: "200px" },
-                    { key: "numFactura", label: "Número Factura", width: "150px" },
-                    { key: "fecFactura", label: "Fecha Factura", width: "120px" },
-                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
-                ];
-                return defaultCols;
-            }
-            case "reporte3": {
-                const defaultCols = [
-                    { key: "fecha", label: "Fecha", width: "120px" },
-                    { key: "nitSalida", label: "Nit Salida", width: "180px" },
-                    { key: "nombreSalida", label: "Nombre Salida", width: "300px" },
-                    { key: "nitDestino", label: "Nit Destino", width: "180px" },
-                    { key: "nombreDestino", label: "Nombre Destino", width: "300px" },
-                    { key: "peso", label: "Peso (KG)", width: "120px" },
-                    { key: "remision", label: "Remisión", width: "150px" },
-                    { key: "tipoResiduo", label: "Producto", width: "180px" },
-                    { key: "numFactura", label: "Número Factura", width: "150px" },
-                    { key: "fecFactura", label: "Fecha Factura", width: "120px" },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
-                    ...(canViewTarifa ? [{ key: "valor", label: "Valor", width: "150px" }] : []),
-                ];
-                return defaultCols;
-            }
-            case "reporte4": {
-                const defaultCols = [
-                    { key: "cliente", label: "Cliente", width: "250px" },
-                    { key: "sede", label: "Sede", width: "250px" },
-                    { key: "residuo", label: "Residuo", width: "180px" },
-                    ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", width: "150px" }] : []),
-                    { key: "fechaInicio", label: "Fecha Inicio", width: "120px" },
-                    { key: "fechaFin", label: "Fecha Fin", width: "120px" },
-                    { key: "correoCliente", label: "Correo Cliente", width: "250px" },
-                    { key: "correoSede", label: "Correo Sede", width: "250px" },
-                ];
-                return defaultCols;
-            }
-            default:
-                return [];
-        }
+        return enabledColumns;
     };
 
     // Normalizar widths y añadir id estable
@@ -577,6 +546,7 @@ export default function ReportesPage() {
                 open={columnConfigOpen}
                 onOpenChange={setColumnConfigOpen}
                 columns={availableColumns}
+                defaultColumns={availableColumns}
                 onConfirm={handleColumnConfigConfirm}
             />
         </div>

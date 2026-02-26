@@ -24,34 +24,15 @@ interface ColumnConfigDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     columns: ColumnConfig[]
+    defaultColumns?: ColumnConfig[]
     onConfirm: (selectedColumns: ColumnConfig[]) => void
 }
-
-const defaultColumns: ColumnConfig[] = [
-    // Información de Cliente
-    { key: "fecha", label: "Fecha", category: "cliente", enabled: true },
-    { key: "nit", label: "NIT", category: "cliente", enabled: true },
-    { key: "ciudad", label: "Ciudad", category: "cliente", enabled: true },
-    { key: "numFactura", label: "Número de Factura", category: "cliente", enabled: true },
-    { key: "valor", label: "Valor Facturado", category: "cliente", enabled: true },
-    
-    // Información de Sede
-    { key: "planta", label: "Planta", category: "sede", enabled: true },
-    { key: "sede", label: "Sede", category: "sede", enabled: true },
-    { key: "direccion", label: "Dirección", category: "sede", enabled: true },
-    
-    // Información de Residuo
-    { key: "tipoResiduo", label: "Tipo Residuo", category: "residuo", enabled: true },
-    { key: "cantidadKg", label: "Cantidad KG", category: "residuo", enabled: true },
-    { key: "cantidadM3", label: "Cantidad M3", category: "residuo", enabled: true },
-    { key: "recolNombre", label: "Recolección", category: "residuo", enabled: true },
-    { key: "tarifa", label: "Tarifa", category: "residuo", enabled: true },
-]
 
 export function ColumnConfigDialog({
     open,
     onOpenChange,
-    columns = defaultColumns,
+    columns = [],
+    defaultColumns = [],
     onConfirm
 }: ColumnConfigDialogProps) {
     const [selectedColumns, setSelectedColumns] = useState<ColumnConfig[]>(columns)
@@ -126,7 +107,7 @@ export function ColumnConfigDialog({
     }
 
     const handleReset = () => {
-        setSelectedColumns(defaultColumns.map(col => ({ ...col, enabled: true })))
+        setSelectedColumns(defaultColumns)
     }
 
     const totalSelected = selectedColumns.filter(col => col.enabled).length
@@ -165,7 +146,7 @@ export function ColumnConfigDialog({
                     {/* Columnas por categoría */}
                     {Object.entries(groupedColumns).map(([category, cols]) => {
                         if (cols.length === 0) return null
-                        
+
                         return (
                             <div key={category} className="space-y-3">
                                 <div className="flex items-center space-x-2">
