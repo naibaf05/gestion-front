@@ -28,7 +28,7 @@ import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
-import { Input } from "@/components/ui/input"
+
 
 export default function ProgsAdminPage() {
   const { user, logout } = useAuth();
@@ -65,9 +65,7 @@ export default function ProgsAdminPage() {
     });
     return formatter.format(today);
   });
-  // Estados locales para los inputs (no disparan recarga mientras se escribe)
-  const [inputDateString, setInputDateString] = useState(dateString);
-  const [inputFechaFinString, setInputFechaFinString] = useState(fechaFinString);
+
   const [progs, setProgs] = useState<ProgVisitaRecol[]>([])
   const [sedes, setSedes] = useState<Sede[]>([])
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([])
@@ -133,50 +131,42 @@ export default function ProgsAdminPage() {
     }
   }, [dateString, fechaFinString])
 
-  const commitDate = (value: string) => {
-    if (value && value.length === 10) {
-      const newDate = new Date(value + 'T00:00:00');
-      if (fechaFin && newDate > fechaFin) {
-        toast({
-          title: "Fecha inválida",
-          description: "La fecha inicio no puede ser mayor que la fecha fin",
-          variant: "destructive",
-        });
-        setInputDateString(dateString);
-        return;
-      }
-      setSelectedDate(newDate);
-      setDateString(value);
+  const formatDateString = (date: Date) => {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(date);
+  };
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    if (!date) return;
+    if (fechaFin && date > fechaFin) {
+      toast({
+        title: "Fecha inválida",
+        description: "La fecha inicio no puede ser mayor que la fecha fin",
+        variant: "destructive",
+      });
+      return;
     }
+    setSelectedDate(date);
+    setDateString(formatDateString(date));
   };
 
-  const commitFechaFin = (value: string) => {
-    if (value && value.length === 10) {
-      const newDate = new Date(value + 'T00:00:00');
-      if (selectedDate && newDate < selectedDate) {
-        toast({
-          title: "Fecha inválida",
-          description: "La fecha fin no puede ser menor que la fecha inicio",
-          variant: "destructive",
-        });
-        setInputFechaFinString(fechaFinString);
-        return;
-      }
-      setFechaFin(newDate);
-      setFechaFinString(value);
+  const handleEndDateChange = (date: Date | undefined) => {
+    if (!date) return;
+    if (selectedDate && date < selectedDate) {
+      toast({
+        title: "Fecha inválida",
+        description: "La fecha fin no puede ser menor que la fecha inicio",
+        variant: "destructive",
+      });
+      return;
     }
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputDateString(value);
-    if (value.length === 10) commitDate(value);
-  };
-
-  const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputFechaFinString(value);
-    if (value.length === 10) commitFechaFin(value);
+    setFechaFin(date);
+    setFechaFinString(formatDateString(date));
   };
 
   const loadData = async () => {
@@ -496,18 +486,18 @@ export default function ProgsAdminPage() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Inicio:</label>
-            <Input
-              type="date"
-              value={inputDateString}
-              onChange={handleDateChange}
+            <DatePicker
+              date={selectedDate}
+              onDateChange={handleStartDateChange}
+              className="w-40"
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Fin:</label>
-            <Input
-              type="date"
-              value={inputFechaFinString}
-              onChange={handleFechaFinChange}
+            <DatePicker
+              date={fechaFin}
+              onDateChange={handleEndDateChange}
+              className="w-40"
             />
           </div>
         </div>
