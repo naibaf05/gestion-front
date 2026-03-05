@@ -65,6 +65,9 @@ export default function ProgsAdminPage() {
     });
     return formatter.format(today);
   });
+  // Estados locales para los inputs (no disparan recarga mientras se escribe)
+  const [inputDateString, setInputDateString] = useState(dateString);
+  const [inputFechaFinString, setInputFechaFinString] = useState(fechaFinString);
   const [progs, setProgs] = useState<ProgVisitaRecol[]>([])
   const [sedes, setSedes] = useState<Sede[]>([])
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([])
@@ -130,42 +133,50 @@ export default function ProgsAdminPage() {
     }
   }, [dateString, fechaFinString])
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value) {
+  const commitDate = (value: string) => {
+    if (value && value.length === 10) {
       const newDate = new Date(value + 'T00:00:00');
-
       if (fechaFin && newDate > fechaFin) {
         toast({
           title: "Fecha inválida",
           description: "La fecha inicio no puede ser mayor que la fecha fin",
           variant: "destructive",
         });
+        setInputDateString(dateString);
         return;
       }
-
       setSelectedDate(newDate);
       setDateString(value);
     }
   };
 
-  const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value) {
+  const commitFechaFin = (value: string) => {
+    if (value && value.length === 10) {
       const newDate = new Date(value + 'T00:00:00');
-
       if (selectedDate && newDate < selectedDate) {
         toast({
           title: "Fecha inválida",
           description: "La fecha fin no puede ser menor que la fecha inicio",
           variant: "destructive",
         });
+        setInputFechaFinString(fechaFinString);
         return;
       }
-
       setFechaFin(newDate);
       setFechaFinString(value);
     }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputDateString(value);
+    if (value.length === 10) commitDate(value);
+  };
+
+  const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputFechaFinString(value);
+    if (value.length === 10) commitFechaFin(value);
   };
 
   const loadData = async () => {
@@ -476,17 +487,6 @@ export default function ProgsAdminPage() {
     return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver administración de recolecciones.</div>
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando administración recolección...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -498,7 +498,7 @@ export default function ProgsAdminPage() {
             <label className="text-sm font-medium">Inicio:</label>
             <Input
               type="date"
-              value={dateString}
+              value={inputDateString}
               onChange={handleDateChange}
             />
           </div>
@@ -506,7 +506,7 @@ export default function ProgsAdminPage() {
             <label className="text-sm font-medium">Fin:</label>
             <Input
               type="date"
-              value={fechaFinString}
+              value={inputFechaFinString}
               onChange={handleFechaFinChange}
             />
           </div>
@@ -548,13 +548,22 @@ export default function ProgsAdminPage() {
               )}
             </div>
           </div>
-          <DataTable
-            columns={columns}
-            data={processedProgs}
-            layoutMode="fixed"
-            searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]}
-            searchPlaceholder="Buscar por nombre..."
-          />
+          {loading ? (
+            <div className="flex items-center justify-center h-48">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-600">Cargando administración recolección...</p>
+              </div>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={processedProgs}
+              layoutMode="fixed"
+              searchKey={["tipo", "sedeNombre", "recolNombre", "vehInterno"]}
+              searchPlaceholder="Buscar por nombre..."
+            />
+          )}
         </CardContent>
       </Card>
 
