@@ -14,6 +14,7 @@ import { PathDialog } from "@/components/dialogs/PathDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 export default function RutasPage() {
     const { user, logout } = useAuth();
@@ -50,8 +51,8 @@ export default function RutasPage() {
                 parametrizationService.getListaActivos("oficina"),
                 parametrizationService.getListaActivos("t_residuo"),
             ])
-            setRutas(rutasData)
-            setOficinas(oficinasData)
+            setRutas(rutasData.filter(r => matchesUserPlantas(r.oficinaId, user)))
+            setOficinas(filterPlantasByUser(oficinasData, user))
         } catch (error) {
             toast({
                 title: "Error",

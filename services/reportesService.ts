@@ -47,6 +47,22 @@ export class ReportesService {
     return response.data;
   }
 
+  // Reportes filtrados por cliente autenticado
+  async generarReporte1Cli(fechaInicio: string, fechaFin: string): Promise<any[]> {
+    const response = await apiService.get<ApiResponse<any[]>>(`/reportes/cli/reporte1?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+    return response.data;
+  }
+
+  async generarReporte2Cli(fechaInicio: string, fechaFin: string): Promise<any[]> {
+    const response = await apiService.get<ApiResponse<any[]>>(`/reportes/cli/reporte2?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+    return response.data;
+  }
+
+  async generarReporte3Cli(fechaInicio: string, fechaFin: string): Promise<any[]> {
+    const response = await apiService.get<ApiResponse<any[]>>(`/reportes/cli/reporte3?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+    return response.data;
+  }
+
   async asignarFactura(data: any): Promise<any[]> {
     const response = await apiService.post<ApiResponse<any[]>>('/reportes/asignarFactura', data);
     return response.data;

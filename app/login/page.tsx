@@ -17,8 +17,9 @@ export default function LoginPage() {
   const [credentials, setCredentials] = useState({ username: "", password: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { login, availableRoles, chooseRole, logout } = useAuth()
+  const { login, availableRoles, chooseRole, logout, availableClientes, chooseClient } = useAuth()
   const [selectedRoleId, setSelectedRoleId] = useState<string>("")
+  const [selectedClientId, setSelectedClientId] = useState<string>("")
   const { config } = useConfig()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,6 +129,35 @@ export default function LoginPage() {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={logout}>Cancelar</Button>
               <Button type="button" disabled={!selectedRoleId} onClick={() => chooseRole(selectedRoleId)} className="bg-primary hover:bg-primary-hover">Continuar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialogo para selección de cliente cuando las credenciales corresponden a múltiples cuentas */}
+        <Dialog open={!!availableClientes && availableClientes.length > 1} onOpenChange={() => { }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Selecciona una Cuenta</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-3 overflow-hidden">
+              <p className="text-sm text-gray-600">Tus credenciales corresponden a múltiples cuentas. Elige una para continuar:</p>
+              <div className="w-full overflow-hidden">
+                <SelectSingle
+                  id="client-select"
+                  options={availableClientes?.map(c => ({ id: String(c.id), nombre: c.nombre })) || []}
+                  value={selectedClientId}
+                  onChange={(value) => setSelectedClientId(value)}
+                  valueKey="id"
+                  labelKey="nombre"
+                  placeholder="Selecciona una cuenta"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={logout}>Cancelar</Button>
+              <Button type="button" disabled={!selectedClientId} onClick={() => chooseClient(selectedClientId)} className="bg-primary hover:bg-primary-hover">Continuar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -12,6 +12,10 @@ export class VisitService {
         return response;
     }
 
+    async updateFirma(id: string, firma: string): Promise<void> {
+        await apiService.patch<ApiResponse<void>>(`/visitas/${id}/firma`, { firma });
+    }
+
     async getId(id: string): Promise<VisitaRecol> {
         const response = await apiService.get<ApiResponse<VisitaRecol>>(`/visitas/${id}`);
         return response.data;

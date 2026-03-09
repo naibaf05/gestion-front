@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { parametrizationService } from "@/services/parametrizationService";
+import type { Parametrizacion } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,12 @@ export default function ReportesPage() {
     });
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+
+    const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
+
+    useEffect(() => {
+        parametrizationService.getListaActivos("oficina").then(setPlantas).catch(() => {});
+    }, []);
 
     const [dialogTableOpen, setDialogTableOpen] = useState(false);
     const [data, setData] = useState<any[]>([]);
@@ -163,7 +171,7 @@ export default function ReportesPage() {
                     { key: "direccionSede", label: "Dirección Sede", category: "sede", enabled: false, width: "300px" },
                     { key: "municipioSede", label: "Municipio Sede", category: "sede", enabled: false, width: "150px" },
                     { key: "correoSede", label: "Correo Sede", category: "sede", enabled: false, width: "250px" },
-                    { key: "oficinaSede", label: "Planta Sede", category: "sede", enabled: false, width: "300px" },                    
+                    { key: "oficinaSede", label: "Planta Sede", category: "sede", enabled: false, width: "300px" },
                     { key: "barrioSede", label: "Barrio Sede", category: "sede", enabled: false, width: "150px" },
                     { key: "telefonoSede", label: "Teléfono Sede", category: "sede", enabled: false, width: "150px" },
                     { key: "frecuenciaRecoleccionSede", label: "Frecuencia Recolección Sede", category: "sede", enabled: false, width: "180px" },
@@ -354,6 +362,38 @@ export default function ReportesPage() {
                     break;
                 default:
                     throw new Error("Tipo de reporte no válido");
+            }
+            // Filter report data by user's assigned plantas
+            if (user?.plantasIds && user.plantasIds.length > 0) {
+                const allowedIds = new Set(user.plantasIds.map(String));
+
+                if (tipoReporte === "reporte3") {
+                    // reporte3 gets numeric plantaId/plantaDestinoId directly from backend — no name lookup needed
+                    dataP = dataP.filter(r =>
+                        (r.plantaId != null && allowedIds.has(String(r.plantaId))) ||
+                        (r.plantaDestinoId != null && allowedIds.has(String(r.plantaDestinoId)))
+                    );
+                } else {
+                    const allowedNames = new Set(
+                        plantas.filter(p => allowedIds.has(String(p.id))).map(p => p.nombre)
+                    );
+                    if (allowedNames.size > 0) {
+                        switch (tipoReporte) {
+                            case "reporte1":
+                            case "reporte2":
+                                dataP = dataP.filter(r =>
+                                    allowedNames.has(r.plantaEntrega)
+                                );
+                                break;
+                            case "reporte4":
+                                // oficinaSede is GROUP_CONCAT(nombre SEPARATOR ', '), so check substring
+                                dataP = dataP.filter(r =>
+                                    r.oficinaSede && [...allowedNames].some(n => r.oficinaSede.includes(n))
+                                );
+                                break;
+                        }
+                    }
+                }
             }
             setData(dataP);
             setExportColumns(exportCols);

@@ -41,11 +41,11 @@ export function SelectSingle<T extends Record<string, any>>({
 
     // Encuentra el elemento seleccionado
     const selectedOption = options.find(option => String(option[valueKey]) === String(value))
-    
+
     // Filtra las opciones basándose en la búsqueda
     const filteredOptions = React.useMemo(() => {
         if (!searchValue || !enableSearch) return options
-        
+
         return options.filter(option =>
             String(option[labelKey])
                 .toLowerCase()
@@ -112,7 +112,7 @@ export function SelectSingle<T extends Record<string, any>>({
                                 {filteredOptions.map((option) => {
                                     const optionValue = String(option[valueKey])
                                     const isSelected = optionValue === String(value)
-                                    
+
                                     return (
                                         <CommandItem
                                             key={optionValue}

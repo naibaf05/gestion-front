@@ -20,6 +20,7 @@ import { WeekPicker } from "@/components/ui/week-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { matchesUserPlantas, matchesUserPlantasArray } from "@/utils/utils";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -79,12 +80,18 @@ export default function ProgsPage() {
         pathService.getRutasDia(selectedDate),
         clientService.getSedesActivas()
       ]);
-      setTabla(data1);
+      const filteredRutas = pathData.filter(r => matchesUserPlantas(r.oficinaId, user));
+      let filteredTabla = data1;
+      if (user?.plantasIds && user.plantasIds.length > 0) {
+        const allowedRutaIds = new Set(filteredRutas.map(r => String(r.id)));
+        filteredTabla = data1.filter(p => allowedRutaIds.has(String(p.rutaId)));
+      }
+      setTabla(filteredTabla);
       setTablaEventual(data2);
       setInfoAdicional(infoAdicionalData);
-      setVehiculos(vehiclesData);
-      setRutas(pathData);
-      setSedes(sedesData);
+      setVehiculos(vehiclesData.filter(v => matchesUserPlantas(v.oficinaId, user)));
+      setRutas(filteredRutas);
+      setSedes(sedesData.filter(s => matchesUserPlantasArray(s.oficinaId, user)));
     } catch (error) {
       toast({
         title: "Error",

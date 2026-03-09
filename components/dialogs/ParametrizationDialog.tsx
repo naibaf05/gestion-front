@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { parametrizationService } from "@/services/parametrizationService";
+import { userService } from "@/services/userService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Cliente, ParametrizationType } from "@/types";
+import { Cliente, ParametrizationType, User } from "@/types";
 import { InputCheck } from "../ui/input-check";
 import { InputDecimal } from "../ui/input-decimal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ParametrizationDialogProps {
   open: boolean;
@@ -34,6 +36,7 @@ export function ParametrizationDialog({
   readOnly = false,
 }: ParametrizationDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     nombre: "",
     codigo: "",
@@ -43,6 +46,12 @@ export function ParametrizationDialog({
     datosJson: {} as any,
   });
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open && type === "oficinas") {
+      userService.getUsersActivos().then(setUsers).catch(() => setUsers([]));
+    }
+  }, [open, type]);
 
   useEffect(() => {
     if (item) {
@@ -285,6 +294,30 @@ export function ParametrizationDialog({
                     decimalPlaces={4}
                     placeholder="Ingrese una cantidad"
                   />
+                )}
+              </div>
+            )}
+            {type === 'oficinas' && (
+              <div className="space-y-2">
+                <Label htmlFor="usuario_receptor_id">Usuario Receptor</Label>
+                {readOnly ? (
+                  <div className="text-sm text-muted-foreground min-h-[38px] border rounded-md px-3 py-2 bg-muted/50">
+                    {users.find(u => String(u.id) === String(formData.datosJson?.usuario_receptor_id))?.nombreCompleto || '-'}
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.datosJson?.usuario_receptor_id ? String(formData.datosJson.usuario_receptor_id) : ""}
+                    onValueChange={(val) => setFormData({ ...formData, datosJson: { ...formData.datosJson, usuario_receptor_id: val } })}
+                  >
+                    <SelectTrigger id="usuario_receptor_id">
+                      <SelectValue placeholder="Seleccionar usuario receptor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((u) => (
+                        <SelectItem key={u.id} value={String(u.id)}>{u.nombreCompleto}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
             )}

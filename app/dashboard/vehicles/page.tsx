@@ -20,6 +20,7 @@ import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils";
 
 export default function VehiclesPage() {
     const { user, logout } = useAuth();
@@ -66,8 +67,8 @@ export default function VehiclesPage() {
                 userService.getUsersActivos(),
                 parametrizationService.getListaActivos("t_vehiculo"),
             ]);
-            setVehicles(vehiclesData);
-            setOficinas(oficinasData);
+            setVehicles(vehiclesData.filter(v => matchesUserPlantas(v.oficinaId, user)));
+            setOficinas(filterPlantasByUser(oficinasData, user));
             setConductores(conductoresData);
             setTiposVehiculo(tiposVehiculoData);
         } catch (error) {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -25,9 +25,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
+import { adjuntosService } from "@/services/adjuntosService"
+import { FirmaGeneradorDialog } from "@/components/dialogs/FirmaGeneradorDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
+import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 
 export default function ProgsAdminPage() {
@@ -90,6 +93,8 @@ export default function ProgsAdminPage() {
 
   const [adjuntosOpen, setAdjuntosOpen] = useState(false)
   const [entidadId, setEntidadId] = useState<string | null>(null)
+  const [firmaGenDialogOpen, setFirmaGenDialogOpen] = useState(false)
+  const [firmaGenVisitaId, setFirmaGenVisitaId] = useState<string | null>(null)
   const [historialOpen, setHistorialOpen] = useState(false)
   const [historialId, setHistorialId] = useState<string>("")
   const [historialLabel, setHistorialLabel] = useState<string>("")
@@ -184,12 +189,14 @@ export default function ProgsAdminPage() {
         parametrizationService.getListaActivos("comercial"),
         parametrizationService.getListaActivos("oficina")
       ])
-      setProgs(progsData);
       setSedes(sedesData);
       setVehiculos(vehiclesData);
       setRecolectores(recolData);
       setComerciales(comercialData);
-      setPlantas(plantasData);
+      setPlantas(filterPlantasByUser(plantasData, user));
+
+      // Cargar datos
+      setProgs(progsData.filter(p => matchesUserPlantas(p.plantaId, user)));
     } catch (error) {
       toast({
         title: "Error",
@@ -282,6 +289,11 @@ export default function ProgsAdminPage() {
   const handleAdjuntos = async (id: string) => {
     setEntidadId(id)
     setAdjuntosOpen(true)
+  }
+
+  const handleFirmaGenerador = (id: string) => {
+    setFirmaGenVisitaId(id)
+    setFirmaGenDialogOpen(true)
   }
 
   const handleHistorial = (obj: ProgVisitaRecol) => {
@@ -455,6 +467,10 @@ export default function ProgsAdminPage() {
                           <Paperclip className="h-4 w-4" />
                           Adjuntos
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleFirmaGenerador(obj.visitaRecolId)}>
+                          <PenLine className="h-4 w-4" />
+                          Firma Generador
+                        </DropdownMenuItem>
                       </>
                     )}
                     {hasPermission("users.historial") && (
@@ -608,6 +624,12 @@ export default function ProgsAdminPage() {
         tipo="progs"
         entityId={entidadId || ""}
         title="Adjuntos"
+      />
+
+      <FirmaGeneradorDialog
+        open={firmaGenDialogOpen}
+        onOpenChange={setFirmaGenDialogOpen}
+        visitaId={firmaGenVisitaId || ""}
       />
 
       <HistorialDialog

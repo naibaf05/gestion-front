@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { filterPlantasByUser, matchesUserPlantasArray } from "@/utils/utils";
 
 export default function SedesPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -112,10 +113,10 @@ export default function SedesPage() {
         pathService.getAll(),
         pathService.getInfoAdicional(selectedDate),
       ]);
-      setSedes(sedesData);
+      setSedes(sedesData.filter(s => matchesUserPlantasArray(s.oficinaId, user)));
       setClientes(clientesData);
       setPoblados(pobladosData);
-      setOficinas(oficinasData);
+      setOficinas(filterPlantasByUser(oficinasData, user));
       setGeneradores(generadoresData);
       setPeriodos(periodosData);
       setMockScheduleItems(pathData);

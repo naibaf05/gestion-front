@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectSingle } from "../ui/select-single";
 import { userService } from "@/services/userService";
-import type { User, Profile } from "@/types";
+import type { User, Profile, Parametrizacion } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectMultiple } from "../ui/select-multiple";
@@ -24,6 +24,7 @@ interface UserDialogProps {
   onOpenChange: (open: boolean) => void;
   user?: User | null;
   profiles: Profile[];
+  plantas: Parametrizacion[];
   onSuccess: () => void;
   readOnly?: boolean;
 }
@@ -33,6 +34,7 @@ export function UserDialog({
   onOpenChange,
   user,
   profiles,
+  plantas,
   onSuccess,
   readOnly = false,
 }: UserDialogProps) {
@@ -45,6 +47,7 @@ export function UserDialog({
     email: "",
     rolId: [] as string[],
     username: "",
+    plantasIds: [] as string[],
   });
   const { toast } = useToast();
 
@@ -58,6 +61,7 @@ export function UserDialog({
         email: user.email,
         rolId: user.rolId || [],
         username: user.username,
+        plantasIds: (user.plantasIds || []).map(String),
       });
     } else {
       setFormData({
@@ -68,6 +72,7 @@ export function UserDialog({
         email: "",
         rolId: [],
         username: "",
+        plantasIds: [],
       });
     }
   }, [user, open]);
@@ -211,6 +216,17 @@ export function UserDialog({
                 required
                 disabled={readOnly}
                 readOnly={readOnly}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="plantas">Plantas</Label>
+              <SelectMultiple
+                options={plantas.map(p => ({ value: String(p.id), label: p.nombre }))}
+                value={formData.plantasIds}
+                onChange={selected => setFormData({ ...formData, plantasIds: selected })}
+                placeholder="Selecciona plantas"
+                disabled={readOnly}
               />
             </div>
           </div>

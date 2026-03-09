@@ -18,7 +18,8 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>
   children?: MenuItem[]
   requiredRole?: string
-  requiredPermission?: string // Nueva propiedad para el permiso requerido
+  requiredPermission?: string
+  exactRole?: string // Debe coincidir exactamente, sin bypass por ADMIN
 }
 
 const menuItems: MenuItem[] = [
@@ -112,6 +113,12 @@ const menuItems: MenuItem[] = [
     requiredPermission: "certificados.view",
   },
   {
+    title: "Mis Reportes",
+    href: "/dashboard/reportes-cli",
+    icon: FileCode,
+    exactRole: "CLIENTE",
+  },
+  {
     title: "Reportes",
     href: "/dashboard/reportes",
     icon: FileCode,
@@ -139,9 +146,9 @@ export function Sidebar() {
   const { config } = useConfig()
   const pathname = usePathname()
 
-  if (user && user.permisos && typeof user.permisos === "string") {
-    user.permisos = JSON.parse(user.permisos);
-  }
+  const permisos = user?.permisos
+    ? (typeof user.permisos === "string" ? JSON.parse(user.permisos) : user.permisos)
+    : {}
 
   // Cargar contador de alertas
   useEffect(() => {
@@ -177,17 +184,22 @@ export function Sidebar() {
 
   // Función para verificar si el usuario tiene un permiso específico
   const hasPermission = (permission: string): boolean => {
-    if (!user || !user.permisos) return false
+    if (!user) return false
 
     // Si es admin, tiene todos los permisos (usando perfil seleccionado)
     if (user?.perfil?.nombre === "ADMIN") return true
 
     // Verificar si el usuario tiene el permiso específico
-    return user.permisos[permission] === true
+    return permisos[permission] === true
   }
 
   // Función para verificar si un elemento del menú debe mostrarse
   const shouldShowMenuItem = (item: MenuItem): boolean => {
+    // exactRole: debe coincidir exactamente, sin excepción para ADMIN
+    if (item.exactRole && user?.perfil?.nombre !== item.exactRole) {
+      return false
+    }
+
     // Verificar rol requerido (lógica existente)
     if (item.requiredRole && user?.perfil?.nombre !== item.requiredRole && user?.perfil?.nombre !== "ADMIN") {
       return false
@@ -256,7 +268,7 @@ export function Sidebar() {
     }
 
     return (
-      <Link key={item.title} href={item.href!}>
+      <Link key={item.href ?? item.title} href={item.href!}>
         <Button
           variant="ghost"
           className={cn(

@@ -4,10 +4,9 @@ import type { AuthResponse, LoginCredentials, ApiResponse } from "@/types"
 export class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiService.post<ApiResponse<AuthResponse>>("/auth/login", credentials)
-    if (response) {
+    if (response?.data?.accessToken) {
       apiService.setToken(response.data.accessToken)
     }
-
     return response.data
   }
 

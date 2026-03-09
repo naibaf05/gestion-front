@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-import type { User, LoginCredentials } from "@/types"
+import type { User, LoginCredentials, ClienteSelector } from "@/types"
 import { authService } from "@/services/authService"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -15,6 +15,8 @@ interface AuthContextType {
   isAuthenticated: boolean
   availableRoles: User["roles"] | null
   chooseRole: (roleId: string) => void
+  availableClientes: ClienteSelector[] | null
+  chooseClient: (clientId: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -23,6 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [availableRoles, setAvailableRoles] = useState<User["roles"] | null>(null)
+  const [availableClientes, setAvailableClientes] = useState<ClienteSelector[] | null>(null)
+  const [pendingClientCredentials, setPendingClientCredentials] = useState<LoginCredentials | null>(null)
   const [pendingUser, setPendingUser] = useState<User | null>(null)
   const router = useRouter()
   const { toast } = useToast()
@@ -64,6 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true)
       const response = await authService.login(credentials)
       const u = response.user
+      // Si hay múltiples clientes disponibles, mostrar selector
+      if (response.clientesDisponibles && response.clientesDisponibles.length > 1) {
+        setAvailableClientes(response.clientesDisponibles)
+        setPendingClientCredentials(credentials)
+        toast({
+          title: "Selecciona una cuenta",
+          description: "Tus credenciales corresponden a múltiples cuentas; elige una para continuar",
+        })
+        return
+      }
       // Si llegan roles múltiples, permitir selección
       const roles = Array.isArray(u?.roles) ? u.roles : null
       if (roles && roles.length > 0) {
@@ -114,6 +128,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const chooseClient = async (clientId: string) => {
+    if (!pendingClientCredentials) return
+    try {
+      setLoading(true)
+      const response = await authService.login({ ...pendingClientCredentials, clientId })
+      setPendingClientCredentials(null)
+      setAvailableClientes(null)
+      const u = response.user
+      // Mismo procesamiento de roles que login() para cliente útúnico
+      const roles = Array.isArray(u?.roles) ? u.roles : null
+      if (roles && roles.length > 0) {
+        roles.forEach((r: any) => {
+          if (r.permisos && typeof r.permisos === "string") {
+            try { r.permisos = JSON.parse(r.permisos) } catch { }
+          }
+        })
+        const role = roles[0]
+        const newUser: User = { ...u, perfil: role, permisos: role.permisos }
+        setUser(newUser)
+        try { localStorage.setItem("selectedRoleId", String(role.id)) } catch { }
+      } else {
+        setUser(u)
+      }
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: `Bienvenido, ${u.nombre}`,
+      })
+      router.push("/dashboard")
+    } catch {
+      toast({
+        title: "Error de autenticación",
+        description: "No se pudo iniciar sesión con la cuenta seleccionada",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const chooseRole = (roleId: string) => {
     if (!pendingUser || !availableRoles) return
     const role = availableRoles.find(r => String(r.id) === String(roleId))
@@ -145,6 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     availableRoles,
     chooseRole,
+    availableClientes,
+    chooseClient,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,3 +1,5 @@
+import type { Parametrizacion, User } from "@/types"
+
 const DIAS_SEMANA = {
     l: "Lunes",
     m: "Martes",
@@ -47,4 +49,37 @@ export function getTipoVisita(tipo: TipoVisitaKey) {
 
 export function getTipoColor(tipo: TipoVisitaKey) {
     return TIPO_COLOR[tipo];
+}
+
+/**
+ * Filtra la lista de plantas según las plantas asignadas al usuario.
+ * Si el usuario no tiene plantas asignadas (null o vacío) devuelve todas.
+ */
+export function filterPlantasByUser(plantas: Parametrizacion[], user: User | null): Parametrizacion[] {
+    if (!user?.plantasIds || user.plantasIds.length === 0) return plantas;
+    const ids = user.plantasIds.map(String);
+    return plantas.filter(p => ids.includes(String(p.id)));
+}
+
+/**
+ * Verifica si un ID de planta individual está dentro de las plantas permitidas del usuario.
+ * Si el usuario no tiene restricción de plantas, devuelve true.
+ * Si el ID de planta es null/undefined (registro sin planta), devuelve true.
+ */
+export function matchesUserPlantas(plantaId: string | number | null | undefined, user: User | null): boolean {
+    if (!user?.plantasIds || user.plantasIds.length === 0) return true;
+    if (plantaId == null) return true;
+    return user.plantasIds.map(String).includes(String(plantaId));
+}
+
+/**
+ * Verifica si al menos uno de los IDs en un array de plantas está en las plantas del usuario.
+ * Si el usuario no tiene restricción, devuelve true.
+ * Si el array es vacío/null, devuelve true.
+ */
+export function matchesUserPlantasArray(ids: (string | number)[] | null | undefined, user: User | null): boolean {
+    if (!user?.plantasIds || user.plantasIds.length === 0) return true;
+    if (!ids || ids.length === 0) return true;
+    const allowed = user.plantasIds.map(String);
+    return ids.some(id => allowed.includes(String(id)));
 }

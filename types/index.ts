@@ -5,12 +5,20 @@ export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "per
 export interface LoginCredentials {
   username: string
   password: string
+  clientId?: string
+}
+
+export interface ClienteSelector {
+  id: string
+  nombre: string
+  nit: string
 }
 
 export interface AuthResponse {
   accessToken: string
   tokenType: string
   user: User
+  clientesDisponibles?: ClienteSelector[]
 }
 
 // Tipos de empleados
@@ -25,12 +33,14 @@ export interface User {
   rolId?: string[]
   perfil?: Profile
   roles?: Profile[]
+  plantasIds?: (string | number)[]
   nombrePerfiles?: string
   activo: boolean
   createdAt: string
   updatedAt: string
   username: string
   permisos?: any
+  firma?: string | null
 }
 
 export interface Profile {
@@ -257,6 +267,8 @@ export interface ProgVisitaRecol {
   fecha?: string
   noFactura?: number
   tieneCartera?: number
+  receptorId?: string
+  plantaId?: string
 }
 
 export interface VisitaRecol {
@@ -282,6 +294,8 @@ export interface VisitaRecol {
   numMan?: string;
   comercialId: string;
   comercialNombre?: string;
+  receptorId?: string;
+  firma?: string | null;
 }
 
 export interface VisitaCantidad {

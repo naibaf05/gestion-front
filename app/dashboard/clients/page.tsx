@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, PowerSquare, Trash2, Key, History, Eye } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
-import type { Cliente, Parametrizacion } from "@/types";
+import type { Cliente, Parametrizacion, Sede } from "@/types";
+import { matchesUserPlantasArray } from "@/utils/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ClientDialog } from "@/components/dialogs/ClientDialog";
 import { PasswordDialog } from "@/components/dialogs/PasswordDialog";
@@ -72,11 +73,12 @@ export default function ClientsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [clientsData, pobladosData, comercialesData, tClientesData] = await Promise.all([
+      const [clientsData, pobladosData, comercialesData, tClientesData, sedesData] = await Promise.all([
         clientService.getClientes(),
         parametrizationService.getListaActivos("poblado"),
         parametrizationService.getListaActivos("comercial"),
         parametrizationService.getListaActivos("t_cliente"),
+        clientService.getSedesActivas(),
       ]);
 
       const tipoClienteMap = tClientesData.reduce((acc: any, tipo) => {
@@ -96,7 +98,12 @@ export default function ClientsPage() {
         client.tipoCliente = t_cliente;
       });
 
-      setClients(clientsData);
+      const filteredSedes = (sedesData as Sede[]).filter(s => matchesUserPlantasArray(s.oficinaId, user));
+      const allowedClienteIds = new Set(filteredSedes.map(s => String(s.clienteId)));
+      const visibleClients = (user?.plantasIds && user.plantasIds.length > 0)
+        ? clientsData.filter(c => allowedClienteIds.has(String(c.id)))
+        : clientsData;
+      setClients(visibleClients);
       setPoblados(pobladosData);
       setComerciales(comercialesData);
       setTClientes(tClientesData);

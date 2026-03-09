@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Eye, PowerSquare, History, Key } from "lucide-react"
+import { Plus, Edit, Eye, PowerSquare, History, Key, PenLine } from "lucide-react"
 import { userService } from "@/services/userService"
-import type { User, Profile } from "@/types"
+import { parametrizationService } from "@/services/parametrizationService"
+import type { User, Profile, Parametrizacion } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { UserDialog } from "@/components/dialogs/UserDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
@@ -18,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/toolti
 import type { ColumnDef } from "@tanstack/react-table"
 import { useAuth } from "@/contexts/AuthContext"
 import { PasswordDialog } from "@/components/dialogs/PasswordDialog"
+import { FirmaDialog } from "@/components/dialogs/FirmaDialog"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function UsersPage() {
@@ -25,9 +27,11 @@ export default function UsersPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [plantas, setPlantas] = useState<Parametrizacion[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [firmaDialogOpen, setFirmaDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [dialogReadOnly, setDialogReadOnly] = useState(false)
   const [historialOpen, setHistorialOpen] = useState(false)
@@ -63,12 +67,14 @@ export default function UsersPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [usersData, profilesData] = await Promise.all([
+      const [usersData, profilesData, plantasData] = await Promise.all([
         userService.getUsers(),
-        userService.getProfiles()
+        userService.getProfiles(),
+        parametrizationService.getListaActivos('oficina'),
       ])
       setUsers(usersData)
       setProfiles(profilesData)
+      setPlantas(plantasData)
     } catch (error) {
       toast({
         title: "Error",
@@ -139,6 +145,11 @@ export default function UsersPage() {
   const handleChangePassword = (user: User) => {
     setSelectedUser(user)
     setPasswordDialogOpen(true)
+  }
+
+  const handleFirma = (user: User) => {
+    setSelectedUser(user)
+    setFirmaDialogOpen(true)
   }
 
   const columns: ColumnDef<User>[] = [
@@ -219,6 +230,10 @@ export default function UsersPage() {
                         <Key className="h-4 w-4" />
                         Cambiar Contraseña
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleFirma(employee)}>
+                        <PenLine className="h-4 w-4" />
+                        {employee.firma ? "Ver / Cambiar Firma" : "Agregar Firma"}
+                      </DropdownMenuItem>
                       {hasPermission("users.historial") && (
                         <DropdownMenuItem onClick={() => handleHistorial(employee.id, employee.nombre, employee.apellido)}>
                           <History className="h-4 w-4" />
@@ -288,6 +303,7 @@ export default function UsersPage() {
         onOpenChange={setDialogOpen}
         user={selectedUser}
         profiles={profiles}
+        plantas={plantas}
         onSuccess={loadData}
         readOnly={dialogReadOnly}
       />
@@ -305,6 +321,15 @@ export default function UsersPage() {
         onOpenChange={setPasswordDialogOpen}
         displayName={selectedUser?.nombre || ""}
         userId={selectedUser?.id || ""}
+        onSuccess={loadData}
+      />
+
+      <FirmaDialog
+        open={firmaDialogOpen}
+        onOpenChange={setFirmaDialogOpen}
+        displayName={selectedUser ? `${selectedUser.nombre} ${selectedUser.apellido}` : ""}
+        userId={selectedUser?.id || ""}
+        currentFirma={selectedUser?.firma}
         onSuccess={loadData}
       />
 

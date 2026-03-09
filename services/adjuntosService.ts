@@ -8,6 +8,12 @@ export class AdjuntosService {
     return response.data
   }
 
+  // Obtener adjuntos por tipo y entityId con ftp
+  async getAdjuntosFtp(tipo: string, entityId: string): Promise<Adjunto[]> {
+    const response = await apiService.get<ApiResponse<Adjunto[]>>(`/adjuntos/ftp/${tipo}/${entityId}`)
+    return response.data
+  }
+
   // Subir un nuevo adjunto
   async uploadAdjunto(archivo: File, tipo: string, entityId: string): Promise<Adjunto> {
     const formData = new FormData()

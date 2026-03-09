@@ -92,6 +92,17 @@ export class UserService {
     const response = await apiService.patch<ApiResponse<User>>(`/roles/${id}/permisos`, data)
     return response.data
   }
+
+  // Firma
+  async addFirma(userId: string, firma: string): Promise<User> {
+    const response = await apiService.post<ApiResponse<User>>(`/users/${userId}/firma`, { firma })
+    return response.data
+  }
+
+  async updateFirma(userId: string, firma: string): Promise<User> {
+    const response = await apiService.put<ApiResponse<User>>(`/users/${userId}/firma`, { firma })
+    return response.data
+  }
 }
 
 export const userService = new UserService()

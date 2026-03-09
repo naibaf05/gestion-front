@@ -21,6 +21,7 @@ import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { vehicleService } from "@/services/vehicleService";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog";
+import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils";
 
 export default function SalidasPage() {
   const { user } = useAuth();
@@ -158,11 +159,19 @@ export default function SalidasPage() {
         parametrizationService.getListaActivos("t_residuo"),
         parametrizationService.getListaActivos("oficina"),
       ]);
-      setSalidas(salidasData);
+      if (!user?.plantasIds || user.plantasIds.length === 0) {
+        setSalidas(salidasData);
+      } else {
+        const allowed = new Set(user.plantasIds.map(String));
+        setSalidas(salidasData.filter(s =>
+          (s.plantaId && allowed.has(String(s.plantaId))) ||
+          (s.plantaDestinoId && allowed.has(String(s.plantaDestinoId)))
+        ));
+      }
       setSedes(sedesData);
       setVehiculos(vehiculosData);
       setProductos(productosData);
-      setPlantas(plantasData);
+      setPlantas(filterPlantasByUser(plantasData, user));
     } catch (error) {
       toast({
         title: "Error",
