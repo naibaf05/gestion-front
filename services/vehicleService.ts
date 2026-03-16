@@ -38,7 +38,7 @@ export class VehicleService {
         return response.data;
     }
 
-    async guardarManual(data: { nombre: string; apellido: string; documento: string; placa: string }): Promise<ApiResponse<any>> {
+    async guardarManual(data: { nombre: string; apellido: string; documento: string; telefono: string; placa: string; firma: string }): Promise<ApiResponse<any>> {
         const response = await apiService.post<ApiResponse<any>>("/vehicles/guardarManual", data);
         return response;
     }

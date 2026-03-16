@@ -302,33 +302,32 @@ export function VisitDialog({
                   disabled={readOnly}
                 />
               </div>
-              {formData.tipo !== 'puesto' ?
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="vehiculo">Vehículo</Label>
-                    {!readOnly && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOpenManualDialog(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Crear Manual
-                      </Button>
-                    )}
-                  </div>
-                  <SelectSingle
-                    id="vehiculo"
-                    placeholder="Seleccione un vehículo"
-                    options={vehiculos}
-                    value={formData.vehId}
-                    onChange={v => setFormData({ ...formData, vehId: v })}
-                    valueKey="id"
-                    labelKey="interno"
-                    disabled={readOnly}
-                  />
-                </div> : ''}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="vehiculo">Vehículo</Label>
+                  {!readOnly && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setOpenManualDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Crear Manual
+                    </Button>
+                  )}
+                </div>
+                <SelectSingle
+                  id="vehiculo"
+                  placeholder="Seleccione un vehículo"
+                  options={vehiculos}
+                  value={formData.vehId}
+                  onChange={v => setFormData({ ...formData, vehId: v })}
+                  valueKey="id"
+                  labelKey="interno"
+                  disabled={readOnly}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="recolector" required>Recolector</Label>
                 <SelectSingle
