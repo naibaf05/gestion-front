@@ -239,33 +239,6 @@ export default function ProgsAdminPage() {
 
   const handlePdf = async (obj: ProgVisitaRecol) => {
     setSelected(obj)
-
-    if (obj.tieneCartera === 1) {
-      setTipoConfirm("cartera")
-      setTitleConfirm("Certificado no disponible")
-      setDescripcionConfirm(
-        "Estimado usuario, para poder acceder al certificado solicitado, es necesario que se encuentre al día en su estado de cuenta. Por favor, regularice su cartera pendiente para habilitar la descarga."
-      )
-      setConfirmText("Entendido")
-      setCancelText("")
-      setHideCancelConfirm(true)
-      setConfirmDialogOpen(true)
-      return
-    }
-
-    if (obj.noFactura === 1) {
-      setTipoConfirm("pdf-no-facturado")
-      setTitleConfirm("Certificado no disponible")
-      setDescripcionConfirm(
-        "El servicio asociado a este certificado aún no ha sido facturado. Una vez se emita la factura correspondiente y realice el pago correspondiente, el sistema habilitará la descarga del documento."
-      )
-      setConfirmText("Entendido")
-      setCancelText("")
-      setHideCancelConfirm(false)
-      setConfirmDialogOpen(true)
-      return
-    }
-
     handlePdfNoValidate(obj)
   }
 
