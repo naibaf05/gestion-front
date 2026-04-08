@@ -96,7 +96,6 @@ export default function ReportesCliPage() {
         const canViewTarifa = hasPermission("rates.view");
         switch (tipo) {
             case "reporte1":
-            case "reporte2":
                 return [
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true, width: "350px" },
                     { key: "sedeNombre", label: "Nombre Sede", category: "sede", enabled: true, width: "250px" },
@@ -124,6 +123,43 @@ export default function ReportesCliPage() {
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "numCert", label: "Certificado", category: "visita", enabled: false, width: "150px" },
+                ];
+            case "reporte2":
+                return [
+                    // ======= SECCIÓN SEDE =======
+                    { key: "fecha", label: "Fecha", category: "sede", enabled: true, width: "120px" },
+                    { key: "nombreSede", label: "Sede", category: "sede", enabled: true, width: "250px" },
+                    { key: "nitSede", label: "NIT", category: "sede", enabled: true, width: "180px" },
+                    { key: "ciudadSede", label: "Ciudad", category: "sede", enabled: true, width: "150px" },
+                    { key: "direccionSede", label: "Dirección", category: "sede", enabled: true, width: "300px" },
+                    { key: "cliente", label: "Cliente", category: "sede", enabled: true, width: "250px" },
+                    // ======= BICICLETA =======
+                    { key: "kgBicicleta", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numBicicleta", label: "Bicicleta", category: "llantas", enabled: true, width: "100px" },
+                    // ======= MOTO =======
+                    { key: "kgMoto", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numMoto", label: "Moto", category: "llantas", enabled: true, width: "100px" },
+                    // ======= AUTO =======
+                    { key: "kgAuto", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numAuto", label: "Auto", category: "llantas", enabled: true, width: "100px" },
+                    // ======= CAMIONETA =======
+                    { key: "kgCamioneta", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numCamioneta", label: "Camioneta", category: "llantas", enabled: true, width: "120px" },
+                    // ======= CAMIÓN =======
+                    { key: "kgCamion", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numCamion", label: "Camión", category: "llantas", enabled: true, width: "100px" },
+                    // ======= OTR =======
+                    { key: "kgOtr", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numOtr", label: "OTR", category: "llantas", enabled: true, width: "100px" },
+                    // ======= OTROS =======
+                    { key: "kgOtros", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numOtros", label: "Otros", category: "llantas", enabled: true, width: "100px" },
+                    // ======= TOTALES =======
+                    { key: "kgTotal", label: "KG", category: "llantas", enabled: true, width: "120px" },
+                    { key: "numTotal", label: "Total", category: "llantas", enabled: true, width: "100px" },
+                    // ======= FACTURA =======
+                    { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
+                    { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
                 ];
             case "reporte3":
                 return [

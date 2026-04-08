@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine, FlaskConical } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -30,6 +30,7 @@ import { FirmaGeneradorDialog } from "@/components/dialogs/FirmaGeneradorDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
+import { UpdateDensDialog } from "@/components/dialogs/UpdateDensDialog"
 import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 
@@ -101,6 +102,9 @@ export default function ProgsAdminPage() {
 
   // Estado para diálogo de Actualizar Tarifas
   const [ratesDialogOpen, setRatesDialogOpen] = useState(false)
+
+  // Estado para diálogo de Actualizar Densidades
+  const [densDialogOpen, setDensDialogOpen] = useState(false)
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -316,6 +320,9 @@ export default function ProgsAdminPage() {
   // Handler para abrir el diálogo de Actualizar Tarifas
   const openRatesDialog = () => setRatesDialogOpen(true)
 
+  // Handler para abrir el diálogo de Actualizar Densidades
+  const openDensDialog = () => setDensDialogOpen(true)
+
   const processedProgs = useMemo(() => {
     return progs.map(prog => ({
       ...prog,
@@ -366,7 +373,7 @@ export default function ProgsAdminPage() {
     },
     {
       accessorKey: "recolNombre",
-      header: "Recolector",
+      header: "Conductor",
       width: "150px",
       cell: ({ row }) => {
         return `${row.original.recolNombre} ${row.original.recolApellido}`
@@ -520,6 +527,12 @@ export default function ProgsAdminPage() {
                 </Button>
               )}
               {hasPermission("admin.edit") && (
+                <Button onClick={openDensDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <FlaskConical className="mr-2 h-4 w-4" />
+                  Actualizar Densidades
+                </Button>
+              )}
+              {hasPermission("admin.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
                   <Plus className="mr-2 h-4 w-4" />
                   Nueva Visita
@@ -556,6 +569,7 @@ export default function ProgsAdminPage() {
         sedes={sedes}
         vehiculos={vehiculos}
         recolectores={recolectores}
+        receptores={recolectores}
         comerciales={comerciales}
         plantas={plantas}
         onSuccess={loadData}
@@ -614,6 +628,7 @@ export default function ProgsAdminPage() {
       />
 
       <UpdateRatesDialog open={ratesDialogOpen} onOpenChange={setRatesDialogOpen} />
+      <UpdateDensDialog open={densDialogOpen} onOpenChange={setDensDialogOpen} />
     </div>
   )
 }

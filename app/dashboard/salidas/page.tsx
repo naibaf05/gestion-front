@@ -159,11 +159,15 @@ export default function SalidasPage() {
         parametrizationService.getListaActivos("t_residuo"),
         parametrizationService.getListaActivos("oficina"),
       ]);
+      const withFormatted = salidasData.map(s => ({
+        ...s,
+        numFormateado: s.num != null ? `RFG${String(s.num).padStart(5, "0")}` : "",
+      }));
       if (!user?.plantasIds || user.plantasIds.length === 0) {
-        setSalidas(salidasData);
+        setSalidas(withFormatted);
       } else {
         const allowed = new Set(user.plantasIds.map(String));
-        setSalidas(salidasData.filter(s =>
+        setSalidas(withFormatted.filter(s =>
           (s.plantaId && allowed.has(String(s.plantaId))) ||
           (s.plantaDestinoId && allowed.has(String(s.plantaDestinoId)))
         ));
@@ -236,6 +240,10 @@ export default function SalidasPage() {
   };
 
   const columns: ColumnDef<Salida>[] = [
+    {
+      accessorKey: "numFormateado",
+      header: "Número",
+    },
     {
       accessorKey: "fecha",
       header: "Fecha"
@@ -374,7 +382,7 @@ export default function SalidasPage() {
           <DataTable
             columns={columns}
             data={salidas}
-            searchKey={["fecha", "sedeNombre", "clienteNombre", "conductorNombre", "productoNombre"]}
+            searchKey={["numFormateado", "fecha", "sedeNombre", "clienteNombre", "conductorNombre", "productoNombre"]}
             searchPlaceholder="Buscar ..."
           />
         </CardContent>

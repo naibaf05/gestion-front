@@ -31,6 +31,7 @@ interface VisitDialogProps {
   sedes: Sede[]
   vehiculos: Vehicle[]
   recolectores: User[]
+  receptores: User[]
   comerciales: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
@@ -48,6 +49,7 @@ export function VisitDialog({
   sedes,
   vehiculos,
   recolectores,
+  receptores,
   comerciales,
   plantas,
   onSuccess,
@@ -69,6 +71,7 @@ export function VisitDialog({
     plantaId: "",
     recolId: "",
     vehId: "",
+    receptorId: "",
     comercialId: "",
     progVisitaRecolId: "",
   })
@@ -98,6 +101,7 @@ export function VisitDialog({
         plantaId: visita.plantaId || "",
         recolId: visita.recolId,
         vehId: visita.vehId,
+        receptorId: visita.receptorId || "",
         comercialId: visita.comercialId,
         progVisitaRecolId: ""
       });
@@ -118,6 +122,7 @@ export function VisitDialog({
         plantaId: "",
         recolId: "",
         vehId: progVisitaRecol && progVisitaRecol.vehId ? progVisitaRecol.vehId : "",
+        receptorId: "",
         comercialId: "",
         progVisitaRecolId: ""
       })
@@ -329,13 +334,26 @@ export function VisitDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="recolector" required>Recolector</Label>
+                <Label htmlFor="recolector" required>Conductor</Label>
                 <SelectSingle
                   id="recolector"
                   placeholder="Seleccione un recolector"
                   options={recolectores}
                   value={formData.recolId}
                   onChange={v => setFormData({ ...formData, recolId: v })}
+                  valueKey="id"
+                  labelKey="nombreCompleto"
+                  disabled={readOnly}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="receptor" required>Receptor</Label>
+                <SelectSingle
+                  id="receptor"
+                  placeholder="Seleccione un receptor"
+                  options={receptores}
+                  value={formData.receptorId}
+                  onChange={v => setFormData({ ...formData, receptorId: v })}
                   valueKey="id"
                   labelKey="nombreCompleto"
                   disabled={readOnly}

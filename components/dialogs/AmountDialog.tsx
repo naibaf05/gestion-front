@@ -43,7 +43,7 @@ export function AmountDialog({
   readOnly = false,
 }: AmountDialogProps) {
   const { user, logout } = useAuth()
-  const [selectedTResiduo, setSelectedTResiduo] = useState<Parametrizacion | null>(null)
+  const [selectedTResiduo, setSelectedTResiduo] = useState<TipoResiduo | null>(null)
   const [loading, setLoading] = useState(false);
   const [viewCantidadKg, setViewCantidadKg] = useState(false);
   const [disabledCantidad, setDisabledCantidad] = useState(false);
@@ -157,7 +157,11 @@ export function AmountDialog({
       newFormData.tarifaNombre = residuoEncontrado.tarifaNombre;
       setDisabledCantidad(newFormData.cantidad !== '');
       setSelectedTResiduo(residuoEncontrado);
-      setViewCantidadKg(residuoEncontrado.codigoUnidad === 'M3');
+      const esM3 = residuoEncontrado.codigoUnidad === 'M3';
+      setViewCantidadKg(esM3);
+      if (esM3 && residuoEncontrado.densidad && newFormData.cantidad) {
+        newFormData.cantidadKg = (parseFloat(newFormData.cantidad) * parseFloat(residuoEncontrado.densidad)).toString();
+      }
     } else {
       newFormData.tResiduoId = '';
       newFormData.cantidad = '';
@@ -175,6 +179,9 @@ export function AmountDialog({
     newFormData.numContenedor = v;
     if (selectedTResiduo?.datosJson?.cantidad && v) {
       newFormData.cantidad = (parseFloat(selectedTResiduo.datosJson?.cantidad) * parseInt(v)) + '';
+    }
+    if (viewCantidadKg && selectedTResiduo?.densidad && newFormData.cantidad) {
+      newFormData.cantidadKg = (parseFloat(newFormData.cantidad) * parseFloat(selectedTResiduo.densidad)).toString();
     }
     console.log(newFormData);
     setFormData(newFormData);
@@ -241,7 +248,15 @@ export function AmountDialog({
                 <InputDecimal
                   id="cantidad"
                   value={formData.cantidad}
-                  onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
+                  onChange={(e) => {
+                    const newCantidad = e.target.value;
+                    const densidad = selectedTResiduo?.densidad;
+                    const cantKg =
+                      viewCantidadKg && densidad && newCantidad
+                        ? (parseFloat(newCantidad) * parseFloat(densidad)).toString()
+                        : formData.cantidadKg;
+                    setFormData({ ...formData, cantidad: newCantidad, cantidadKg: cantKg });
+                  }}
                   required
                   decimalPlaces={4}
                   placeholder="Ingrese una cantidad"

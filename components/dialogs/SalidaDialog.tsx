@@ -57,6 +57,7 @@ export function SalidaDialog({
     productoId: "",
     peso: 0,
     fecha: "",
+    fechaRecibo: "",
     esSede: false,
     esPlanta: false,
   })
@@ -73,6 +74,7 @@ export function SalidaDialog({
         productoId: salida.productoId,
         peso: salida.peso,
         fecha: salida.fecha ? salida.fecha.split('T')[0] : "",
+        fechaRecibo: salida.fechaRecibo ? salida.fechaRecibo.split('T')[0] : "",
         esSede: salida.plantaId ? false : true,
         esPlanta: salida.sedeId ? false : true,
       })
@@ -88,6 +90,7 @@ export function SalidaDialog({
         productoId: "",
         peso: 0,
         fecha: today,
+        fechaRecibo: "",
         esSede: false,
         esPlanta: false,
       })
@@ -270,6 +273,16 @@ export function SalidaDialog({
                   type="date"
                   value={formData.fecha}
                   onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                  disabled={readOnly}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fechaRecibo">Fecha Recibo</Label>
+                <Input
+                  id="fechaRecibo"
+                  type="date"
+                  value={formData.fechaRecibo}
+                  onChange={(e) => setFormData({ ...formData, fechaRecibo: e.target.value })}
                   disabled={readOnly}
                 />
               </div>

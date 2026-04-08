@@ -73,6 +73,7 @@ export interface TipoResiduo {
   tarifa: string
   tarifaNombre: string
   codigoUnidad: string
+  densidad?: string
 }
 
 // Tipos de clientes y sedes
@@ -372,6 +373,7 @@ export interface Salida {
   productoNombre?: string
   peso: number
   fecha: string
+  fechaRecibo?: string
   activo: boolean
   createdAt: string
   updatedAt: string
@@ -380,6 +382,7 @@ export interface Salida {
   producto?: Parametrizacion
   salida?: string
   destino?: string
+  num?: number
 }
 
 // Tipos para Dashboard Stats
