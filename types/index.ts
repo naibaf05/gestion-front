@@ -340,6 +340,8 @@ export interface Certificados {
   clienteNombre?: string
   sedeId?: string
   sedeNombre?: string
+  plantaDestinoId?: string
+  plantaDestinoNombre?: string
   tipo: string
   fecha: string
   inicio: string
@@ -369,11 +371,14 @@ export interface Salida {
   vehiculoPlaca?: string
   conductorId: string
   conductorNombre?: string
+  receptorId?: string
+  receptorNombre?: string
   productoId: string
   productoNombre?: string
   peso: number
   fecha: string
   fechaRecibo?: string
+  notas?: string
   activo: boolean
   createdAt: string
   updatedAt: string

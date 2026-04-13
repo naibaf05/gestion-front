@@ -12,7 +12,8 @@ import { NotasDialog } from "@/components/dialogs/NotasDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { certificatesService } from "@/services/certificatesService";
 import { clientService } from "@/services/clientService";
-import type { Certificados, Cliente, Sede } from "@/types";
+import { parametrizationService } from "@/services/parametrizationService";
+import type { Certificados, Cliente, Parametrizacion, Sede } from "@/types";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -32,8 +33,10 @@ export default function CertificadosPage() {
     const [certificadosLlantas, setCertificadosLlantas] = useState<Certificados[]>([]);
     const [certificadosOtros, setCertificadosOtros] = useState<Certificados[]>([]);
     const [certificadosProforma, setCertificadosProforma] = useState<Certificados[]>([]);
+    const [certificadosSalidas, setCertificadosSalidas] = useState<Certificados[]>([]);
     const [sedes, setSedes] = useState<Sede[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -119,31 +122,39 @@ export default function CertificadosPage() {
         try {
             setLoading(true);
             if (user?.perfil?.nombre === "CLIENTE") {
-                const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificadosCliente("1", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("2", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("3", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("4", user.id || "", dateString, fechaFinString),
                     clientService.getSedesActivas(),
-                    clientService.getClientesActivos()
+                    clientService.getClientesActivos(),
+                    parametrizationService.getListaActivos("oficina"),
                 ]);
                 setCertificadosLlantas(llantasData);
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
+                setCertificadosSalidas(salidasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
+                setPlantas(plantasData);
             } else {
-                const [llantasData, otrosData, proformaData, sedesData, clientesData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificados("1", dateString, fechaFinString),
                     certificatesService.getCertificados("2", dateString, fechaFinString),
                     certificatesService.getCertificados("3", dateString, fechaFinString),
+                    certificatesService.getCertificados("4", dateString, fechaFinString),
                     clientService.getSedesActivas(),
-                    clientService.getClientesActivos()
+                    clientService.getClientesActivos(),
+                    parametrizationService.getListaActivos("oficina"),
                 ]);
                 setCertificadosLlantas(llantasData);
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
+                setCertificadosSalidas(salidasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
+                setPlantas(plantasData);
             }
         } catch (error) {
             toast({
@@ -211,6 +222,9 @@ export default function CertificadosPage() {
                 break;
             case "3":
                 base64 = await certificatesService.getCertificadoProformaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                break;
+            case "4":
+                base64 = await certificatesService.getCertificadoProformaSalidaPDF(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             default:
                 base64 = null;
@@ -305,6 +319,10 @@ export default function CertificadosPage() {
             case "3":
                 base64 = await certificatesService.getCertificadoProformaExcel(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
+            case "4": {
+                base64 = await certificatesService.getCertificadoProformaSalidaExcel(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                break;
+            }
             default:
                 base64 = null; // Solo proforma soporta Excel actualmente
                 break;
@@ -578,6 +596,92 @@ export default function CertificadosPage() {
         },
     ];
 
+    const columnsSalidas: ColumnDef<Certificados>[] = [
+        {
+            id: "destino",
+            header: "Destino",
+            enableColumnFilter: true,
+            cell: ({ row }) => row.original.sedeNombre || row.original.plantaDestinoNombre || "",
+        },
+        {
+            accessorKey: "inicio",
+            header: "Fecha Inicio",
+        },
+        {
+            accessorKey: "fin",
+            header: "Fecha Fin",
+        },
+        {
+            accessorKey: "activo",
+            header: "Estado",
+            cell: ({ row }) => (
+                <span className={`px-2 py-1 rounded text-xs ${row.original.activo
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
+                    {row.original.activo ? 'Activo' : 'Inactivo'}
+                </span>
+            ),
+        },
+        {
+            id: "actions",
+            header: "Acciones",
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <TooltipProvider>
+                        <div className="flex items-center space-x-2">
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEdit(item)} tooltipContent="Editar">
+                                    <Edit className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
+                            {hasPermission("certificados.edit") && (
+                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(item.id)}
+                                    className={item.activo ? "new-text-green-600" : "new-text-red-600"}
+                                    tooltipContent={item.activo ? "Desactivar" : "Activar"}
+                                >
+                                    <PowerSquare className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
+                            <DropdownMenu>
+                                <Tooltip>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <span className="sr-only">Más acciones</span>
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                                <circle cx="5" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="19" cy="12" r="2" fill="currentColor" />
+                                            </svg>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <TooltipContent>Más acciones</TooltipContent>
+                                </Tooltip>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handlePdf(item)}>
+                                        <FileText className="h-4 w-4" />
+                                        PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExcel(item)}>
+                                        <Table className="h-4 w-4" />
+                                        Excel
+                                    </DropdownMenuItem>
+                                    {hasPermission("users.historial") && (
+                                        <DropdownMenuItem onClick={() => handleHistorial(item)}>
+                                            <History className="h-4 w-4" />
+                                            Historial
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </TooltipProvider>
+                );
+            },
+        },
+    ];
+
     if (!hasPermission("certificados.view")) {
         return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver los certificados.</div>
     }
@@ -617,6 +721,7 @@ export default function CertificadosPage() {
                             <TabsTrigger value="llantas">Llantas</TabsTrigger>
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
+                            {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="salidas">Proforma Salidas</TabsTrigger>)}
                         </TabsList>
 
                         <TabsContent value="llantas">
@@ -672,6 +777,24 @@ export default function CertificadosPage() {
                                 searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
+
+                        <TabsContent value="salidas">
+                            <div className="flex justify-between items-center mb-4">
+                                <div></div>
+                                {hasPermission("certificados.edit") && (
+                                    <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Certificado Salida
+                                    </Button>
+                                )}
+                            </div>
+                            <DataTable
+                                columns={columnsSalidas}
+                                data={certificadosSalidas}
+                                searchKey={["sedeNombre", "clienteNombre", "plantaDestinoNombre"]}
+                                searchPlaceholder="Buscar ..."
+                            />
+                        </TabsContent>
                     </Tabs>
                 </CardContent>
             </Card>
@@ -682,6 +805,7 @@ export default function CertificadosPage() {
                 certificado={selectedCertificado}
                 sedes={sedes}
                 clientes={clientes}
+                plantas={plantas}
                 onSuccess={loadData}
                 tipo={tipo}
             />

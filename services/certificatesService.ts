@@ -42,6 +42,18 @@ export class CertificatesService {
         return response.data;
     }
 
+    async getCertificadoProformaSalidaPDF(sedeId: string, plantaDestinoId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        notas = notas.replaceAll('\n', '**');
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-salida?sedeId=${sedeId}&plantaDestinoId=${plantaDestinoId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+        return response.data;
+    }
+
+    async getCertificadoProformaSalidaExcel(sedeId: string, plantaDestinoId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+        notas = notas.replaceAll('\n', '**');
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-salida/excel?sedeId=${sedeId}&plantaDestinoId=${plantaDestinoId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+        return response.data;
+    }
+
     // Certificados
     async getCertificados(tipo: string, inicio: string, fin: string): Promise<Certificados[]> {
         const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/${tipo}/${inicio}/${fin}`);

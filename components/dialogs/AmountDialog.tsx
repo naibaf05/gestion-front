@@ -270,7 +270,15 @@ export function AmountDialog({
                   <InputDecimal
                     id="cantidadKg"
                     value={formData.cantidadKg}
-                    onChange={(e) => setFormData({ ...formData, cantidadKg: e.target.value })}
+                    onChange={(e) => {
+                      const newCantidadKg = e.target.value;
+                      const densidad = selectedTResiduo?.densidad;
+                      const cant =
+                        densidad && newCantidadKg
+                          ? (parseFloat(newCantidadKg) / parseFloat(densidad)).toString()
+                          : formData.cantidad;
+                      setFormData({ ...formData, cantidadKg: newCantidadKg, cantidad: cant });
+                    }}
                     required
                     decimalPlaces={4}
                     placeholder="Ingrese una cantidad KG"

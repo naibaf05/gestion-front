@@ -9,7 +9,8 @@ import { Plus, Edit, PowerSquare, FileText, Eye, CircleDollarSign } from "lucide
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import { salidaService } from "@/services/salidaService";
-import type { Salida, Sede, Parametrizacion, Vehicle } from "@/types";
+import { userService } from "@/services/userService";
+import type { Salida, Sede, Parametrizacion, Vehicle, User } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { SalidaDialog } from "@/components/dialogs/SalidaDialog";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -65,6 +66,7 @@ export default function SalidasPage() {
   const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
   const [productos, setProductos] = useState<Parametrizacion[]>([]);
+  const [receptores, setReceptores] = useState<User[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -151,13 +153,15 @@ export default function SalidasPage() {
         sedesData,
         vehiculosData,
         productosData,
-        plantasData
+        plantasData,
+        receptoresData
       ] = await Promise.all([
         salidaService.getSalidas(dateString, fechaFinString),
         clientService.getSedesActivas(),
         vehicleService.getVehiclesActivos(),
         parametrizationService.getListaActivos("t_residuo"),
         parametrizationService.getListaActivos("oficina"),
+        userService.getUsersActivos(),
       ]);
       const withFormatted = salidasData.map(s => ({
         ...s,
@@ -176,6 +180,7 @@ export default function SalidasPage() {
       setVehiculos(vehiculosData);
       setProductos(productosData);
       setPlantas(filterPlantasByUser(plantasData, user));
+      setReceptores(receptoresData);
     } catch (error) {
       toast({
         title: "Error",
@@ -382,7 +387,7 @@ export default function SalidasPage() {
           <DataTable
             columns={columns}
             data={salidas}
-            searchKey={["numFormateado", "fecha", "sedeNombre", "clienteNombre", "conductorNombre", "productoNombre"]}
+            searchKey={["numFormateado", "fecha", "salida", "destino", "conductorNombre", "productoNombre", "peso"]}
             searchPlaceholder="Buscar ..."
           />
         </CardContent>
@@ -394,6 +399,7 @@ export default function SalidasPage() {
         salida={selectedSalida}
         sedes={sedes}
         vehiculos={vehiculos}
+        receptores={receptores}
         productos={productos}
         plantas={plantas}
         onSuccess={loadData}

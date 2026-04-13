@@ -13,10 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { certificatesService } from "@/services/certificatesService";
-import type { Certificados, Cliente, Sede } from "@/types";
+import type { Certificados, Cliente, Parametrizacion, Sede } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
+import { InputCheck } from "../ui/input-check";
 import { PdfDialog } from "./PdfDialog";
 
 interface CertificadoDialogProps {
@@ -25,6 +26,7 @@ interface CertificadoDialogProps {
   certificado?: Certificados | null;
   sedes: Sede[];
   clientes: Cliente[];
+  plantas?: Parametrizacion[];
   tipo: string;
   onSuccess: () => void;
 }
@@ -35,17 +37,20 @@ export function CertificadoDialog({
   certificado,
   sedes,
   clientes,
+  plantas = [],
   tipo,
   onSuccess,
 }: CertificadoDialogProps) {
   const [base64, setBase64] = useState<string | null>(null)
   const [dialogPdfOpen, setDialogPdfOpen] = useState(false);
+  const [esPlanta, setEsPlanta] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
     clienteId: "",
     sedeId: "",
+    plantaDestinoId: "",
     fecha: "",
     inicio: "",
     fin: "",
@@ -56,11 +61,13 @@ export function CertificadoDialog({
   const { toast } = useToast();
 
   useEffect(() => {
+    setEsPlanta(false);
     if (certificado) {
       setFormData({
         id: certificado.id,
         clienteId: certificado.clienteId || "",
         sedeId: certificado.sedeId || "",
+        plantaDestinoId: (certificado as any).plantaDestinoId || "",
         fecha: certificado.fecha.split('T')[0],
         inicio: certificado.inicio.split('T')[0],
         fin: certificado.fin.split('T')[0],
@@ -73,6 +80,7 @@ export function CertificadoDialog({
         id: "",
         clienteId: "",
         sedeId: "",
+        plantaDestinoId: "",
         fecha: "",
         inicio: "",
         fin: "",
@@ -152,9 +160,15 @@ export function CertificadoDialog({
         case "2":
           base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
           break;
-        case "3":
-          base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
+        case "3": {
+          const destSedeId = formData.sedeId || formData.plantaDestinoId;
+          base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, destSedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
           break;
+        }
+        case "4": {
+          base64 = await certificatesService.getCertificadoProformaSalidaPDF(formData.sedeId, formData.plantaDestinoId, formData.inicio, formData.fin, formData.fecha, formData.notas);
+          break;
+        }
         default:
           base64 = null;
           break;
@@ -180,30 +194,70 @@ export function CertificadoDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="clienteId">Cliente</Label>
-            <SelectSingle
-              id="cliente"
-              placeholder="Seleccione un cliente"
-              options={clientes}
-              value={formData.clienteId}
-              onChange={v => setFormData({ ...formData, clienteId: v, sedeId: "" })}
-              valueKey="id"
-              labelKey="nombre"
-            />
-          </div>
-          <div>
-            <Label htmlFor="sedeId">Sede</Label>
-            <SelectSingle
-              id="sede"
-              placeholder="Seleccione una sede"
-              options={sedes}
-              value={formData.sedeId}
-              onChange={v => setFormData({ ...formData, sedeId: v, clienteId: "" })}
-              valueKey="id"
-              labelKey="nombre"
-            />
-          </div>
+          {String(tipo) === "4" ? (
+            <div className="space-y-2">
+              <Label>Destino</Label>
+              <span style={{ paddingLeft: "15px" }}>
+                <InputCheck
+                  id="esPlanta"
+                  checked={esPlanta}
+                  onChange={(e) => {
+                    setEsPlanta(e.target.checked);
+                    setFormData({ ...formData, sedeId: "", plantaDestinoId: "" });
+                  }}
+                  label="¿Es Planta?"
+                />
+              </span>
+              {esPlanta ? (
+                <SelectSingle
+                  id="plantaDestino"
+                  placeholder="Selecciona una planta"
+                  options={plantas}
+                  value={formData.plantaDestinoId}
+                  onChange={(value) => setFormData({ ...formData, plantaDestinoId: value, sedeId: "", clienteId: "" })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
+                />
+              ) : (
+                <SelectSingle
+                  id="sedeDestino"
+                  placeholder="Selecciona una sede"
+                  options={sedes}
+                  value={formData.sedeId}
+                  onChange={(value) => setFormData({ ...formData, sedeId: value, clienteId: "", plantaDestinoId: "" })}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
+              )}
+            </div>
+          ) : (
+            <>
+              <div>
+                <Label htmlFor="clienteId">Cliente</Label>
+                <SelectSingle
+                  id="cliente"
+                  placeholder="Seleccione un cliente"
+                  options={clientes}
+                  value={formData.clienteId}
+                  onChange={v => setFormData({ ...formData, clienteId: v, sedeId: "" })}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
+              </div>
+              <div>
+                <Label htmlFor="sedeId">Sede</Label>
+                <SelectSingle
+                  id="sede"
+                  placeholder="Seleccione una sede"
+                  options={sedes}
+                  value={formData.sedeId}
+                  onChange={v => setFormData({ ...formData, sedeId: v, clienteId: "" })}
+                  valueKey="id"
+                  labelKey="nombre"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label htmlFor="fechaInicio">Fecha Inicio</Label>

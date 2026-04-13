@@ -13,13 +13,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { salidaService } from "@/services/salidaService"
-import type { Salida, Parametrizacion, Vehicle, Sede } from "@/types"
+import type { Salida, Parametrizacion, Vehicle, Sede, User } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Plus } from "lucide-react"
 import { InputDecimal } from "@/components/ui/input-decimal"
 import { SelectSingle } from "../ui/select-single"
 import { InputCheck } from "../ui/input-check"
 import { VehicleManualDialog } from "./VehicleManualDialog"
+import { Textarea } from "../ui/textarea"
 
 interface SalidaDialogProps {
   open: boolean
@@ -27,6 +28,7 @@ interface SalidaDialogProps {
   salida?: Salida | null
   sedes: Sede[]
   vehiculos: Vehicle[]
+  receptores: User[]
   productos: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
@@ -40,6 +42,7 @@ export function SalidaDialog({
   salida,
   sedes,
   vehiculos,
+  receptores,
   productos,
   plantas,
   onSuccess,
@@ -54,10 +57,12 @@ export function SalidaDialog({
     sedeId: "",
     sedeSalidaId: "",
     vehiculoId: "",
+    receptorId: "",
     productoId: "",
     peso: 0,
     fecha: "",
     fechaRecibo: "",
+    notas: "",
     esSede: false,
     esPlanta: false,
   })
@@ -71,10 +76,12 @@ export function SalidaDialog({
         sedeId: salida.sedeId,
         sedeSalidaId: salida.sedeSalidaId || "",
         vehiculoId: salida.vehiculoId,
+        receptorId: salida.receptorId || "",
         productoId: salida.productoId,
         peso: salida.peso,
         fecha: salida.fecha ? salida.fecha.split('T')[0] : "",
         fechaRecibo: salida.fechaRecibo ? salida.fechaRecibo.split('T')[0] : "",
+        notas: salida.notas || "",
         esSede: salida.plantaId ? false : true,
         esPlanta: salida.sedeId ? false : true,
       })
@@ -87,10 +94,12 @@ export function SalidaDialog({
         sedeId: "",
         sedeSalidaId: "",
         vehiculoId: "",
+        receptorId: "",
         productoId: "",
         peso: 0,
         fecha: today,
         fechaRecibo: "",
+        notas: "",
         esSede: false,
         esPlanta: false,
       })
@@ -237,18 +246,34 @@ export function SalidaDialog({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="producto" required>Producto (Tipo de Residuo)</Label>
-              <SelectSingle
-                id="producto"
-                placeholder="Selecciona un tipo de residuo"
-                options={productos}
-                value={formData.productoId}
-                onChange={(value) => setFormData({ ...formData, productoId: value })}
-                valueKey="id"
-                labelKey="nombreMostrar"
-                disabled={readOnly}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="receptor">Receptor</Label>
+                <SelectSingle
+                  id="receptor"
+                  placeholder="Selecciona un receptor"
+                  options={receptores}
+                  value={formData.receptorId}
+                  onChange={(value) => setFormData({ ...formData, receptorId: value })}
+                  valueKey="id"
+                  labelKey="nombreCompleto"
+                  disabled={readOnly}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="producto" required>Producto (Tipo de Residuo)</Label>
+                <SelectSingle
+                  id="producto"
+                  placeholder="Selecciona un tipo de residuo"
+                  options={productos}
+                  value={formData.productoId}
+                  onChange={(value) => setFormData({ ...formData, productoId: value })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
+                  disabled={readOnly}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -286,6 +311,20 @@ export function SalidaDialog({
                   disabled={readOnly}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={formData.notas}
+                onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
+                rows={2}
+                placeholder="..."
+                disabled={readOnly}
+                readOnly={readOnly}
+                maxLength={500}
+              />
             </div>
           </div>
           <DialogFooter>

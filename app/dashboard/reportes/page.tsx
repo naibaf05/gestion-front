@@ -75,7 +75,8 @@ export default function ReportesPage() {
     const getColumnConfig = (tipoReporte: TipoReporte) => {
         const canViewTarifa = hasPermission("rates.view");
         switch (tipoReporte) {
-            case "reporte1": {
+            case "reporte1":
+            case "reporte2": {
                 const cols = [
                     // ======= SECCIÓN SEDE =======
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true, width: "350px" },
@@ -122,7 +123,7 @@ export default function ReportesPage() {
                 ];
                 return cols;
             }
-            case "reporte2": {
+            case "reporte3": {
                 const cols = [
                     // ======= SECCIÓN SEDE =======
                     { key: "fecha", label: "Fecha", category: "sede", enabled: true, width: "120px" },
@@ -161,7 +162,7 @@ export default function ReportesPage() {
                 ];
                 return cols;
             }
-            case "reporte3": {
+            case "reporte4": {
                 const cols = [
                     { key: "fecha", label: "Fecha", category: "visita", enabled: true, width: "120px" },
                     { key: "nitSalida", label: "Nit Salida", category: "salida", enabled: true, width: "180px" },
@@ -184,7 +185,7 @@ export default function ReportesPage() {
                 ];
                 return cols;
             }
-            case "reporte4": {
+            case "reporte5": {
                 const cols = [
                     // ======= SECCIÓN CLIENTE =======
                     { key: "nombreCliente", label: "Nombre Cliente", category: "cliente", enabled: true, width: "250px" },
@@ -290,8 +291,9 @@ export default function ReportesPage() {
     const tiposReporte = [
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
         { value: "reporte2", label: "Reporte Recolecciones y/o entregas en plantas (Llantas)" },
-        { value: "reporte3", label: "Reporte Salidas" },
-        { value: "reporte4", label: "Reporte Información Clientes" },
+        { value: "reporte3", label: "Reporte Recolecciones y/o entregas en plantas (Llantas Consolidado)" },
+        { value: "reporte4", label: "Reporte Salidas" },
+        { value: "reporte5", label: "Reporte Información Clientes" },
     ];
 
     const [exportColumns, setExportColumns] = useState<string[]>([]);
@@ -307,7 +309,7 @@ export default function ReportesPage() {
         console.log("Número de factura:", invoiceNumber);
         setLoading(true);
         try {
-            const ids = tipoReporte === "reporte2"
+            const ids = tipoReporte === "reporte3"
                 ? selectedRows.flatMap((row: any) => row.ids ?? [row.id])
                 : selectedRows.map((row: any) => row.id);
             const data = {
@@ -346,7 +348,7 @@ export default function ReportesPage() {
         }
 
         // Validar fechas solo para reportes que no sean reporte4
-        if (tipoReporte !== "reporte4") {
+        if (tipoReporte !== "reporte5") {
             if (!fechaInicio || !fechaFin) {
                 toast({
                     title: "Error",
@@ -389,14 +391,18 @@ export default function ReportesPage() {
                     setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte2":
-                    dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
+                    dataP = await reportesService.generarReporte2Llantas(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte3":
-                    dataP = await reportesService.generarReporte3(fechaInicio, fechaFin);
+                    dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
                     break;
                 case "reporte4":
+                    dataP = await reportesService.generarReporte3(fechaInicio, fechaFin);
+                    setColumns_table(dynamicTableColumns);
+                    break;
+                case "reporte5":
                     dataP = await reportesService.generarReporte4(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
                     break;
@@ -407,8 +413,8 @@ export default function ReportesPage() {
             if (user?.plantasIds && user.plantasIds.length > 0) {
                 const allowedIds = new Set(user.plantasIds.map(String));
 
-                if (tipoReporte === "reporte3") {
-                    // reporte3 gets numeric plantaId/plantaDestinoId directly from backend — no name lookup needed
+                if (tipoReporte === "reporte4") {
+                    // reporte4 (salidas) gets numeric plantaId/plantaDestinoId directly from backend
                     dataP = dataP.filter(r =>
                         (r.plantaId != null && allowedIds.has(String(r.plantaId))) ||
                         (r.plantaDestinoId != null && allowedIds.has(String(r.plantaDestinoId)))
@@ -421,11 +427,12 @@ export default function ReportesPage() {
                         switch (tipoReporte) {
                             case "reporte1":
                             case "reporte2":
+                            case "reporte3":
                                 dataP = dataP.filter(r =>
                                     allowedNames.has(r.plantaEntrega)
                                 );
                                 break;
-                            case "reporte4":
+                            case "reporte5":
                                 // oficinaSede is GROUP_CONCAT(nombre SEPARATOR ', '), so check substring
                                 dataP = dataP.filter(r =>
                                     r.oficinaSede && [...allowedNames].some(n => r.oficinaSede.includes(n))
@@ -543,7 +550,7 @@ export default function ReportesPage() {
                             </Select>
                         </div>
 
-                        {tipoReporte !== "reporte4" && (
+                        {tipoReporte !== "reporte5" && (
                             <>
                                 <div>
                                     <Label htmlFor="fechaInicio">Fecha Inicio</Label>
@@ -615,8 +622,8 @@ export default function ReportesPage() {
                 title={reporteNombre}
                 exportColumns={exportColumns}
                 exportHeaders={exportHeaders}
-                showCheckboxes={hasPermission("reportes.assign") && tipoReporte !== "reporte4"}
-                showAssignInvoice={hasPermission("reportes.assign") && tipoReporte !== "reporte4"}
+                showCheckboxes={hasPermission("reportes.assign") && tipoReporte !== "reporte5"}
+                showAssignInvoice={hasPermission("reportes.assign") && tipoReporte !== "reporte5"}
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
                 tipoReporte={tipoReporte}
