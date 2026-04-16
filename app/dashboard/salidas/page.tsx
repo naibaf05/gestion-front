@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, PowerSquare, FileText, Eye, CircleDollarSign } from "lucide-react";
+import { Plus, Edit, PowerSquare, FileText, Eye, CircleDollarSign, History } from "lucide-react";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import { salidaService } from "@/services/salidaService";
@@ -16,13 +16,15 @@ import { SalidaDialog } from "@/components/dialogs/SalidaDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useAuth } from "@/contexts/AuthContext";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { certificatesService } from "@/services/certificatesService";
 import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { vehicleService } from "@/services/vehicleService";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog";
 import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 
 export default function SalidasPage() {
   const { user } = useAuth();
@@ -74,6 +76,9 @@ export default function SalidasPage() {
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [ratesDialogOpen, setRatesDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialId, setHistorialId] = useState<string>("");
+  const [historialLabel, setHistorialLabel] = useState<string>("");
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -219,6 +224,12 @@ export default function SalidasPage() {
     setDialogPdfOpen(true);
   }
 
+  const handleHistorial = (id: string, num?: number) => {
+    setHistorialId(id);
+    setHistorialLabel(`Salida [${num != null ? `RFG${String(num).padStart(5, "0")}` : id}]`);
+    setHistorialOpen(true);
+  };
+
   const handleToggleStatus = async (id: string) => {
     if (confirm("¿Estás seguro de que deseas cambiar el estado de esta salida?")) {
       try {
@@ -301,20 +312,44 @@ export default function SalidasPage() {
                   <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(salida)} tooltipContent="PDF">
                     <FileText className="h-4 w-4" />
                   </ButtonTooltip>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleToggleStatus(salida.id)}
-                    tooltipContent={salida.activo ? "Desactivar" : "Activar"}
-                    className={salida.activo ? "new-text-green-600" : "new-text-red-600"}
-                  >
-                    <PowerSquare className="h-4 w-4" />
-                  </ButtonTooltip>
                 </>
               ) : (
-                <>
-                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(salida)} tooltipContent="Ver">
-                    <Eye className="h-4 w-4" />
-                  </ButtonTooltip>
-                </>
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleView(salida)} tooltipContent="Ver">
+                  <Eye className="h-4 w-4" />
+                </ButtonTooltip>
               )}
+              <DropdownMenu>
+                <Tooltip>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <span className="sr-only">Más acciones</span>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="2" fill="currentColor" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <circle cx="19" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <TooltipContent>Más acciones</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  {hasPermission("salida.edit") && (
+                    <DropdownMenuItem
+                      onClick={() => handleToggleStatus(salida.id)}
+                      className={salida.activo ? "new-text-green-600" : "new-text-red-600"}
+                    >
+                      <PowerSquare className="h-4 w-4" />
+                      {salida.activo ? "Desactivar" : "Activar"}
+                    </DropdownMenuItem>
+                  )}
+                  {hasPermission("users.historial") && (
+                    <DropdownMenuItem onClick={() => handleHistorial(salida.id, salida.num)}>
+                      <History className="h-4 w-4" />
+                      Historial
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </TooltipProvider>
         );
@@ -419,6 +454,14 @@ export default function SalidasPage() {
         open={ratesDialogOpen}
         onOpenChange={setRatesDialogOpen}
         tipo="salida"
+      />
+
+      <HistorialDialog
+        open={historialOpen}
+        onOpenChange={setHistorialOpen}
+        tipo="Salida"
+        id={historialId}
+        label={historialLabel}
       />
     </div>
   );

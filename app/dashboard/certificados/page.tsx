@@ -782,7 +782,7 @@ export default function CertificadosPage() {
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
                                 {hasPermission("certificados.edit") && (
-                                    <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
+                                    <Button onClick={() => handleCreate("4")} className="bg-primary hover:bg-primary-hover">
                                         <Plus className="mr-2 h-4 w-4" />
                                         Nuevo Certificado Salida
                                     </Button>

@@ -253,7 +253,7 @@ export function AmountDialog({
                     const densidad = selectedTResiduo?.densidad;
                     const cantKg =
                       viewCantidadKg && densidad && newCantidad
-                        ? (parseFloat(newCantidad) * parseFloat(densidad)).toString()
+                        ? parseFloat((parseFloat(newCantidad) * parseFloat(densidad)).toFixed(4)).toString()
                         : formData.cantidadKg;
                     setFormData({ ...formData, cantidad: newCantidad, cantidadKg: cantKg });
                   }}
@@ -275,7 +275,7 @@ export function AmountDialog({
                       const densidad = selectedTResiduo?.densidad;
                       const cant =
                         densidad && newCantidadKg
-                          ? (parseFloat(newCantidadKg) / parseFloat(densidad)).toString()
+                          ? parseFloat((parseFloat(newCantidadKg) / parseFloat(densidad)).toFixed(4)).toString()
                           : formData.cantidad;
                       setFormData({ ...formData, cantidadKg: newCantidadKg, cantidad: cant });
                     }}

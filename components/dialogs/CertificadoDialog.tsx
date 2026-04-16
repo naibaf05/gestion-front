@@ -160,15 +160,12 @@ export function CertificadoDialog({
         case "2":
           base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, formData.clienteId, formData.sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
           break;
-        case "3": {
-          const destSedeId = formData.sedeId || formData.plantaDestinoId;
-          base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, destSedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
+        case "3":
+          base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
           break;
-        }
-        case "4": {
+        case "4":
           base64 = await certificatesService.getCertificadoProformaSalidaPDF(formData.sedeId, formData.plantaDestinoId, formData.inicio, formData.fin, formData.fecha, formData.notas);
           break;
-        }
         default:
           base64 = null;
           break;
