@@ -253,12 +253,12 @@ export function AmountDialog({
                     const densidad = selectedTResiduo?.densidad;
                     const cantKg =
                       viewCantidadKg && densidad && newCantidad
-                        ? parseFloat((parseFloat(newCantidad) * parseFloat(densidad)).toFixed(4)).toString()
+                        ? parseFloat((parseFloat(newCantidad) * parseFloat(densidad)).toFixed(2)).toString()
                         : formData.cantidadKg;
                     setFormData({ ...formData, cantidad: newCantidad, cantidadKg: cantKg });
                   }}
                   required
-                  decimalPlaces={4}
+                  decimalPlaces={2}
                   placeholder="Ingrese una cantidad"
                   disabled={disabledCantidad}
                   readOnly={disabledCantidad}
@@ -275,12 +275,12 @@ export function AmountDialog({
                       const densidad = selectedTResiduo?.densidad;
                       const cant =
                         densidad && newCantidadKg
-                          ? parseFloat((parseFloat(newCantidadKg) / parseFloat(densidad)).toFixed(4)).toString()
+                          ? parseFloat((parseFloat(newCantidadKg) / parseFloat(densidad)).toFixed(2)).toString()
                           : formData.cantidad;
                       setFormData({ ...formData, cantidadKg: newCantidadKg, cantidad: cant });
                     }}
                     required
-                    decimalPlaces={4}
+                    decimalPlaces={2}
                     placeholder="Ingrese una cantidad KG"
                     disabled={readOnly}
                     readOnly={readOnly}

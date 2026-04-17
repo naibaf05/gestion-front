@@ -291,7 +291,7 @@ export function ParametrizationDialog({
                     id="cantidad"
                     value={formData.datosJson?.cantidad || ''}
                     onChange={(e) => setFormData({ ...formData, datosJson: { ...formData.datosJson, cantidad: e.target.value } })}
-                    decimalPlaces={4}
+                    decimalPlaces={2}
                     placeholder="Ingrese una cantidad"
                   />
                 )}
