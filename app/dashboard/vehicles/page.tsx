@@ -215,7 +215,7 @@ export default function VehiclesPage() {
                                     <TooltipContent>Más acciones</TooltipContent>
                                 </Tooltip>
                                 <DropdownMenuContent align="end">
-                                    {hasPermission("profiles.permissions") && (
+                                    {hasPermission("vehicles.edit") && (
                                         <DropdownMenuItem onClick={() => handleAdjuntos(veh.id)}>
                                             <Paperclip className="h-4 w-4" />
                                             Adjuntos
