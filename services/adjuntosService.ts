@@ -16,6 +16,13 @@ export class AdjuntosService {
 
   // Subir un nuevo adjunto
   async uploadAdjunto(archivo: File, tipo: string, entityId: string): Promise<Adjunto> {
+    const MAX_SIZE_MB = 10
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
+
+    if (archivo.size > MAX_SIZE_BYTES) {
+      throw new Error(`El archivo supera el límite de ${MAX_SIZE_MB} MB. Tamaño actual: ${(archivo.size / 1024 / 1024).toFixed(2)} MB.`)
+    }
+
     const formData = new FormData()
     formData.append('file', archivo)
     formData.append('tipo', tipo)
@@ -40,8 +47,19 @@ export class AdjuntosService {
           window.location.href = "/login"
         }
       }
-      const errorData = await response.json()
-      throw errorData
+
+      if (response.status === 413) {
+        throw new Error(`El archivo es demasiado grande para el servidor. El límite permitido es ${MAX_SIZE_MB} MB.`)
+      }
+
+      // Intentar leer el cuerpo como JSON; si falla, usar mensaje genérico
+      const contentType = response.headers.get("content-type") ?? ""
+      if (contentType.includes("application/json")) {
+        const errorData = await response.json()
+        throw new Error(errorData?.message || "No se pudo subir el archivo")
+      }
+
+      throw new Error(`Error al subir el archivo (código ${response.status})`)
     }
 
     const result = await response.json()
