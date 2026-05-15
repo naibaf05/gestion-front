@@ -173,6 +173,7 @@ export default function ReportesCliPage() {
                     { key: "tipoResiduo", label: "Producto", category: "visita", enabled: true, width: "180px" },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
                     { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
+                    { key: "fechaRecibo", label: "Fecha Recibo", category: "visita", enabled: true, width: "150px" },
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "direccionSalida", label: "Dirección Salida", category: "salida", enabled: false, width: "300px" },

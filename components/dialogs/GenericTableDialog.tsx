@@ -11,8 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { FileSpreadsheet } from "lucide-react";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import { exportToExcel } from "@/lib/exportExcel";
 
 interface GenericTableDialogProps<TData, TValue> {
     open: boolean;
@@ -39,28 +38,16 @@ export function GenericTableDialog<TData, TValue>({
     exportHeaders,
     maxWidth = "95vw",
 }: GenericTableDialogProps<TData, TValue>) {
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         const keys = exportColumns && exportColumns.length > 0
             ? exportColumns
             : columns.filter((col: any) => col.id !== "actions").map((col: any) => col.accessorKey || col.id);
 
-        const headers = exportHeaders && exportHeaders.length === keys.length
+        const hdrs = exportHeaders && exportHeaders.length === keys.length
             ? exportHeaders
             : keys;
 
-        const exportData = data.map((row: any) => {
-            const obj: any = {};
-            keys.forEach((key: string, idx: number) => {
-                const value = key.split(".").reduce((acc: any, k: string) => acc?.[k], row);
-                obj[headers[idx]] = value;
-            });
-            return obj;
-        });
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Datos");
-        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-        saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), `${title.toLocaleLowerCase().replace(/\s+/g, "_")}.xlsx`);
+        await exportToExcel({ keys, headers: hdrs, data: data as any[], title });
     };
 
     return (
