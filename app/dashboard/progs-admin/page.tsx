@@ -642,7 +642,7 @@ export default function ProgsAdminPage() {
 
       <UpdateRatesDialog open={ratesDialogOpen} onOpenChange={setRatesDialogOpen} />
       <UpdateDensDialog open={densDialogOpen} onOpenChange={setDensDialogOpen} />
-      <BulkPdfDialog open={bulkPdfDialogOpen} onOpenChange={setBulkPdfDialogOpen} />
+      <BulkPdfDialog open={bulkPdfDialogOpen} onOpenChange={setBulkPdfDialogOpen} user={user} />
     </div>
   )
 }

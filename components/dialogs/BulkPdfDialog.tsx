@@ -7,16 +7,17 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { SelectMultiple, OptionType } from "@/components/ui/select-multiple"
 import { Download } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { Sede } from "@/types"
+import type { Sede, User } from "@/types"
 import { clientService } from "@/services/clientService"
 import { certificatesService } from "@/services/certificatesService"
 
 interface BulkPdfDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  user?: User | null
 }
 
-export function BulkPdfDialog({ open, onOpenChange }: BulkPdfDialogProps) {
+export function BulkPdfDialog({ open, onOpenChange, user }: BulkPdfDialogProps) {
   const { toast } = useToast()
 
   const bogotaFormatter = useMemo(
@@ -72,8 +73,11 @@ export function BulkPdfDialog({ open, onOpenChange }: BulkPdfDialogProps) {
   const loadSedes = async () => {
     try {
       setLoadingSedes(true)
-      const data = await clientService.getSedesActivas()
-      setSedesOptions(data)
+      const esCliente = user?.perfil?.nombre === "CLIENTE"
+      const data = esCliente
+        ? await clientService.getSedesActivasByCliente(user!.id)
+        : await clientService.getSedesActivas()
+      setSedesOptions(data ?? [])
     } catch {
       toast({
         title: "Error",

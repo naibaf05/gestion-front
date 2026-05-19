@@ -74,6 +74,10 @@ export class ClientService {
     return response.data
   }
 
+  async getSedesActivasByCliente(clienteId: string): Promise<Sede[]> {
+    return apiService.get<Sede[]>(`/sedes/cliente/${clienteId}`)
+  }
+
   async getSede(id: string): Promise<Sede> {
     const response = await apiService.get<ApiResponse<Sede>>(`/sedes/${id}`)
     return response.data
