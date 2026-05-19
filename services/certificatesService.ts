@@ -89,6 +89,14 @@ export class CertificatesService {
         const response = await apiService.patch<ApiResponse<Certificados>>(`/certificado/${id}/notas`, { notas });
         return response.data;
     }
+
+    async getVisitasZip(sedeIds: string[], inicio: string, fin: string): Promise<string> {
+        const response = await apiService.post<ApiResponse<string>>(
+            `/certificado/visitas-zip?inicio=${inicio}&fin=${fin}`,
+            sedeIds.map(id => Number(id))
+        );
+        return response.data;
+    }
 }
 
 export const certificatesService = new CertificatesService();

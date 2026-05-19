@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine, FlaskConical } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine, FlaskConical, FolderDown } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -31,6 +31,7 @@ import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
 import { UpdateDensDialog } from "@/components/dialogs/UpdateDensDialog"
+import { BulkPdfDialog } from "@/components/dialogs/BulkPdfDialog"
 import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 
@@ -105,6 +106,9 @@ export default function ProgsAdminPage() {
 
   // Estado para diálogo de Actualizar Densidades
   const [densDialogOpen, setDensDialogOpen] = useState(false)
+
+  // Estado para diálogo de Descarga Masiva de PDFs
+  const [bulkPdfDialogOpen, setBulkPdfDialogOpen] = useState(false)
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -323,6 +327,9 @@ export default function ProgsAdminPage() {
   // Handler para abrir el diálogo de Actualizar Densidades
   const openDensDialog = () => setDensDialogOpen(true)
 
+  // Handler para abrir el diálogo de Descarga Masiva de PDFs
+  const openBulkPdfDialog = () => setBulkPdfDialogOpen(true)
+
   const processedProgs = useMemo(() => {
     return progs.map(prog => ({
       ...prog,
@@ -501,7 +508,7 @@ export default function ProgsAdminPage() {
 
       <Card>
         <CardContent>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-start gap-3">
             {tiposUnicos.length > 0 ? (
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-semibold mb-2 text-gray-700">Leyenda de Tipos:</h3>
@@ -519,7 +526,7 @@ export default function ProgsAdminPage() {
             ) : (
               <div />
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {hasPermission("rates.edit") && (
                 <Button onClick={openRatesDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
                   <CircleDollarSign className="mr-2 h-4 w-4" />
@@ -530,6 +537,12 @@ export default function ProgsAdminPage() {
                 <Button onClick={openDensDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
                   <FlaskConical className="mr-2 h-4 w-4" />
                   Actualizar Densidades
+                </Button>
+              )}
+              {hasPermission("generar.pdf") && (
+                <Button onClick={openBulkPdfDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <FolderDown className="mr-2 h-4 w-4" />
+                  Descarga Masiva PDF
                 </Button>
               )}
               {hasPermission("admin.edit") && (
@@ -629,6 +642,7 @@ export default function ProgsAdminPage() {
 
       <UpdateRatesDialog open={ratesDialogOpen} onOpenChange={setRatesDialogOpen} />
       <UpdateDensDialog open={densDialogOpen} onOpenChange={setDensDialogOpen} />
+      <BulkPdfDialog open={bulkPdfDialogOpen} onOpenChange={setBulkPdfDialogOpen} />
     </div>
   )
 }
