@@ -1,9 +1,16 @@
 import { apiService } from "./api"
 import type { AuthResponse, LoginCredentials, ApiResponse } from "@/types"
 
+const recaptchaHeader = (token?: string): Record<string, string> =>
+  token ? { "X-Recaptcha-Token": token } : {}
+
 export class AuthService {
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiService.post<ApiResponse<AuthResponse>>("/auth/login", credentials)
+  async login(credentials: LoginCredentials, recaptchaToken?: string): Promise<AuthResponse> {
+    const response = await apiService.post<ApiResponse<AuthResponse>>(
+      "/auth/login",
+      credentials,
+      recaptchaHeader(recaptchaToken)
+    )
     if (response?.data?.accessToken) {
       apiService.setToken(response.data.accessToken)
     }
@@ -23,12 +30,12 @@ export class AuthService {
     return response.data
   }
 
-  async forgotPassword(email: string): Promise<void> {
-    await apiService.post("/auth/forgot-password", { email })
+  async forgotPassword(email: string, recaptchaToken?: string): Promise<void> {
+    await apiService.post("/auth/forgot-password", { email }, recaptchaHeader(recaptchaToken))
   }
 
-  async resetPassword(token: string, password: string): Promise<void> {
-    await apiService.post("/auth/reset-password", { token, password })
+  async resetPassword(token: string, password: string, recaptchaToken?: string): Promise<void> {
+    await apiService.post("/auth/reset-password", { token, password }, recaptchaHeader(recaptchaToken))
   }
 
   async refreshToken(): Promise<AuthResponse> {

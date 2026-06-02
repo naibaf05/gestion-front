@@ -5,6 +5,7 @@ import "./globals.css"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ConfigProvider } from "@/contexts/ConfigContext"
 import { Toaster } from "@/components/ui/toaster"
+import { RecaptchaProvider } from "@/components/RecaptchaProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,12 +23,14 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        <ConfigProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </ConfigProvider>
+        <RecaptchaProvider>
+          <ConfigProvider>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </ConfigProvider>
+        </RecaptchaProvider>
       </body>
     </html>
   )

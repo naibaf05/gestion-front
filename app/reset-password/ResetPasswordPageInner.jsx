@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, Eye, EyeOff, CheckCircle, AlertCircle } from "lucid
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useConfig } from "@/contexts/ConfigContext"
+import { useRecaptcha } from "@/hooks/useRecaptcha"
 
 export default function ResetPasswordPageInner() {
   const [password, setPassword] = useState("")
@@ -26,6 +27,7 @@ export default function ResetPasswordPageInner() {
   const router = useRouter()
   const { toast } = useToast()
   const { config } = useConfig()
+  const { getToken } = useRecaptcha()
 
   useEffect(() => {
     const tokenParam = searchParams.get("token")
@@ -90,7 +92,8 @@ export default function ResetPasswordPageInner() {
     setIsLoading(true)
 
     try {
-      await authService.resetPassword(token, password)
+      const recaptchaToken = await getToken("reset_password")
+      await authService.resetPassword(token, password, recaptchaToken)
       setResetSuccess(true)
       toast({
         title: "Contraseña restablecida",

@@ -97,6 +97,22 @@ export class CertificatesService {
         );
         return response.data;
     }
+
+    async getCertificadosZip(certIds: string[]): Promise<string> {
+        const response = await apiService.post<ApiResponse<string>>(
+            `/certificado/certificados-zip`,
+            certIds.map(id => Number(id))
+        );
+        return response.data;
+    }
+
+    async getCertificadosZipByFiltro(tipo: string, inicio: string, fin: string, sedeIds: string[]): Promise<string> {
+        const response = await apiService.post<ApiResponse<string>>(
+            `/certificado/certificados-zip-filtro?tipo=${tipo}&inicio=${inicio}&fin=${fin}`,
+            sedeIds.map(id => Number(id))
+        );
+        return response.data;
+    }
 }
 
 export const certificatesService = new CertificatesService();

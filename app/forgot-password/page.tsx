@@ -11,19 +11,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Loader2, Mail } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import { useRecaptcha } from "@/hooks/useRecaptcha"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const { toast } = useToast()
+  const { getToken } = useRecaptcha()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      await authService.forgotPassword(email)
+      const recaptchaToken = await getToken("forgot_password")
+      await authService.forgotPassword(email, recaptchaToken)
       setEmailSent(true)
       toast({
         title: "Correo enviado",

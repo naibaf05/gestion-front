@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
+  login: (credentials: LoginCredentials, recaptchaToken?: string) => Promise<void>
   logout: () => Promise<void>
   isAuthenticated: boolean
   availableRoles: User["roles"] | null
@@ -63,10 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginCredentials, recaptchaToken?: string) => {
     try {
       setLoading(true)
-      const response = await authService.login(credentials)
+      const response = await authService.login(credentials, recaptchaToken)
       const u = response.user
       // Si hay múltiples clientes disponibles, mostrar selector
       if (response.clientesDisponibles && response.clientesDisponibles.length > 1) {

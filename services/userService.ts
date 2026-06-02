@@ -48,7 +48,7 @@ export class UserService {
 
   // Perfiles
   async getProfilesTable(): Promise<Profile[]> {
-    const response = await apiService.get<ApiResponse<Profile[]>>(`/roles/all`)
+    const response = await apiService.get<ApiResponse<Profile[]>>(`/roles`)
     response.data.forEach((element) => {
       if (element.permisos && typeof element.permisos === "string") {
         element.permisos = JSON.parse(element.permisos);

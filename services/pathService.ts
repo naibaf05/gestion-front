@@ -18,7 +18,7 @@ export class PathService {
   }
 
   async getAll(): Promise<Path[]> {
-    const response = await apiService.get<ApiResponse<Path[]>>(`/rutas/all`)
+    const response = await apiService.get<ApiResponse<Path[]>>(`/rutas`)
     return response.data
   }
 

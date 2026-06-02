@@ -28,13 +28,15 @@ class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
+    const { headers: optHeaders, ...restOptions } = options
+
     const config: RequestInit = {
+      ...restOptions,
       headers: {
         "Content-Type": "application/json",
         ...(this.token && { Authorization: `Bearer ${this.token}` }),
-        ...options.headers,
+        ...optHeaders,
       },
-      ...options,
     }
 
     try {
@@ -61,10 +63,11 @@ class ApiService {
     return this.request<T>(endpoint, { method: "GET" })
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any, extraHeaders?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
+      headers: extraHeaders,
     })
   }
 

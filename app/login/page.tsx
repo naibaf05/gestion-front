@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { useRecaptcha } from "@/hooks/useRecaptcha"
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({ username: "", password: "" })
@@ -21,12 +22,14 @@ export default function LoginPage() {
   const [selectedRoleId, setSelectedRoleId] = useState<string>("")
   const [selectedClientId, setSelectedClientId] = useState<string>("")
   const { config } = useConfig()
+  const { getToken } = useRecaptcha()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await login(credentials)
+      const recaptchaToken = await getToken("login")
+      await login(credentials, recaptchaToken)
     } catch (error) {
       console.error("Login error:", error)
     } finally {

@@ -294,7 +294,7 @@ export default function UsersPage() {
 
       <Card>
         <CardContent>
-          <DataTable columns={columns} data={users} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
+          <DataTable columns={columns} data={users} searchKey={["nombre", "documento", "email"]} searchPlaceholder="Buscar por nombre, documento o email..." />
         </CardContent>
       </Card>
 

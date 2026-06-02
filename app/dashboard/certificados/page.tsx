@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, FileText, Plus, PowerSquare, Table, Trash2, History } from "lucide-react";
+import { Edit, FileText, FolderDown, Plus, PowerSquare, Table, Trash2, History } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog";
 import { DatePicker } from "@/components/ui/date-picker";
+import { BulkPdfCertificadosDialog } from "@/components/dialogs/BulkPdfCertificadosDialog";
 
 export default function CertificadosPage() {
     const { user, logout } = useAuth()
@@ -51,6 +52,9 @@ export default function CertificadosPage() {
     // Notas
     const [notasDialogOpen, setNotasDialogOpen] = useState(false);
     const [selectedCertificadoNotas, setSelectedCertificadoNotas] = useState<Certificados | null>(null);
+
+    // Estado para diálogo de Descarga Masiva de PDFs
+    const [bulkPdfOpen, setBulkPdfOpen] = useState(false);
 
     // Estados para mensajes de confirmación similares a progs-admin
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -727,12 +731,20 @@ export default function CertificadosPage() {
                         <TabsContent value="llantas">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                {hasPermission("certificados.edit") && (
-                                    <Button onClick={() => handleCreate("1")} className="bg-primary hover:bg-primary-hover">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Nuevo Certificado
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("1")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <DataTable
                                 columns={columns}
@@ -745,12 +757,20 @@ export default function CertificadosPage() {
                         <TabsContent value="otros">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                {hasPermission("certificados.edit") && (
-                                    <Button onClick={() => handleCreate("2")} className="bg-primary hover:bg-primary-hover">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Nuevo Certificado
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("2")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <DataTable
                                 columns={columns}
@@ -763,12 +783,20 @@ export default function CertificadosPage() {
                         <TabsContent value="proforma">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                {hasPermission("certificados.edit") && (
-                                    <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Nuevo Certificado
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("3")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <DataTable
                                 columns={columnsProforma}
@@ -781,12 +809,20 @@ export default function CertificadosPage() {
                         <TabsContent value="salidas">
                             <div className="flex justify-between items-center mb-4">
                                 <div></div>
-                                {hasPermission("certificados.edit") && (
-                                    <Button onClick={() => handleCreate("4")} className="bg-primary hover:bg-primary-hover">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Nuevo Certificado Salida
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("4")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado Salida
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <DataTable
                                 columns={columnsSalidas}
@@ -844,6 +880,18 @@ export default function CertificadosPage() {
                 certificadoId={selectedCertificadoNotas?.id || ""}
                 notasActuales={selectedCertificadoNotas?.notas || ""}
                 onSuccess={loadData}
+            />
+
+            <BulkPdfCertificadosDialog
+                open={bulkPdfOpen}
+                onOpenChange={setBulkPdfOpen}
+                tipo={
+                    tab === "llantas" ? "1"
+                    : tab === "otros" ? "2"
+                    : tab === "proforma" ? "3"
+                    : "4"
+                }
+                user={user}
             />
         </div>
     );
