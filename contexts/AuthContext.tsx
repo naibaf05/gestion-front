@@ -6,6 +6,7 @@ import type { User, LoginCredentials, ClienteSelector } from "@/types"
 import { authService } from "@/services/authService"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3"
 
 interface AuthContextType {
   user: User | null
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingUser, setPendingUser] = useState<User | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const { executeRecaptcha } = useGoogleReCaptcha()
 
   useEffect(() => {
     checkAuth()
@@ -132,7 +134,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!pendingClientCredentials) return
     try {
       setLoading(true)
-      const response = await authService.login({ ...pendingClientCredentials, clientId })
+      const recaptchaToken = executeRecaptcha ? await executeRecaptcha("login") : undefined
+      const response = await authService.login({ ...pendingClientCredentials, clientId }, recaptchaToken)
       setPendingClientCredentials(null)
       setAvailableClientes(null)
       const u = response.user

@@ -13,6 +13,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useRecaptcha } from "@/hooks/useRecaptcha"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState({ username: "", password: "" })
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [selectedClientId, setSelectedClientId] = useState<string>("")
   const { config } = useConfig()
   const { getToken } = useRecaptcha()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +33,8 @@ export default function LoginPage() {
       const recaptchaToken = await getToken("login")
       await login(credentials, recaptchaToken)
     } catch (error) {
-      console.error("Login error:", error)
+      const message = error instanceof Error ? error.message : "Error al iniciar sesión"
+      toast({ title: "Error", description: message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }

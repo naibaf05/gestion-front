@@ -14,10 +14,13 @@ export function useRecaptcha() {
   const getToken = useCallback(
     async (action: string): Promise<string> => {
       if (!executeRecaptcha) {
-        console.warn("reCAPTCHA no está listo todavía")
-        return ""
+        throw new Error("La verificación de seguridad no está lista. Por favor espera un momento e intenta de nuevo.")
       }
-      return executeRecaptcha(action)
+      const token = await executeRecaptcha(action)
+      if (!token) {
+        throw new Error("No se pudo obtener el token de verificación. Por favor intenta de nuevo.")
+      }
+      return token
     },
     [executeRecaptcha]
   )
