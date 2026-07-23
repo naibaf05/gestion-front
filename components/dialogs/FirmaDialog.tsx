@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Upload, Trash2, RotateCcw, PenLine } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { userService } from "@/services/userService"
+import { adjuntosService } from "@/services/adjuntosService"
 
 interface FirmaDialogProps {
     open: boolean
@@ -37,6 +38,8 @@ export function FirmaDialog({
     const [mode, setMode] = useState<"upload" | "draw">("upload")
     const [isDrawing, setIsDrawing] = useState(false)
     const [hasDrawn, setHasDrawn] = useState(false)
+    const [firmaPreviewUrl, setFirmaPreviewUrl] = useState<string | null>(null)
+    const [loadingFirma, setLoadingFirma] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const { toast } = useToast()
@@ -49,8 +52,35 @@ export function FirmaDialog({
             setChangingFirma(false)
             setMode("upload")
             setHasDrawn(false)
+            setFirmaPreviewUrl(null)
         }
     }, [open])
+
+    // La firma actual llega como ruta del FTP; hay que consultar el contenido bajo demanda
+    useEffect(() => {
+        if (!open || !currentFirma) return
+        let cancelled = false
+        setLoadingFirma(true)
+        adjuntosService.getByRuta(currentFirma)
+            .then((adjunto) => {
+                if (cancelled) return
+                if (adjunto?.base64) {
+                    const mime = adjunto.tipoArchivo ? `image/${adjunto.tipoArchivo}` : "image/png"
+                    setFirmaPreviewUrl(`data:${mime};base64,${adjunto.base64}`)
+                } else {
+                    setFirmaPreviewUrl(null)
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setFirmaPreviewUrl(null)
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingFirma(false)
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [open, currentFirma])
 
     // Inicializar canvas cuando se muestra el pad de dibujo
     useEffect(() => {
@@ -223,11 +253,17 @@ export function FirmaDialog({
                         <div className="space-y-2">
                             <Label>Firma actual</Label>
                             <div className="border rounded-md p-3 bg-gray-50 flex items-center justify-center min-h-[120px]">
-                                <img
-                                    src={currentFirma!}
-                                    alt="Firma actual"
-                                    className="max-h-40 max-w-full object-contain"
-                                />
+                                {loadingFirma ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                ) : firmaPreviewUrl ? (
+                                    <img
+                                        src={firmaPreviewUrl}
+                                        alt="Firma actual"
+                                        className="max-h-40 max-w-full object-contain"
+                                    />
+                                ) : (
+                                    <p className="text-sm text-gray-400">No se pudo cargar la firma</p>
+                                )}
                             </div>
                             <Button
                                 variant="outline"

@@ -14,6 +14,12 @@ export class AdjuntosService {
     return response.data
   }
 
+  // Obtener el contenido (base64) de un archivo del FTP a partir de su ruta
+  async getByRuta(ruta: string): Promise<Adjunto> {
+    const response = await apiService.get<ApiResponse<Adjunto>>(`/adjuntos/ftp?ruta=${encodeURIComponent(ruta)}`)
+    return response.data
+  }
+
   // Subir un nuevo adjunto
   async uploadAdjunto(archivo: File, tipo: string, entityId: string): Promise<Adjunto> {
     const MAX_SIZE_MB = 10
