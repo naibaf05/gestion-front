@@ -156,6 +156,16 @@ export interface ApiResponse<T> {
   errors?: string[]
 }
 
+export interface PublicValidationResult {
+  success: boolean
+  numero?: string
+  fecha?: string
+  entidad?: string
+  empresa: string
+  activo: boolean
+  pdfBase64: string
+}
+
 export interface Path {
   id: string
   codigo: string

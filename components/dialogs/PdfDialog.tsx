@@ -2,13 +2,14 @@
 
 import type React from "react"
 import { useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
 interface PdfDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     title?: string
+    description?: string
     base64: string
     viewSaveButton?: boolean
     onSuccess?: () => void;
@@ -18,6 +19,7 @@ export function PdfDialog({
     open,
     onOpenChange,
     title = "Visualización PDF",
+    description,
     base64,
     viewSaveButton = false,
     onSuccess = () => { },
@@ -38,6 +40,7 @@ export function PdfDialog({
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                         <DialogTitle>{title}</DialogTitle>
+                        {description && <DialogDescription>{description}</DialogDescription>}
                     </DialogHeader>
 
                     <iframe
