@@ -123,6 +123,10 @@ export default function ReportesCliPage() {
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "numCert", label: "Certificado", category: "visita", enabled: false, width: "150px" },
+                    { key: "fleteNombre", label: "Flete", category: "visita", enabled: false, width: "180px" },
+                    { key: "cantidadVisita", label: "Cantidad Visita", category: "visita", enabled: false, width: "130px" },
+                    { key: "numFacturaExt", label: "Número Factura Externa", category: "visita", enabled: true, width: "180px" },
+                    { key: "fecFacturaExt", label: "Fecha Factura Externa", category: "visita", enabled: true, width: "150px" },
                 ];
             case "reporte2":
                 return [

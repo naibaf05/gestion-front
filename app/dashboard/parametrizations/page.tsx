@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car, History, Eye } from "lucide-react"
+import { Plus, Edit, MapPin, MapPinOff, PowerSquare, Building, Zap, Clock, UserCheck, Settings, Search, LocateFixed, Biohazard, TableProperties, PencilRuler, Trash2, Car, History, Eye, CircleDollarSign, Truck } from "lucide-react"
 import { parametrizationService } from "@/services/parametrizationService"
 import type { Cliente, Parametrizacion, ParametrizationType } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { ParametrizationDialog } from "@/components/dialogs/ParametrizationDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
+import { RatesParamDialog } from "@/components/dialogs/RatesParamDialog"
 import type { ColumnDef } from "@tanstack/react-table"
 import { LocationPickerDialog } from "@/components/dialogs/LocationPickerDialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -119,6 +120,24 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     color: "text-indigo-600",
     bgColor: "bg-indigo-50",
   },
+  {
+    key: "fletes",
+    title: "Fletes",
+    singular_title: "Flete",
+    description: "Administra los fletes disponibles con sus tarifas",
+    icon: Truck,
+    color: "text-orange-600",
+    bgColor: "bg-orange-50",
+  },
+  {
+    key: "gestores",
+    title: "Gestores",
+    singular_title: "Gestor",
+    description: "Administra los gestores disponibles con sus tarifas",
+    icon: Truck,
+    color: "text-cyan-700",
+    bgColor: "bg-cyan-50",
+  },
 ]
 
 export default function ParametrizationsPage() {
@@ -138,6 +157,8 @@ export default function ParametrizationsPage() {
   const [und_medidas, setUndMedidas] = useState<Parametrizacion[]>([])
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [t_vehiculos, setTVehiculos] = useState<Parametrizacion[]>([])
+  const [fletes, setFletes] = useState<Parametrizacion[]>([])
+  const [gestores, setGestores] = useState<Parametrizacion[]>([])
 
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -148,6 +169,8 @@ export default function ParametrizationsPage() {
   const [historialOpen, setHistorialOpen] = useState(false);
   const [historialId, setHistorialId] = useState<string>("");
   const [historialLabel, setHistorialLabel] = useState<string>("");
+  const [ratesParamOpen, setRatesParamOpen] = useState(false);
+  const [ratesParamItem, setRatesParamItem] = useState<any>(null);
   const { toast } = useToast()
 
   if (user && user.permisos && typeof user.permisos === "string") {
@@ -171,7 +194,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData] =
+      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData, fletesData, gestoresData] =
         await Promise.all([
           clientService.getClientesActivos(),
           parametrizationService.getLista("poblado"),
@@ -184,6 +207,8 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("und_medida"),
           parametrizationService.getLista("contenedor"),
           parametrizationService.getLista("t_vehiculo"),
+          parametrizationService.getLista("flete"),
+          parametrizationService.getLista("gestor"),
         ])
       setClientes(clientesData)
       setPoblados(pobladosData)
@@ -196,6 +221,8 @@ export default function ParametrizationsPage() {
       setUndMedidas(undMedidasData)
       setContenedores(contenedoresData)
       setTVehiculos(tVehiculosData)
+      setFletes(fletesData)
+      setGestores(gestoresData)
     } catch (error) {
       toast({
         title: "Error",
@@ -229,6 +256,10 @@ export default function ParametrizationsPage() {
         return contenedores
       case "t_vehiculos":
         return t_vehiculos
+      case "fletes":
+        return fletes
+      case "gestores":
+        return gestores
       default:
         return []
     }
@@ -256,6 +287,10 @@ export default function ParametrizationsPage() {
         return contenedores.length
       case "t_vehiculos":
         return t_vehiculos.length
+      case "fletes":
+        return fletes.length
+      case "gestores":
+        return gestores.length
       default:
         return 0
     }
@@ -328,6 +363,11 @@ export default function ParametrizationsPage() {
     const tipoConfig = parametrizationConfigs.find(config => config.key === tipo);
     setHistorialLabel(`${tipoConfig?.singular_title || 'Parametrización'} [${nombre}]`);
     setHistorialOpen(true);
+  };
+
+  const openRatesParam = (item: any) => {
+    setRatesParamItem(item);
+    setRatesParamOpen(true);
   };
 
   const openLocationPicker = (item: any, type: ParametrizationType) => {
@@ -426,6 +466,11 @@ export default function ParametrizationsPage() {
                 ) : (
                   <div></div>
                 )}
+                {item.tieneTarifa && (
+                  <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
+                    <CircleDollarSign className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -443,6 +488,11 @@ export default function ParametrizationsPage() {
                 {hasPermission("users.historial") && (
                   <Button variant="ghost" size="sm" onClick={() => handleHistorial(item.id, item.nombre, type)}>
                     <History className="h-4 w-4" />
+                  </Button>
+                )}
+                {item.tieneTarifa && (
+                  <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
+                    <CircleDollarSign className="h-4 w-4" />
                   </Button>
                 )}
               </>
@@ -580,6 +630,14 @@ export default function ParametrizationsPage() {
         tipo="Parametrizacion"
         id={historialId}
         label={historialLabel}
+      />
+
+      <RatesParamDialog
+        open={ratesParamOpen}
+        onOpenChange={setRatesParamOpen}
+        parametrizacion={ratesParamItem}
+        readOnly={!hasPermission("rates.edit")}
+        canEdit={hasPermission("rates.edit")}
       />
     </div>
   )

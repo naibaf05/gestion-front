@@ -1,6 +1,6 @@
 import { init } from "next/dist/compiled/webpack/webpack"
 
-export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos"
+export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos" | "fletes" | "gestores"
 
 export interface LoginCredentials {
   username: string
@@ -60,6 +60,25 @@ export interface Parametrizacion {
   descripcion?: string
   datosJson?: any
   activo: boolean
+  tieneTarifa?: boolean
+}
+
+export interface RateParam {
+  id: string
+  parametrizacionId: string
+  parametrizacionNombre?: string
+  undMedidaId: string
+  undMedidaNombre?: string
+  tipoResiduoId: string
+  tipoResiduoCodigo?: string
+  tipoResiduoNombre?: string
+  tarifa: string
+  tarifaNombre?: string
+  fechaInicio: string
+  fechaFin?: string
+  activo: boolean
+  puestoPlanta: boolean
+  densidad?: string
 }
 
 export interface TipoResiduo {
@@ -325,6 +344,22 @@ export interface VisitaCantidad {
   cantidadUnidad?: string;
 }
 
+export interface SalidaExternaCantidad {
+  id: string;
+  cantidad: string;
+  cantidadKg?: string;
+  tResiduoId: string;
+  tResiduoNombre?: string;
+  contenedorId?: string;
+  contenedorNombre?: string;
+  numContenedor?: string;
+  salidaExternaId: string;
+  tarifaId?: string;
+  tarifaNombre?: string;
+  unidadMedida?: string;
+  cantidadUnidad?: string;
+}
+
 export interface InfoAdicional {
   semanaActual: string
 }
@@ -398,6 +433,49 @@ export interface Salida {
   salida?: string
   destino?: string
   num?: number
+}
+
+export interface SalidaExterna {
+  id: string
+  tipo: string
+  lat?: string
+  lon?: string
+  fecha: string
+  inicio: string
+  fin?: string
+  notas?: string
+  firma?: string | null
+  plantaId?: string
+  plantaNombre?: string
+  plantaDestinoId?: string
+  plantaDestinoNombre?: string
+  sedeId?: string
+  sedeNombre?: string
+  sedeSalidaId?: string
+  sedeSalidaNombre?: string
+  vehiculoId?: string
+  vehiculoPlaca?: string
+  conductorId?: string
+  conductorNombre?: string
+  receptorId?: string
+  receptorNombre?: string
+  comercialId?: string
+  comercialNombre?: string
+  gestorId?: string
+  gestorNombre?: string
+  fleteId?: string
+  fleteNombre?: string
+  tarifaFleteId?: string
+  tarifaFlete?: number
+  tarifaFleteNombre?: string
+  tarifaGestorId?: string
+  tarifaGestor?: number
+  tarifaGestorNombre?: string
+  cantidad?: number
+  activo: boolean
+  num?: number
+  salida?: string
+  destino?: string
 }
 
 // Tipos para Dashboard Stats

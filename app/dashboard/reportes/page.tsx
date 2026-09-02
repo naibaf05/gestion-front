@@ -76,7 +76,9 @@ export default function ReportesPage() {
         const canViewTarifa = hasPermission("rates.view");
         switch (tipoReporte) {
             case "reporte1":
-            case "reporte2": {
+            case "reporte2":
+            case "reporte6": {
+                const isReporteResiduos = tipoReporte === "reporte1" || tipoReporte === "reporte6";
                 const cols = [
                     // ======= SECCIÓN SEDE =======
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true, width: "350px" },
@@ -120,6 +122,13 @@ export default function ReportesPage() {
                     { key: "numCert", label: "Certificado", category: "visita", enabled: false, width: "150px" },
                     { key: "unidades", label: "Unidades", category: "visita", enabled: false, width: "100px" },
                     { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: false, width: "150px" },
+                    { key: "fleteNombre", label: "Flete", category: "visita", enabled: isReporteResiduos, width: "180px" },
+                    { key: "gestorNombre", label: "Gestor", category: "visita", enabled: isReporteResiduos, width: "180px" },
+                    { key: "cantidadVisita", label: "Cantidad Visita", category: "visita", enabled: isReporteResiduos, width: "130px" },
+                    ...(canViewTarifa ? [{ key: "tarifaFlete", label: "Tarifa Flete", category: "visita", enabled: isReporteResiduos, width: "130px" }] : []),
+                    ...(canViewTarifa ? [{ key: "tarifaGestor", label: "Tarifa Gestor", category: "visita", enabled: isReporteResiduos, width: "130px" }] : []),
+                    { key: "numFacturaExt", label: "N\u00famero Factura Externa", category: "visita", enabled: false, width: "180px" },
+                    { key: "fecFacturaExt", label: "Fecha Factura Externa", category: "visita", enabled: false, width: "150px" },
                 ];
                 return cols;
             }
@@ -159,6 +168,10 @@ export default function ReportesPage() {
                     // ======= FACTURA =======
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
                     { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
+                    { key: "numFacturaExt", label: "N\u00famero Factura Externa", category: "visita", enabled: true, width: "180px" },
+                    { key: "fecFacturaExt", label: "Fecha Factura Externa", category: "visita", enabled: true, width: "150px" },
+                    { key: "fleteNombre", label: "Flete", category: "visita", enabled: false, width: "180px" },
+                    { key: "cantidadVisita", label: "Cantidad Visita", category: "visita", enabled: false, width: "130px" },
                 ];
                 return cols;
             }
@@ -258,7 +271,7 @@ export default function ReportesPage() {
     };
 
     // Columnas que deben mostrarse con formato monetario (sin alterar el valor original numérico)
-    const CURRENCY_COLUMNS = new Set(["valor", "tarifa"]);
+    const CURRENCY_COLUMNS = new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor"]);
     const currencyFormatter = new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",
@@ -292,6 +305,7 @@ export default function ReportesPage() {
     const tiposReporte = [
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
         { value: "reporte2", label: "Reporte Recolecciones y/o entregas en plantas (Llantas)" },
+        { value: "reporte6", label: "Reporte Recolecciones y/o entregas en plantas (Residuos + Llantas)" },
         { value: "reporte3", label: "Reporte Recolecciones y/o entregas en plantas (Llantas Consolidado)" },
         { value: "reporte4", label: "Reporte Salidas" },
         { value: "reporte5", label: "Reporte Información Clientes" },
@@ -333,6 +347,33 @@ export default function ReportesPage() {
                 description: error?.message || "No se pudo asignar factura",
                 variant: "error",
             });
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const asignarFacturaExterna = async (selectedRows: any[], invoiceNumber: string, invoiceDate?: string) => {
+        setLoading(true);
+        try {
+            const rowsSalidasExternas = selectedRows.filter((row: any) => Number(row?.id) < 0);
+            if (rowsSalidasExternas.length === 0) {
+                toast({
+                    title: "Sin registros de Salidas Externas",
+                    description: "La factura externa solo se puede asignar a registros de Salidas Externas.",
+                    variant: "warning",
+                });
+                return;
+            }
+
+            const ids = tipoReporte === "reporte3"
+                ? selectedRows.flatMap((row: any) => row.ids ?? [row.id])
+                : rowsSalidasExternas.map((row: any) => row.id);
+            const data = { ids, numeroFactura: invoiceNumber, fecFactura: invoiceDate, tipo: tipoReporte };
+            await reportesService.asignarFacturaExterna(data);
+            toast({ title: "Factura externa asignada", description: "La factura externa ha sido asignada exitosamente", variant: "success" });
+            handleGenerar();
+        } catch (error: any) {
+            toast({ title: "Error", description: error?.message || "No se pudo asignar factura externa", variant: "error" });
         } finally {
             setLoading(false);
         }
@@ -395,6 +436,10 @@ export default function ReportesPage() {
                     dataP = await reportesService.generarReporte2Llantas(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
                     break;
+                case "reporte6":
+                    dataP = await reportesService.generarReporte6(fechaInicio, fechaFin);
+                    setColumns_table(dynamicTableColumns);
+                    break;
                 case "reporte3":
                     dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
@@ -421,22 +466,33 @@ export default function ReportesPage() {
                         (r.plantaDestinoId != null && allowedIds.has(String(r.plantaDestinoId)))
                     );
                 } else {
+                    const normalizePlantaName = (value: unknown): string =>
+                        String(value ?? "").trim().toLowerCase();
+
                     const allowedNames = new Set(
-                        plantas.filter(p => allowedIds.has(String(p.id))).map(p => p.nombre)
+                        plantas
+                            .filter(p => allowedIds.has(String(p.id)))
+                            .map(p => normalizePlantaName(p.nombre))
+                            .filter(Boolean)
                     );
+
                     if (allowedNames.size > 0) {
                         switch (tipoReporte) {
                             case "reporte1":
                             case "reporte2":
+                            case "reporte6":
                             case "reporte3":
-                                dataP = dataP.filter(r =>
-                                    allowedNames.has(r.plantaEntrega)
-                                );
+                                dataP = dataP.filter(r => {
+                                    const plantaEntrega = normalizePlantaName(r?.plantaEntrega);
+                                    const plantaSede = normalizePlantaName(r?.plantaSede);
+
+                                    return allowedNames.has(plantaEntrega) || allowedNames.has(plantaSede);
+                                });
                                 break;
                             case "reporte5":
                                 // oficinaSede is GROUP_CONCAT(nombre SEPARATOR ', '), so check substring
                                 dataP = dataP.filter(r =>
-                                    r.oficinaSede && [...allowedNames].some(n => r.oficinaSede.includes(n))
+                                    r.oficinaSede && [...allowedNames].some(n => normalizePlantaName(r.oficinaSede).includes(n))
                                 );
                                 break;
                         }
@@ -627,6 +683,8 @@ export default function ReportesPage() {
                 showAssignInvoice={hasPermission("reportes.assign") && tipoReporte !== "reporte5"}
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
+                onAssignInvoiceExterna={(selectedRows, invoiceNumber, invoiceDate) => asignarFacturaExterna(selectedRows, invoiceNumber, invoiceDate)}
+                showAssignInvoiceExterna={hasPermission("reportes.assign") && (tipoReporte === "reporte1" || tipoReporte === "reporte6")}
                 tipoReporte={tipoReporte}
             />
 

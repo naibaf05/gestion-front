@@ -31,8 +31,10 @@ interface ReportDialogProps<TData, TValue> {
     exportHeaders?: string[]; // opcional: nombres de columnas en Excel
     maxWidth?: string; // ancho máximo configurable (ej: "1200px", "95vw", "90%")
     showCheckboxes?: boolean; // nueva prop para mostrar checkboxes
-    showAssignInvoice?: boolean; // nueva prop para mostrar botón de asignar factura
-    onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void; // callback para asignar factura con fecha
+    showAssignInvoice?: boolean;
+    onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void;
+    showAssignInvoiceExterna?: boolean;
+    onAssignInvoiceExterna?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void;
     rowIdField?: string; // campo que actúa como ID único para cada fila (ej: "id", "codigo")
     checkboxColumnWidth?: string; // ancho de la columna de selección (ej: "40px")
     tipoReporte?: string; // nuevo campo para identificar el tipo de reporte en el historial
@@ -52,6 +54,8 @@ export function ReportDialog<TData, TValue>({
     showCheckboxes = false,
     showAssignInvoice = false,
     onAssignInvoice,
+    showAssignInvoiceExterna = false,
+    onAssignInvoiceExterna,
     rowIdField = "id",
     checkboxColumnWidth,
     tipoReporte,
@@ -61,7 +65,7 @@ export function ReportDialog<TData, TValue>({
     const DEFAULT_CHECK_COL_WIDTH = "100px";
     const checkColWidth = checkboxColumnWidth || DEFAULT_CHECK_COL_WIDTH;
     // Columnas consideradas monetarias para formatear sumatorias
-    const CURRENCY_KEYS = React.useMemo(() => new Set(["valor", "tarifa"]), []);
+    const CURRENCY_KEYS = React.useMemo(() => new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor"]), []);
     const currencyFormatter = React.useMemo(() => new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",
@@ -76,10 +80,17 @@ export function ReportDialog<TData, TValue>({
     const [invoiceDialogOpen, setInvoiceDialogOpen] = React.useState(false);
     const [invoiceNumber, setInvoiceNumber] = React.useState("");
     const [invoiceDate, setInvoiceDate] = React.useState("");
+    // Estados para factura externa
+    const [invoiceExtDialogOpen, setInvoiceExtDialogOpen] = React.useState(false);
+    const [invoiceExtNumber, setInvoiceExtNumber] = React.useState("");
+    const [invoiceExtDate, setInvoiceExtDate] = React.useState("");
     // Filtro para mostrar sólo registros sin número de factura
     const [showOnlyWithoutFactura, setShowOnlyWithoutFactura] = React.useState(false);
     // Filtro para mostrar sólo registros sin fecha de factura
     const [showOnlyWithoutFecFactura, setShowOnlyWithoutFecFactura] = React.useState(false);
+    // Filtros para factura externa
+    const [showOnlyWithoutFacturaExt, setShowOnlyWithoutFacturaExt] = React.useState(false);
+    const [showOnlyWithoutFecFacturaExt, setShowOnlyWithoutFecFacturaExt] = React.useState(false);
 
     // Estado para sumar columnas
     const [summaryKeys, setSummaryKeys] = React.useState<string[]>([]);
@@ -95,6 +106,9 @@ export function ReportDialog<TData, TValue>({
             setSelectedRows(new Set());
             setSelectAll(false);
             setInvoiceNumber("");
+            setInvoiceExtNumber("");
+            setShowOnlyWithoutFacturaExt(false);
+            setShowOnlyWithoutFecFacturaExt(false);
         }
     }, [open]);
 
@@ -103,7 +117,7 @@ export function ReportDialog<TData, TValue>({
         const colKeys = (columns || []).map((c: any) => String(c.accessorKey || c.id)).filter(Boolean);
         const defaults: string[] = [];
         // Elegir sólo columnas numéricas por defecto
-        const numericCandidates = ["cantidadKg", "valor", "cantidad", "tarifa"];
+        const numericCandidates = ["cantidadKg", "valor", "cantidad", "tarifa", "tarifaFlete", "tarifaGestor"];
         numericCandidates.forEach(k => {
             if (colKeys.includes(k)) defaults.push(k);
         });
@@ -243,6 +257,42 @@ export function ReportDialog<TData, TValue>({
                     )
                 };
             }
+            if (key === 'numFacturaExt') {
+                return {
+                    ...col,
+                    header: () => (
+                        <div className="flex flex-col gap-1 py-1">
+                            <span className="text-xs font-medium">Número Factura Externa</span>
+                            <label className="flex items-center gap-1 text-[10px] font-normal">
+                                <Checkbox
+                                    checked={showOnlyWithoutFacturaExt}
+                                    onCheckedChange={(checked) => setShowOnlyWithoutFacturaExt(!!checked)}
+                                    aria-label="Filtrar vacíos"
+                                />
+                                <span className="select-none">Vacíos</span>
+                            </label>
+                        </div>
+                    )
+                };
+            }
+            if (key === 'fecFacturaExt') {
+                return {
+                    ...col,
+                    header: () => (
+                        <div className="flex flex-col gap-1 py-1">
+                            <span className="text-xs font-medium">Fecha Factura Externa</span>
+                            <label className="flex items-center gap-1 text-[10px] font-normal">
+                                <Checkbox
+                                    checked={showOnlyWithoutFecFacturaExt}
+                                    onCheckedChange={(checked) => setShowOnlyWithoutFecFacturaExt(!!checked)}
+                                    aria-label="Filtrar vacíos"
+                                />
+                                <span className="select-none">Vacíos</span>
+                            </label>
+                        </div>
+                    )
+                };
+            }
             return col;
         });
         return working;
@@ -251,14 +301,16 @@ export function ReportDialog<TData, TValue>({
     // Data filtrada según toggle de facturas vacías
     const dataForTable = React.useMemo(() => {
         const isEmpty = (v: any) => v == null || String(v).trim() === "";
-        if (!showOnlyWithoutFactura && !showOnlyWithoutFecFactura) return data;
+        if (!showOnlyWithoutFactura && !showOnlyWithoutFecFactura && !showOnlyWithoutFacturaExt && !showOnlyWithoutFecFacturaExt) return data;
         return data.filter((r: any) => {
             let pass = true;
             if (showOnlyWithoutFactura) pass = pass && isEmpty(r?.numFactura);
             if (showOnlyWithoutFecFactura) pass = pass && isEmpty(r?.fecFactura);
+            if (showOnlyWithoutFacturaExt) pass = pass && isEmpty(r?.numFacturaExt);
+            if (showOnlyWithoutFecFacturaExt) pass = pass && isEmpty(r?.fecFacturaExt);
             return pass;
         });
-    }, [data, showOnlyWithoutFactura, showOnlyWithoutFecFactura]);
+    }, [data, showOnlyWithoutFactura, showOnlyWithoutFecFactura, showOnlyWithoutFacturaExt, showOnlyWithoutFecFacturaExt]);
 
     // Mantener filteredRows sincronizado con dataForTable cuando cambia el filtro de factura vacía
     React.useEffect(() => {
@@ -287,6 +339,32 @@ export function ReportDialog<TData, TValue>({
             return;
         }
         setInvoiceDialogOpen(true);
+    };
+
+    const handleAssignInvoiceExtClick = () => {
+        if (selectedRows.size === 0) {
+            message("Error", "Por favor selecciona al menos una fila para asignar factura externa.", "error");
+            return;
+        }
+        setInvoiceExtDialogOpen(true);
+    };
+
+    const handleConfirmAssignInvoiceExt = () => {
+        if (!invoiceExtNumber.trim()) {
+            message("Error", "Por favor ingresa un número de factura externa.", "error");
+            return;
+        }
+        if (!invoiceExtDate.trim()) {
+            message("Error", "Por favor selecciona la fecha de la factura externa.", "error");
+            return;
+        }
+        const selectedRowsData = data.filter((row: any) => selectedRows.has(String(row[rowIdField])));
+        onAssignInvoiceExterna?.(selectedRowsData, invoiceExtNumber.trim(), invoiceExtDate.trim());
+        setInvoiceExtNumber("");
+        setInvoiceExtDate("");
+        setInvoiceExtDialogOpen(false);
+        setSelectedRows(new Set());
+        setSelectAll(false);
     };
 
     // Confirmar asignación de factura
@@ -450,6 +528,18 @@ export function ReportDialog<TData, TValue>({
                                 </Button>
                             )}
 
+                            {showAssignInvoiceExterna && (
+                                <Button
+                                    type="button"
+                                    onClick={handleAssignInvoiceExtClick}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 shadow"
+                                    disabled={selectedRows.size === 0}
+                                >
+                                    <Receipt className="h-5 w-5" />
+                                    Asignar Factura Externa ({selectedRows.size})
+                                </Button>
+                            )}
+
                             <Button
                                 type="button"
                                 onClick={handleExportExcel}
@@ -579,6 +669,47 @@ export function ReportDialog<TData, TValue>({
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             Asignar Factura
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Diálogo para asignar factura externa */}
+            <Dialog open={invoiceExtDialogOpen} onOpenChange={setInvoiceExtDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Asignar Número de Factura Externa</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="text-sm text-gray-600">
+                            Se asignará la factura externa a {selectedRows.size} registro(s) seleccionado(s).
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="invoice-ext-number">Número de Factura Externa</Label>
+                            <Input
+                                id="invoice-ext-number"
+                                type="text"
+                                placeholder="Ej: FE-2025-001"
+                                value={invoiceExtNumber}
+                                onChange={(e) => setInvoiceExtNumber(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="invoice-ext-date">Fecha de Factura Externa</Label>
+                            <Input
+                                id="invoice-ext-date"
+                                type="date"
+                                value={invoiceExtDate}
+                                onChange={(e) => setInvoiceExtDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => { setInvoiceExtDialogOpen(false); setInvoiceExtNumber(""); }}>
+                            Cancelar
+                        </Button>
+                        <Button type="button" onClick={handleConfirmAssignInvoiceExt} className="bg-purple-600 hover:bg-purple-700">
+                            Asignar Factura Externa
                         </Button>
                     </DialogFooter>
                 </DialogContent>

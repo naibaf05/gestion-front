@@ -79,6 +79,8 @@ const AVAILABLE_PERMISSIONS: PermissionCategory[] = [
         permissions: [
             { id: "salida.view", name: "Ver Salidas", category: "salidas" },
             { id: "salida.edit", name: "Editar Salidas", category: "salidas" },
+            { id: "salidaexterna.view", name: "Ver Salidas Externas", category: "salidas" },
+            { id: "salidaexterna.edit", name: "Editar Salidas Externas", category: "salidas" },
         ]
     },
     {

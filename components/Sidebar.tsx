@@ -107,6 +107,12 @@ const menuItems: MenuItem[] = [
     requiredPermission: "salida.view",
   },
   {
+    title: "Salidas Externas",
+    href: "/dashboard/salidas-externas",
+    icon: FileCode,
+    requiredPermission: "salidaexterna.view",
+  },
+  {
     title: "Certificados",
     href: "/dashboard/certificados",
     icon: FolderDown,

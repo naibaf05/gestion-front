@@ -1,7 +1,7 @@
 import { apiService } from "./api";
 import type { ApiResponse, GroupedChartResponse, MonthlySedeData, SedeInfo, SedeChart } from "@/types";
 
-export type TipoReporte = "reporte1" | "reporte2" | "reporte3" | "reporte4" | "reporte5";
+export type TipoReporte = "reporte1" | "reporte2" | "reporte3" | "reporte4" | "reporte5" | "reporte6";
 
 export interface ReporteRequest {
   tipo: TipoReporte;
@@ -52,6 +52,11 @@ export class ReportesService {
     return response.data;
   }
 
+  async generarReporte6(fechaInicio: string, fechaFin: string): Promise<any[]> {
+    const response = await apiService.get<ApiResponse<any[]>>(`/reportes/reporte6?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+    return response.data;
+  }
+
   // Reportes filtrados por cliente autenticado
   async generarReporte1Cli(fechaInicio: string, fechaFin: string): Promise<any[]> {
     const response = await apiService.get<ApiResponse<any[]>>(`/reportes/cli/reporte1?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
@@ -70,6 +75,11 @@ export class ReportesService {
 
   async asignarFactura(data: any): Promise<any[]> {
     const response = await apiService.post<ApiResponse<any[]>>('/reportes/asignarFactura', data);
+    return response.data;
+  }
+
+  async asignarFacturaExterna(data: any): Promise<any[]> {
+    const response = await apiService.post<ApiResponse<any[]>>('/reportes/asignarFacturaExterna', data);
     return response.data;
   }
 

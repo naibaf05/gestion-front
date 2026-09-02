@@ -44,6 +44,7 @@ export function ParametrizationDialog({
     telefono: "",
     descripcion: "",
     datosJson: {} as any,
+    tieneTarifa: false,
   });
   const { toast } = useToast();
 
@@ -61,7 +62,8 @@ export function ParametrizationDialog({
         direccion: item.direccion || "",
         telefono: item.telefono || "",
         descripcion: item.descripcion || "",
-        datosJson: item.datosJson || {}
+        datosJson: item.datosJson || {},
+        tieneTarifa: item.tieneTarifa || false,
       });
     } else {
       setFormData({
@@ -70,7 +72,8 @@ export function ParametrizationDialog({
         direccion: "",
         telefono: "",
         descripcion: "",
-        datosJson: {}
+        datosJson: {},
+        tieneTarifa: type === "fletes" || type === "gestores",
       });
     }
   }, [item, open]);
@@ -146,6 +149,10 @@ export function ParametrizationDialog({
         return "contenedor"
       case "t_vehiculos":
         return "t_vehiculo"
+      case "fletes":
+        return "flete"
+      case "gestores":
+        return "gestor"
       default:
         return "";
     }
@@ -162,7 +169,9 @@ export function ParametrizationDialog({
       t_clientes: "Tipo de Cliente",
       und_medidas: "Unidad de Medida",
       contenedores: "Unidad de Entrega",
-      t_vehiculos: "Tipo de Vehículo"
+      t_vehiculos: "Tipo de Vehículo",
+      fletes: "Flete",
+      gestores: "Gestor",
     };
     if (readOnly) return `Ver ${titles[type]}`;
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
@@ -218,6 +227,16 @@ export function ParametrizationDialog({
       t_vehiculos: {
         nombre: "Nombre del tipo de vehículo",
         codigo: "Código del tipo de vehículo",
+        descripcion: "Descripción",
+      },
+      fletes: {
+        nombre: "Nombre del flete",
+        codigo: "Código del flete",
+        descripcion: "Descripción",
+      },
+      gestores: {
+        nombre: "Nombre del gestor",
+        codigo: "Código del gestor",
         descripcion: "Descripción",
       },
     };
@@ -321,6 +340,21 @@ export function ParametrizationDialog({
                 )}
               </div>
             )}
+            <div className="space-y-2">
+              {readOnly ? (
+                <div className="flex items-center gap-2">
+                  <Label className="font-medium">¿Tiene Tarifa?</Label>
+                  <span className="text-sm text-muted-foreground">{formData.tieneTarifa ? 'Sí' : 'No'}</span>
+                </div>
+              ) : (
+                <InputCheck
+                  id="tieneTarifa"
+                  checked={formData.tieneTarifa}
+                  onChange={(e) => setFormData({ ...formData, tieneTarifa: e.target.checked })}
+                  label="¿Tiene Tarifa?"
+                />
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción</Label>
               {readOnly ? (
