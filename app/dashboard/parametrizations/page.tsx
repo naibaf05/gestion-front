@@ -121,13 +121,22 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     bgColor: "bg-indigo-50",
   },
   {
-    key: "fletes",
-    title: "Fletes",
-    singular_title: "Flete",
-    description: "Administra los fletes disponibles con sus tarifas",
+    key: "fletes_gestion",
+    title: "Fletes Gestión",
+    singular_title: "Flete Gestión",
+    description: "Administra los fletes de gestión y sus tarifas por sede",
     icon: Truck,
     color: "text-orange-600",
     bgColor: "bg-orange-50",
+  },
+  {
+    key: "fletes_focus",
+    title: "Fletes Focus",
+    singular_title: "Flete Focus",
+    description: "Administra los fletes Focus y sus tarifas por sede",
+    icon: Truck,
+    color: "text-red-600",
+    bgColor: "bg-red-50",
   },
   {
     key: "gestores",
@@ -157,7 +166,8 @@ export default function ParametrizationsPage() {
   const [und_medidas, setUndMedidas] = useState<Parametrizacion[]>([])
   const [contenedores, setContenedores] = useState<Parametrizacion[]>([])
   const [t_vehiculos, setTVehiculos] = useState<Parametrizacion[]>([])
-  const [fletes, setFletes] = useState<Parametrizacion[]>([])
+  const [fletesGestion, setFletesGestion] = useState<Parametrizacion[]>([])
+  const [fletesFocus, setFletesFocus] = useState<Parametrizacion[]>([])
   const [gestores, setGestores] = useState<Parametrizacion[]>([])
 
   const [loading, setLoading] = useState(true)
@@ -194,7 +204,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData, fletesData, gestoresData] =
+      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData, fletesGestionData, fletesFocusData, gestoresData] =
         await Promise.all([
           clientService.getClientesActivos(),
           parametrizationService.getLista("poblado"),
@@ -208,6 +218,7 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("contenedor"),
           parametrizationService.getLista("t_vehiculo"),
           parametrizationService.getLista("flete"),
+          parametrizationService.getLista("flete_focus"),
           parametrizationService.getLista("gestor"),
         ])
       setClientes(clientesData)
@@ -221,7 +232,8 @@ export default function ParametrizationsPage() {
       setUndMedidas(undMedidasData)
       setContenedores(contenedoresData)
       setTVehiculos(tVehiculosData)
-      setFletes(fletesData)
+      setFletesGestion(fletesGestionData)
+      setFletesFocus(fletesFocusData)
       setGestores(gestoresData)
     } catch (error) {
       toast({
@@ -256,8 +268,10 @@ export default function ParametrizationsPage() {
         return contenedores
       case "t_vehiculos":
         return t_vehiculos
-      case "fletes":
-        return fletes
+      case "fletes_gestion":
+        return fletesGestion
+      case "fletes_focus":
+        return fletesFocus
       case "gestores":
         return gestores
       default:
@@ -287,8 +301,10 @@ export default function ParametrizationsPage() {
         return contenedores.length
       case "t_vehiculos":
         return t_vehiculos.length
-      case "fletes":
-        return fletes.length
+      case "fletes_gestion":
+        return fletesGestion.length
+      case "fletes_focus":
+        return fletesFocus.length
       case "gestores":
         return gestores.length
       default:
@@ -466,7 +482,7 @@ export default function ParametrizationsPage() {
                 ) : (
                   <div></div>
                 )}
-                {item.tieneTarifa && (
+                {(item.tieneTarifa || type === "fletes_gestion" || type === "fletes_focus") && (
                   <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
                     <CircleDollarSign className="h-4 w-4" />
                   </Button>
@@ -490,7 +506,7 @@ export default function ParametrizationsPage() {
                     <History className="h-4 w-4" />
                   </Button>
                 )}
-                {item.tieneTarifa && (
+                {(item.tieneTarifa || type === "fletes_gestion" || type === "fletes_focus") && (
                   <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
                     <CircleDollarSign className="h-4 w-4" />
                   </Button>

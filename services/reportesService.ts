@@ -1,7 +1,7 @@
 import { apiService } from "./api";
 import type { ApiResponse, GroupedChartResponse, MonthlySedeData, SedeInfo, SedeChart } from "@/types";
 
-export type TipoReporte = "reporte1" | "reporte2" | "reporte3" | "reporte4" | "reporte5" | "reporte6";
+export type TipoReporte = "reporte1" | "reporte2" | "reporte3" | "reporte4" | "reporte5" | "reporte6" | "reporte7";
 
 export interface ReporteRequest {
   tipo: TipoReporte;
@@ -54,6 +54,11 @@ export class ReportesService {
 
   async generarReporte6(fechaInicio: string, fechaFin: string): Promise<any[]> {
     const response = await apiService.get<ApiResponse<any[]>>(`/reportes/reporte6?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+    return response.data;
+  }
+
+  async generarReporte7(fechaInicio: string, fechaFin: string): Promise<any[]> {
+    const response = await apiService.get<ApiResponse<any[]>>(`/reportes/reporte7?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
     return response.data;
   }
 

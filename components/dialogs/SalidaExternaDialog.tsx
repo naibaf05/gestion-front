@@ -36,6 +36,8 @@ interface SalidaExternaDialogProps {
   comerciales: Parametrizacion[]
   gestores: Parametrizacion[]
   fletes: Parametrizacion[]
+  fletesGestion: Parametrizacion[]
+  fletesFocus: Parametrizacion[]
   plantas: Parametrizacion[]
   onSuccess: () => void
   onVehiclesUpdate?: () => void
@@ -59,6 +61,8 @@ export function SalidaExternaDialog({
   comerciales,
   gestores,
   fletes,
+  fletesGestion,
+  fletesFocus,
   plantas,
   onSuccess,
   onVehiclesUpdate,
@@ -66,6 +70,7 @@ export function SalidaExternaDialog({
 }: SalidaExternaDialogProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [fletesDisponibles, setFletesDisponibles] = useState<Parametrizacion[]>(fletes)
   const [openManualDialog, setOpenManualDialog] = useState(false)
   const [formData, setFormData] = useState({
     tipo: "",
@@ -82,11 +87,16 @@ export function SalidaExternaDialog({
     comercialId: "",
     gestorId: "",
     fleteId: "",
+    fleteGestionId: "",
+    fleteFocusId: "",
     tarifaFleteId: "",
     tarifaFleteNombre: "",
+    tarifaFleteGestionId: "",
+    tarifaFleteGestionNombre: "",
+    tarifaFleteFocusId: "",
+    tarifaFleteFocusNombre: "",
     tarifaGestorId: "",
     tarifaGestorNombre: "",
-    cantidad: "",
     notas: "",
     lat: "",
     lon: "",
@@ -106,6 +116,24 @@ export function SalidaExternaDialog({
     return user.permisos[permission] === true
   }
 
+  useEffect(() => {
+    setFletesDisponibles(fletes)
+  }, [fletes])
+
+  useEffect(() => {
+    if (!open || salidaExterna) return
+    const sedeIds = [formData.sedeSalidaId, formData.sedeId].filter(Boolean)
+    if (sedeIds.length === 0) {
+      setFletesDisponibles([])
+      return
+    }
+
+    rateParamService.getTableBySedes(sedeIds).then((tarifas) => {
+      const ids = new Set(tarifas.map((tarifa) => String(tarifa.parametrizacionId)))
+      setFletesDisponibles(fletes.filter((flete) => ids.has(String(flete.id))))
+    }).catch(() => setFletesDisponibles([]))
+  }, [open, salidaExterna, formData.sedeSalidaId, formData.sedeId, fletes])
+
   const isDateInRateRange = (fecha: string, rate: RateParam): boolean => {
     if (!fecha || !rate?.fechaInicio) return false
     if (fecha < rate.fechaInicio) return false
@@ -113,9 +141,11 @@ export function SalidaExternaDialog({
     return true
   }
 
-  const findVigenteRate = async (parametrizacionId: string, fecha: string): Promise<RateParam | null> => {
+  const findVigenteRate = async (parametrizacionId: string, fecha: string, sedeIds: string[] = []): Promise<RateParam | null> => {
     if (!parametrizacionId || !fecha) return null
-    const rates = await rateParamService.getTable(parametrizacionId)
+    const rates = sedeIds.length > 0
+      ? (await rateParamService.getTableBySedes(sedeIds)).filter((rate) => String(rate.parametrizacionId) === String(parametrizacionId))
+      : await rateParamService.getTable(parametrizacionId)
     const vigentes = rates
       .filter((r) => r.activo && isDateInRateRange(fecha, r))
       .sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")))
@@ -154,11 +184,16 @@ export function SalidaExternaDialog({
         comercialId: salidaExterna.comercialId || "",
         gestorId: salidaExterna.gestorId || "",
         fleteId: salidaExterna.fleteId || "",
+        fleteGestionId: salidaExterna.fleteGestionId || salidaExterna.fleteId || "",
+        fleteFocusId: salidaExterna.fleteFocusId || "",
         tarifaFleteId: salidaExterna.tarifaFleteId || "",
         tarifaFleteNombre: salidaExterna.tarifaFleteNombre || "",
+        tarifaFleteGestionId: salidaExterna.tarifaFleteGestionId || salidaExterna.tarifaFleteId || "",
+        tarifaFleteGestionNombre: salidaExterna.tarifaFleteGestionNombre || salidaExterna.tarifaFleteNombre || "",
+        tarifaFleteFocusId: salidaExterna.tarifaFleteFocusId || "",
+        tarifaFleteFocusNombre: salidaExterna.tarifaFleteFocusNombre || "",
         tarifaGestorId: salidaExterna.tarifaGestorId || "",
         tarifaGestorNombre: salidaExterna.tarifaGestorNombre || "",
-        cantidad: salidaExterna.cantidad != null ? String(salidaExterna.cantidad) : "",
         notas: salidaExterna.notas || "",
         lat: salidaExterna.lat || "",
         lon: salidaExterna.lon || "",
@@ -185,11 +220,16 @@ export function SalidaExternaDialog({
       comercialId: "",
       gestorId: "",
       fleteId: "",
+      fleteGestionId: "",
+      fleteFocusId: "",
       tarifaFleteId: "",
       tarifaFleteNombre: "",
+      tarifaFleteGestionId: "",
+      tarifaFleteGestionNombre: "",
+      tarifaFleteFocusId: "",
+      tarifaFleteFocusNombre: "",
       tarifaGestorId: "",
       tarifaGestorNombre: "",
-      cantidad: "",
       notas: "",
       esSede: false,
       esPlanta: false,
@@ -201,23 +241,28 @@ export function SalidaExternaDialog({
 
     const resolveTarifas = async () => {
       try {
-        const [rateFlete, rateGestor] = await Promise.all([
-          formData.fleteId ? findVigenteRate(formData.fleteId, formData.fecha) : Promise.resolve(null),
+        const [rateFleteGestion, rateFleteFocus, rateGestor] = await Promise.all([
+          formData.fleteGestionId ? findVigenteRate(formData.fleteGestionId, formData.fecha, [formData.sedeSalidaId, formData.sedeId].filter(Boolean)) : Promise.resolve(null),
+          formData.fleteFocusId ? findVigenteRate(formData.fleteFocusId, formData.fecha, [formData.sedeSalidaId, formData.sedeId].filter(Boolean)) : Promise.resolve(null),
           formData.gestorId ? findVigenteRate(formData.gestorId, formData.fecha) : Promise.resolve(null),
         ])
 
         setFormData((prev) => ({
           ...prev,
-          tarifaFleteId: rateFlete?.id || "",
-          tarifaFleteNombre: rateFlete?.tarifaNombre || (prev.fleteId ? "Sin tarifa vigente" : ""),
+          tarifaFleteGestionId: rateFleteGestion?.id || "",
+          tarifaFleteGestionNombre: rateFleteGestion?.tarifaNombre || (prev.fleteGestionId ? "Sin tarifa vigente" : ""),
+          tarifaFleteFocusId: rateFleteFocus?.id || "",
+          tarifaFleteFocusNombre: rateFleteFocus?.tarifaNombre || (prev.fleteFocusId ? "Sin tarifa vigente" : ""),
           tarifaGestorId: rateGestor?.id || "",
           tarifaGestorNombre: rateGestor?.tarifaNombre || (prev.gestorId ? "Sin tarifa vigente" : ""),
         }))
       } catch {
         setFormData((prev) => ({
           ...prev,
-          tarifaFleteId: "",
-          tarifaFleteNombre: prev.fleteId ? "No se pudo consultar tarifa" : "",
+          tarifaFleteGestionId: "",
+          tarifaFleteGestionNombre: prev.fleteGestionId ? "No se pudo consultar tarifa" : "",
+          tarifaFleteFocusId: "",
+          tarifaFleteFocusNombre: prev.fleteFocusId ? "No se pudo consultar tarifa" : "",
           tarifaGestorId: "",
           tarifaGestorNombre: prev.gestorId ? "No se pudo consultar tarifa" : "",
         }))
@@ -225,7 +270,7 @@ export function SalidaExternaDialog({
     }
 
     resolveTarifas()
-  }, [open, formData.fecha, formData.fleteId, formData.gestorId])
+  }, [open, formData.fecha, formData.fleteGestionId, formData.fleteFocusId, formData.gestorId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -238,8 +283,12 @@ export function SalidaExternaDialog({
     try {
       const payload: any = {
         ...formData,
-        cantidad: formData.cantidad ? Number(formData.cantidad) : null,
       }
+
+      payload.fleteId = payload.fleteGestionId || null
+      payload.tarifaFleteId = payload.tarifaFleteGestionId || null
+      delete payload.tarifaFleteGestionNombre
+      delete payload.tarifaFleteFocusNombre
 
       if (payload.esSede) {
         payload.plantaId = ""
@@ -493,19 +542,34 @@ export function SalidaExternaDialog({
                     disabled={readOnly}
                   />
                 </div>
+                {!salidaExterna && <>
                 <div className="space-y-2">
-                  <Label htmlFor="flete">Flete</Label>
+                  <Label htmlFor="fleteGestion">Flete Gestión</Label>
                   <SelectSingle
-                    id="flete"
-                    placeholder="Selecciona un flete"
-                    options={fletes}
-                    value={formData.fleteId}
-                    onChange={(value) => setFormData({ ...formData, fleteId: value, tarifaFleteId: "", tarifaFleteNombre: "" })}
+                    id="fleteGestion"
+                    placeholder="Selecciona un flete de gestión"
+                    options={fletesGestion}
+                    value={formData.fleteGestionId}
+                    onChange={(value) => setFormData({ ...formData, fleteGestionId: value, tarifaFleteGestionId: "", tarifaFleteGestionNombre: "" })}
                     valueKey="id"
                     labelKey="nombreMostrar"
                     disabled={readOnly}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fleteFocus">Flete Focus</Label>
+                  <SelectSingle
+                    id="fleteFocus"
+                    placeholder="Selecciona un flete Focus"
+                    options={fletesFocus}
+                    value={formData.fleteFocusId}
+                    onChange={(value) => setFormData({ ...formData, fleteFocusId: value, tarifaFleteFocusId: "", tarifaFleteFocusNombre: "" })}
+                    valueKey="id"
+                    labelKey="nombreMostrar"
+                    disabled={readOnly}
+                  />
+                </div>
+                </>}
                 {hasPermission("rates.view") && (
                   <>
                     <div className="space-y-2">
@@ -519,29 +583,27 @@ export function SalidaExternaDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="tarifaFleteNombre">Tarifa Flete</Label>
+                      <Label htmlFor="tarifaFleteGestionNombre">Tarifa Flete Gestión</Label>
                       <Input
-                        id="tarifaFleteNombre"
-                        value={formData.tarifaFleteNombre}
-                        placeholder="Tarifa de flete"
+                        id="tarifaFleteGestionNombre"
+                        value={formData.tarifaFleteGestionNombre}
+                        placeholder="Tarifa de flete gestión"
+                        disabled={true}
+                        readOnly={true}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="tarifaFleteFocusNombre">Tarifa Flete Focus</Label>
+                      <Input
+                        id="tarifaFleteFocusNombre"
+                        value={formData.tarifaFleteFocusNombre}
+                        placeholder="Tarifa de flete Focus"
                         disabled={true}
                         readOnly={true}
                       />
                     </div>
                   </>
                 )}
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="cantidad">Cantidad</Label>
-                  <InputDecimal
-                    id="cantidad"
-                    value={formData.cantidad}
-                    onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
-                    decimalPlaces={2}
-                    placeholder="0.00"
-                    min={0}
-                    disabled={readOnly}
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">

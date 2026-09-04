@@ -7,6 +7,13 @@ export class RateParamService {
     return response.data
   }
 
+  async getTableBySedes(sedeIds: string[]): Promise<RateParam[]> {
+    if (sedeIds.length === 0) return []
+    const params = sedeIds.map((id) => `sedeIds=${encodeURIComponent(id)}`).join("&")
+    const response = await apiService.get<ApiResponse<RateParam[]>>(`/rates-param/all-by-sedes?${params}`)
+    return response.data
+  }
+
   async get(id: string): Promise<RateParam> {
     const response = await apiService.get<ApiResponse<RateParam>>(`/rates-param/${id}`)
     return response.data

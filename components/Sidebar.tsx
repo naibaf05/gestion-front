@@ -93,6 +93,12 @@ const menuItems: MenuItem[] = [
         requiredPermission: "admin.view"
       },
       {
+        title: "Admin Gestión Externa",
+        href: "/dashboard/salidas-externas",
+        icon: FileCode,
+        requiredPermission: "salidaexterna.view",
+      },
+      {
         title: "Programación",
         href: "/dashboard/progs",
         icon: CalendarRange,
@@ -105,12 +111,6 @@ const menuItems: MenuItem[] = [
     href: "/dashboard/salidas",
     icon: FileCode,
     requiredPermission: "salida.view",
-  },
-  {
-    title: "Salidas Externas",
-    href: "/dashboard/salidas-externas",
-    icon: FileCode,
-    requiredPermission: "salidaexterna.view",
   },
   {
     title: "Certificados",
@@ -177,10 +177,10 @@ export function Sidebar() {
       loadAlertasCount()
       // Recargar cada 5 minutos
       const interval = setInterval(loadAlertasCount, 5 * 60 * 1000)
-      
+
       // Escuchar eventos de actualización de alertas
       window.addEventListener('alertas-updated', handleAlertasUpdated)
-      
+
       return () => {
         clearInterval(interval)
         window.removeEventListener('alertas-updated', handleAlertasUpdated)
@@ -286,8 +286,8 @@ export function Sidebar() {
           <item.icon className="mr-2 h-4 w-4" />
           {item.title}
           {item.title === "Alertas" && alertasCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="ml-auto h-5 min-w-5 rounded-full p-0 px-1.5 flex items-center justify-center text-xs"
             >
               {alertasCount}

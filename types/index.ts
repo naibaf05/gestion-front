@@ -1,6 +1,6 @@
 import { init } from "next/dist/compiled/webpack/webpack"
 
-export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos" | "fletes" | "gestores"
+export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos" | "fletes_gestion" | "fletes_focus" | "gestores"
 
 export interface LoginCredentials {
   username: string
@@ -54,6 +54,7 @@ export interface Profile {
 // Tipos de parametrizaciones
 export interface Parametrizacion {
   id: string
+  tipo?: string
   nombre: string
   nombreMostrar: string
   codigo?: string
@@ -65,6 +66,8 @@ export interface Parametrizacion {
 
 export interface RateParam {
   id: string
+  sedeId?: string
+  sedeNombre?: string
   parametrizacionId: string
   parametrizacionNombre?: string
   undMedidaId: string
@@ -465,13 +468,22 @@ export interface SalidaExterna {
   gestorNombre?: string
   fleteId?: string
   fleteNombre?: string
+  fleteGestionId?: string
+  fleteGestionNombre?: string
+  fleteFocusId?: string
+  fleteFocusNombre?: string
   tarifaFleteId?: string
   tarifaFlete?: number
   tarifaFleteNombre?: string
+  tarifaFleteGestionId?: string
+  tarifaFleteGestion?: number
+  tarifaFleteGestionNombre?: string
+  tarifaFleteFocusId?: string
+  tarifaFleteFocus?: number
+  tarifaFleteFocusNombre?: string
   tarifaGestorId?: string
   tarifaGestor?: number
   tarifaGestorNombre?: string
-  cantidad?: number
   activo: boolean
   num?: number
   salida?: string

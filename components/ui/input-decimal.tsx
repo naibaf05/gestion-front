@@ -16,7 +16,7 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
             onChange,
             error,
             decimalPlaces = 2,
-            min = 0,
+            min,
             step = "0.01",
             maxLength = 10,
             disabled = false,
@@ -26,8 +26,9 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
     ) => {
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;
-            // Solo permite dígitos y un solo punto decimal
-            val = val.replace(/[^0-9.]/g, "");
+            val = val.replace(/[^0-9.-]/g, "");
+            const sign = val.startsWith("-") ? "-" : "";
+            val = sign + val.slice(sign ? 1 : 0).replace(/-/g, "");
             const parts = val.split(".");
             if (parts.length > 2) {
                 // Más de un punto decimal, inválido
@@ -36,10 +37,6 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
             if (parts[1]?.length > decimalPlaces) {
                 parts[1] = parts[1].slice(0, decimalPlaces);
                 val = parts.join(".");
-            }
-            // Si min es 0, no permitir "-"
-            if (min === 0 && val.startsWith("-")) {
-                return;
             }
             // Limitar la longitud máxima
             if (val.length > maxLength) {
@@ -56,7 +53,7 @@ const InputDecimal = React.forwardRef<HTMLInputElement, InputDecimalProps>(
                 <input
                     type="text"
                     inputMode="decimal"
-                    pattern={`^\\d*(\\.\\d{0,${decimalPlaces}})?$`}
+                    pattern={`^-?\\d*(\\.\\d{0,${decimalPlaces}})?$`}
                     className={cn(
                         "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                         error && "border-red-500",

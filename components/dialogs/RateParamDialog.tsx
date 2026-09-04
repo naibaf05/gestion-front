@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { rateParamService } from "@/services/rateParamService";
-import type { RateParam, Parametrizacion } from "@/types";
+import type { RateParam, Parametrizacion, Sede } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SelectSingle } from "../ui/select-single";
@@ -27,6 +27,7 @@ interface RateParamDialogProps {
   parametrizacion?: Parametrizacion | null;
   undMedidas: Parametrizacion[];
   tiposResiduos?: Parametrizacion[];
+  sedes?: Sede[];
   onSuccess: () => void;
   readOnly?: boolean;
 }
@@ -38,13 +39,17 @@ export function RateParamDialog({
   parametrizacion,
   undMedidas,
   tiposResiduos = [],
+  sedes = [],
   onSuccess,
   readOnly = false,
 }: RateParamDialogProps) {
+  const tipoParametrizacion = parametrizacion?.tipo?.toLowerCase();
+  const esFlete = tipoParametrizacion === "flete" || tipoParametrizacion === "flete_focus";
   const [loading, setLoading] = useState(false);
   const [viewDensidad, setViewDensidad] = useState(false);
   const [formData, setFormData] = useState({
     parametrizacionId: "",
+    sedeId: "",
     undMedidaId: "",
     tipoResiduoId: "",
     tarifa: "",
@@ -68,8 +73,9 @@ export function RateParamDialog({
       }
       setFormData({
         parametrizacionId: parametrizacion ? parametrizacion.id : "",
-        undMedidaId: rate.undMedidaId,
-        tipoResiduoId: rate.tipoResiduoId,
+        sedeId: rate.sedeId ?? "",
+        undMedidaId: rate.undMedidaId ?? "",
+        tipoResiduoId: rate.tipoResiduoId ?? "",
         tarifa: rate.tarifa,
         fechaInicio: rate.fechaInicio,
         fechaFin: rate.fechaFin ?? "",
@@ -79,6 +85,7 @@ export function RateParamDialog({
     } else {
       setFormData({
         parametrizacionId: parametrizacion ? parametrizacion.id : "",
+        sedeId: "",
         undMedidaId: "",
         tipoResiduoId: "",
         tarifa: "",
@@ -153,7 +160,22 @@ export function RateParamDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {esFlete && (
+                <div className="space-y-2">
+                  <Label htmlFor="sedeId" required>Sede</Label>
+                  <SelectSingle
+                    id="sedeId"
+                    placeholder="Selecciona una sede"
+                    options={sedes}
+                    value={formData.sedeId}
+                    onChange={(value) => setFormData({ ...formData, sedeId: value })}
+                    valueKey="id"
+                    labelKey="nombre"
+                    disabled={readOnly}
+                  />
+                </div>
+              )}
+              {!esFlete && <div className="space-y-2">
                 <Label htmlFor="undMedidaId" required>Unidad de Medida</Label>
                 <SelectSingle
                   id="undMedidaId"
@@ -165,8 +187,8 @@ export function RateParamDialog({
                   labelKey="nombre"
                   disabled={readOnly}
                 />
-              </div>
-              <div className="space-y-2">
+              </div>}
+              {!esFlete && <div className="space-y-2">
                 <Label htmlFor="tipoResiduoId" required>Tipo de Residuo</Label>
                 <SelectSingle
                   id="tipoResiduoId"
@@ -180,7 +202,7 @@ export function RateParamDialog({
                   labelKey="nombre"
                   disabled={readOnly}
                 />
-              </div>
+              </div>}
               <div className="space-y-2">
                 <Label htmlFor="fechaInicio" required>Fecha Inicio</Label>
                 <Input

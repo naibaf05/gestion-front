@@ -77,8 +77,9 @@ export default function ReportesPage() {
         switch (tipoReporte) {
             case "reporte1":
             case "reporte2":
-            case "reporte6": {
-                const isReporteResiduos = tipoReporte === "reporte1" || tipoReporte === "reporte6";
+            case "reporte6":
+            case "reporte7": {
+                const isReporteResiduos = tipoReporte !== "reporte2";
                 const cols = [
                     // ======= SECCIÓN SEDE =======
                     { key: "plantaSede", label: "Planta Sede", category: "sede", enabled: true, width: "350px" },
@@ -305,7 +306,8 @@ export default function ReportesPage() {
     const tiposReporte = [
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
         { value: "reporte2", label: "Reporte Recolecciones y/o entregas en plantas (Llantas)" },
-        { value: "reporte6", label: "Reporte Recolecciones y/o entregas en plantas (Residuos + Llantas)" },
+        { value: "reporte7", label: "Reporte Gestión Externa" },
+        { value: "reporte6", label: "Reporte Recolecciones y/o entregas en plantas (Residuos + Llantas)" },        
         { value: "reporte3", label: "Reporte Recolecciones y/o entregas en plantas (Llantas Consolidado)" },
         { value: "reporte4", label: "Reporte Salidas" },
         { value: "reporte5", label: "Reporte Información Clientes" },
@@ -440,6 +442,10 @@ export default function ReportesPage() {
                     dataP = await reportesService.generarReporte6(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
                     break;
+                case "reporte7":
+                    dataP = await reportesService.generarReporte7(fechaInicio, fechaFin);
+                    setColumns_table(dynamicTableColumns);
+                    break;
                 case "reporte3":
                     dataP = await reportesService.generarReporte2(fechaInicio, fechaFin);
                     setColumns_table(dynamicTableColumns);
@@ -481,6 +487,7 @@ export default function ReportesPage() {
                             case "reporte1":
                             case "reporte2":
                             case "reporte6":
+                            case "reporte7":
                             case "reporte3":
                                 dataP = dataP.filter(r => {
                                     const plantaEntrega = normalizePlantaName(r?.plantaEntrega);
@@ -684,7 +691,7 @@ export default function ReportesPage() {
                 rowIdField="id"
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
                 onAssignInvoiceExterna={(selectedRows, invoiceNumber, invoiceDate) => asignarFacturaExterna(selectedRows, invoiceNumber, invoiceDate)}
-                showAssignInvoiceExterna={hasPermission("reportes.assign") && (tipoReporte === "reporte1" || tipoReporte === "reporte6")}
+                showAssignInvoiceExterna={hasPermission("reportes.assign") && (tipoReporte === "reporte1" || tipoReporte === "reporte6" || tipoReporte === "reporte7")}
                 tipoReporte={tipoReporte}
             />
 

@@ -18,6 +18,7 @@ import { Parametrizacion, RateParam } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { rateParamService } from "@/services/rateParamService"
 import { parametrizationService } from "@/services/parametrizationService"
+import { clientService } from "@/services/clientService"
 import { RateParamDialog } from "./RateParamDialog"
 
 interface RatesParamDialogProps {
@@ -40,6 +41,7 @@ export function RatesParamDialog({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [undMedidas, setUndMedidas] = useState<Parametrizacion[]>([])
   const [tiposResiduos, setTiposResiduos] = useState<Parametrizacion[]>([])
+  const [sedes, setSedes] = useState<import("@/types").Sede[]>([])
   const [selectedRate, setSelectedRate] = useState<RateParam | null>(null)
   const [rateDialogReadOnly, setRateDialogReadOnly] = useState(false)
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
@@ -54,14 +56,16 @@ export function RatesParamDialog({
     try {
       if (parametrizacion) {
         setLoading(true)
-        const [ratesData, undMedidasData, tiposResiduosData] = await Promise.all([
+        const [ratesData, undMedidasData, tiposResiduosData, sedesData] = await Promise.all([
           rateParamService.getTable(parametrizacion.id),
           parametrizationService.getListaActivos("und_medida"),
           parametrizationService.getListaActivos("t_residuo"),
+          clientService.getSedesActivas(),
         ])
         setRates(ratesData)
         setUndMedidas(undMedidasData)
         setTiposResiduos(tiposResiduosData)
+        setSedes(sedesData)
       }
     } catch (error) {
       toast({
@@ -128,22 +132,27 @@ export function RatesParamDialog({
     setStatusDialogOpen(false)
   }
 
+  const esFlete = ["flete", "flete_focus"].includes(parametrizacion?.tipo?.toLowerCase() || "")
+
   const columns: ColumnDef<RateParam>[] = [
     {
+      width: "250px",
+      accessorKey: "sedeNombre",
+      header: "Sede",
+    },
+    ...(esFlete ? [] : [{
       width: "150px",
       accessorKey: "undMedidaNombre",
       header: "Unidad de Medida",
-    },
-    {
+    }, {
       width: "150px",
       accessorKey: "tipoResiduoCodigo",
       header: "Cod. Tipo de Residuo",
-    },
-    {
+    }, {
       width: "250px",
       accessorKey: "tipoResiduoNombre",
       header: "Tipo de Residuo",
-    },
+    }]),
     {
       width: "100px",
       accessorKey: "tarifaNombre",
@@ -240,8 +249,8 @@ export function RatesParamDialog({
               <DataTable
                 columns={columns}
                 data={rates}
-                searchKey={["undMedidaNombre", "tipoResiduoCodigo", "tipoResiduoNombre", "tarifaNombre"]}
-                searchPlaceholder="Buscar por unidad de medida..."
+                searchKey={["sedeNombre", "undMedidaNombre", "tipoResiduoCodigo", "tipoResiduoNombre", "tarifaNombre"]}
+                searchPlaceholder="Buscar por sede..."
               />
             </>
           )}
@@ -261,6 +270,7 @@ export function RatesParamDialog({
         parametrizacion={parametrizacion}
         undMedidas={undMedidas}
         tiposResiduos={tiposResiduos}
+        sedes={sedes}
         onSuccess={loadData}
         readOnly={rateDialogReadOnly}
       />

@@ -23,6 +23,7 @@ import { filterPlantasByUser } from "@/utils/utils"
 import { SalidaExternaDialog } from "@/components/dialogs/SalidaExternaDialog"
 import { SalidaExternaCantidadesDialog } from "@/components/dialogs/SalidaExternaCantidadesDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
+import { rateParamService } from "@/services/rateParamService"
 
 export default function SalidasExternasPage() {
     const { user } = useAuth()
@@ -61,6 +62,8 @@ export default function SalidasExternasPage() {
     const [receptores, setReceptores] = useState<User[]>([])
     const [comerciales, setComerciales] = useState<Parametrizacion[]>([])
     const [fletes, setFletes] = useState<Parametrizacion[]>([])
+    const [fletesGestion, setFletesGestion] = useState<Parametrizacion[]>([])
+    const [fletesFocus, setFletesFocus] = useState<Parametrizacion[]>([])
     const [gestores, setGestores] = useState<Parametrizacion[]>([])
 
     const [loading, setLoading] = useState(true)
@@ -152,7 +155,8 @@ export default function SalidasExternasPage() {
                 receptoresData,
                 plantasData,
                 comercialesData,
-                fletesData,
+                fletesGestionData,
+                fletesFocusData,
                 gestoresData,
             ] = await Promise.all([
                 salidaExternaService.getSalidasExternas(dateString, fechaFinString),
@@ -163,6 +167,7 @@ export default function SalidasExternasPage() {
                 parametrizationService.getListaActivos("oficina"),
                 parametrizationService.getListaActivos("comercial"),
                 parametrizationService.getListaActivos("flete"),
+                parametrizationService.getListaActivos("flete_focus"),
                 parametrizationService.getListaActivos("gestor"),
             ])
 
@@ -187,7 +192,12 @@ export default function SalidasExternasPage() {
             setReceptores(receptoresData)
             setPlantas(filterPlantasByUser(plantasData, user))
             setComerciales(comercialesData)
-            setFletes(fletesData)
+            const sedeIds = sedesData.map((sede) => sede.id)
+            const tarifasFlete = await rateParamService.getTableBySedes(sedeIds)
+            const fleteIds = new Set(tarifasFlete.map((tarifa) => String(tarifa.parametrizacionId)))
+            setFletes([...fletesGestionData, ...fletesFocusData].filter((flete) => fleteIds.has(String(flete.id))))
+            setFletesGestion(fletesGestionData.filter((flete) => fleteIds.has(String(flete.id))))
+            setFletesFocus(fletesFocusData.filter((flete) => fleteIds.has(String(flete.id))))
             setGestores(gestoresData)
         } catch (error) {
             toast({
@@ -326,15 +336,15 @@ export default function SalidasExternasPage() {
     ]
 
     if (!hasPermission("salidaexterna.view")) {
-        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver las salidas externas.</div>
-    }
+        return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver las Admin Gestión Externa.</div>
+    }   
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-sm text-gray-600">Cargando salidas externas...</p>
+                    <p className="mt-2 text-sm text-gray-600">Cargando Admin Gestión Externa...</p>
                 </div>
             </div>
         )
@@ -344,8 +354,8 @@ export default function SalidasExternasPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Salidas Externas</h1>
-                    <p className="text-gray-600">Gestiona salidas externas con origen y destino</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Admin Gestión Externa</h1>
+                    <p className="text-gray-600">Gestiona las salidas externas con origen y destino</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -389,6 +399,8 @@ export default function SalidasExternasPage() {
                 comerciales={comerciales}
                 gestores={gestores}
                 fletes={fletes}
+                fletesGestion={fletesGestion}
+                fletesFocus={fletesFocus}
                 plantas={plantas}
                 onSuccess={loadData}
                 readOnly={dialogReadOnly}

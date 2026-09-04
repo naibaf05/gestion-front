@@ -149,8 +149,10 @@ export function ParametrizationDialog({
         return "contenedor"
       case "t_vehiculos":
         return "t_vehiculo"
-      case "fletes":
+      case "fletes_gestion":
         return "flete"
+      case "fletes_focus":
+        return "flete_focus"
       case "gestores":
         return "gestor"
       default:
@@ -170,7 +172,8 @@ export function ParametrizationDialog({
       und_medidas: "Unidad de Medida",
       contenedores: "Unidad de Entrega",
       t_vehiculos: "Tipo de Vehículo",
-      fletes: "Flete",
+      fletes_gestion: "Flete Gestión",
+      fletes_focus: "Flete Focus",
       gestores: "Gestor",
     };
     if (readOnly) return `Ver ${titles[type]}`;
@@ -229,9 +232,14 @@ export function ParametrizationDialog({
         codigo: "Código del tipo de vehículo",
         descripcion: "Descripción",
       },
-      fletes: {
+      fletes_gestion: {
         nombre: "Nombre del flete",
         codigo: "Código del flete",
+        descripcion: "Descripción",
+      },
+      fletes_focus: {
+        nombre: "Nombre del flete Focus",
+        codigo: "Código del flete Focus",
         descripcion: "Descripción",
       },
       gestores: {
