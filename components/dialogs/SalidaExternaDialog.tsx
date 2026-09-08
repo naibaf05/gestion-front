@@ -542,7 +542,7 @@ export function SalidaExternaDialog({
                     disabled={readOnly}
                   />
                 </div>
-                {!salidaExterna && <>
+                <>
                 <div className="space-y-2">
                   <Label htmlFor="fleteGestion">Flete Gestión</Label>
                   <SelectSingle
@@ -569,7 +569,7 @@ export function SalidaExternaDialog({
                     disabled={readOnly}
                   />
                 </div>
-                </>}
+                </>
                 {hasPermission("rates.view") && (
                   <>
                     <div className="space-y-2">

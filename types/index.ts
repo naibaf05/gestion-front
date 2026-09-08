@@ -396,10 +396,12 @@ export interface Certificados {
   fin: string
   activo: boolean
   num: string
+  numExterno?: string
   notas?: string
   noFactura?: number
   tieneCartera?: number
   numMostrar?: string
+  salidaExternaId?: string
 }
 
 // Tipos para salidas

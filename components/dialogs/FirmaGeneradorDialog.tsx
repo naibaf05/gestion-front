@@ -14,12 +14,14 @@ import { Loader2, Trash2, RotateCcw, PenLine } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { adjuntosService } from "@/services/adjuntosService"
 import { visitService } from "@/services/visitService"
+import { salidaExternaService } from "@/services/salidaExternaService"
 
 interface FirmaGeneradorDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     visitaId: string
     onSuccess?: () => void
+    entityType?: "visita" | "salidaExterna"
 }
 
 export function FirmaGeneradorDialog({
@@ -27,6 +29,7 @@ export function FirmaGeneradorDialog({
     onOpenChange,
     visitaId,
     onSuccess,
+    entityType = "visita",
 }: FirmaGeneradorDialogProps) {
     const [loading, setLoading] = useState(false)
 
@@ -142,7 +145,7 @@ export function FirmaGeneradorDialog({
             setLoadingCurrent(true)
             const [adjuntos, visita] = await Promise.all([
                 adjuntosService.getAdjuntosFtp("firma-generador", visitaId),
-                visitService.getId(visitaId)
+                entityType === "visita" ? visitService.getId(visitaId) : salidaExternaService.getSalidaExterna(visitaId)
             ])
             const firmaName = visita.firma || ""
             setNombreFirmante(firmaName)
@@ -169,7 +172,11 @@ export function FirmaGeneradorDialog({
                 await adjuntosService.deleteAdjunto(currentAdjunto.id)
             }
             await adjuntosService.uploadAdjunto(file, "firma-generador", visitaId)
-            await visitService.updateFirma(visitaId, nombreFirmante.trim())
+            if (entityType === "visita") {
+                await visitService.updateFirma(visitaId, nombreFirmante.trim())
+            } else {
+                await salidaExternaService.updateFirma(visitaId, nombreFirmante.trim())
+            }
             toast({
                 title: "Firma guardada",
                 description: "La firma del generador ha sido guardada exitosamente",

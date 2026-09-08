@@ -9,7 +9,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { ButtonTooltip } from "@/components/ui/button-tooltip"
-import { Edit, Eye, History, Plus, PowerSquare, TableProperties } from "lucide-react"
+import { Edit, Eye, FileText, History, Paperclip, PenLine, Plus, TableProperties, Trash2 } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Parametrizacion, SalidaExterna, Sede, User, Vehicle } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -24,6 +24,10 @@ import { SalidaExternaDialog } from "@/components/dialogs/SalidaExternaDialog"
 import { SalidaExternaCantidadesDialog } from "@/components/dialogs/SalidaExternaCantidadesDialog"
 import { HistorialDialog } from "@/components/dialogs/HistorialDialog"
 import { rateParamService } from "@/services/rateParamService"
+import { certificatesService } from "@/services/certificatesService"
+import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
+import { FirmaGeneradorDialog } from "@/components/dialogs/FirmaGeneradorDialog"
+import { PdfDialog } from "@/components/dialogs/PdfDialog"
 
 export default function SalidasExternasPage() {
     const { user } = useAuth()
@@ -75,6 +79,11 @@ export default function SalidasExternasPage() {
     const [historialOpen, setHistorialOpen] = useState(false)
     const [historialId, setHistorialId] = useState("")
     const [historialLabel, setHistorialLabel] = useState("")
+    const [adjuntosOpen, setAdjuntosOpen] = useState(false)
+    const [firmaOpen, setFirmaOpen] = useState(false)
+    const [pdfOpen, setPdfOpen] = useState(false)
+    const [pdfBase64, setPdfBase64] = useState<string | null>(null)
+    const [actionId, setActionId] = useState("")
 
     if (user && user.permisos && typeof user.permisos === "string") {
         user.permisos = JSON.parse(user.permisos)
@@ -230,17 +239,17 @@ export default function SalidasExternasPage() {
         setDialogOpen(true)
     }
 
-    const handleToggleStatus = async (id: string) => {
+    const handleDelete = async (id: string) => {
         if (!hasPermission("salidaexterna.edit")) return
-        if (confirm("Estas seguro de que deseas cambiar el estado de esta salida externa?")) {
+        if (confirm("¿Estas seguro de que deseas eliminar esta salida externa? Solo se puede eliminar si no tiene productos asociados.")) {
             try {
-                await salidaExternaService.toggleSalidaExternaStatus(id)
-                toast({ title: "Estado actualizado", description: "El estado de la salida externa ha sido actualizado" })
+                await salidaExternaService.deleteSalidaExterna(id)
+                toast({ title: "Salida externa eliminada", description: "La salida externa fue eliminada correctamente", variant: "success" })
                 loadData()
-            } catch {
+            } catch (error: any) {
                 toast({
                     title: "Error",
-                    description: "No se pudo actualizar el estado",
+                    description: error?.message || "No se pudo eliminar la salida externa",
                     variant: "destructive",
                 })
             }
@@ -256,6 +265,13 @@ export default function SalidasExternasPage() {
     const handleCantidades = (obj: SalidaExterna) => {
         setSelectedSalidaExterna(obj)
         setCantidadesDialogOpen(true)
+    }
+
+    const handleExternalPdf = async (obj: SalidaExterna) => {
+        if (!obj.id) return
+        const base64 = await certificatesService.getCertificadoExternaPDF(obj.id, String(obj.num || "0"), obj.fecha, obj.notas || "")
+        setPdfBase64(base64)
+        setPdfOpen(true)
     }
 
     const columns: ColumnDef<SalidaExterna>[] = [
@@ -311,13 +327,16 @@ export default function SalidasExternasPage() {
                                     <TooltipContent>Mas acciones</TooltipContent>
                                 </Tooltip>
                                 <DropdownMenuContent align="end">
+                                    {hasPermission("generar.pdf") && <DropdownMenuItem onClick={() => handleExternalPdf(obj)}><FileText className="h-4 w-4" /> PDF</DropdownMenuItem>}
+                                    {hasPermission("salidaexterna.edit") && <DropdownMenuItem onClick={() => { setActionId(obj.id); setAdjuntosOpen(true) }}><Paperclip className="h-4 w-4" /> Adjuntos</DropdownMenuItem>}
+                                    {hasPermission("salidaexterna.edit") && <DropdownMenuItem onClick={() => { setActionId(obj.id); setFirmaOpen(true) }}><PenLine className="h-4 w-4" /> Firma Generador</DropdownMenuItem>}
                                     {hasPermission("salidaexterna.edit") && (
                                         <DropdownMenuItem
-                                            onClick={() => handleToggleStatus(obj.id)}
-                                            className={obj.activo ? "new-text-green-600" : "new-text-red-600"}
+                                            onClick={() => handleDelete(obj.id)}
+                                            className="new-text-red-600"
                                         >
-                                            <PowerSquare className="h-4 w-4" />
-                                            {obj.activo ? "Desactivar" : "Activar"}
+                                            <Trash2 className="h-4 w-4" />
+                                            Eliminar
                                         </DropdownMenuItem>
                                     )}
                                     {hasPermission("users.historial") && (
@@ -414,6 +433,9 @@ export default function SalidasExternasPage() {
                     salidaExterna={selectedSalidaExterna}
                 />
             )}
+            <AdjuntosDialog open={adjuntosOpen} onOpenChange={setAdjuntosOpen} tipo="salidas-externas" entityId={actionId} title="Adjuntos de Gestión Externa" />
+            <FirmaGeneradorDialog open={firmaOpen} onOpenChange={setFirmaOpen} visitaId={actionId} entityType="salidaExterna" />
+            <PdfDialog open={pdfOpen} onOpenChange={setPdfOpen} base64={pdfBase64 || ""} />
 
             <HistorialDialog
                 open={historialOpen}

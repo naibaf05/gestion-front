@@ -21,6 +21,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ReportDialog } from "@/components/dialogs/ReportDialog";
 import { ColumnConfigDialog } from "@/components/dialogs/ColumnConfigDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { certificatesService } from "@/services/certificatesService";
 
 export default function ReportesPage() {
     const { user, logout } = useAuth();
@@ -577,6 +578,17 @@ export default function ReportesPage() {
         return <div className="p-8 text-center text-muted-foreground">No tienes permiso para ver los reportes.</div>
     }
 
+    const crearCertificadosExternos = async (rows: any[], numero: string, fecha: string, archivo: File) => {
+        try {
+            const ids = rows.filter((row) => Number(row?.id) < 0).map((row) => row.id);
+            if (!ids.length) throw new Error("Selecciona filas de gestión externa");
+            const creados = await certificatesService.crearCertificadosExternosMasivo(ids, numero, fecha, archivo);
+            toast({ title: "Certificados creados", description: `Se crearon ${creados} certificados externos`, variant: "success" });
+        } catch (error: any) {
+            toast({ title: "Error", description: error?.message || "No se pudieron crear los certificados", variant: "destructive" });
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -692,6 +704,8 @@ export default function ReportesPage() {
                 onAssignInvoice={(selectedRows, invoiceNumber, invoiceDate) => asignarFactura(selectedRows, invoiceNumber, invoiceDate)}
                 onAssignInvoiceExterna={(selectedRows, invoiceNumber, invoiceDate) => asignarFacturaExterna(selectedRows, invoiceNumber, invoiceDate)}
                 showAssignInvoiceExterna={hasPermission("reportes.assign") && (tipoReporte === "reporte1" || tipoReporte === "reporte6" || tipoReporte === "reporte7")}
+                showCreateExternalCertificates={hasPermission("certificados.edit") && (tipoReporte === "reporte7" || tipoReporte === "reporte6")}
+                onCreateExternalCertificates={crearCertificadosExternos}
                 tipoReporte={tipoReporte}
             />
 

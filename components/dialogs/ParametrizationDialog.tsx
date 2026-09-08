@@ -44,7 +44,6 @@ export function ParametrizationDialog({
     telefono: "",
     descripcion: "",
     datosJson: {} as any,
-    tieneTarifa: false,
   });
   const { toast } = useToast();
 
@@ -63,7 +62,6 @@ export function ParametrizationDialog({
         telefono: item.telefono || "",
         descripcion: item.descripcion || "",
         datosJson: item.datosJson || {},
-        tieneTarifa: item.tieneTarifa || false,
       });
     } else {
       setFormData({
@@ -73,7 +71,6 @@ export function ParametrizationDialog({
         telefono: "",
         descripcion: "",
         datosJson: {},
-        tieneTarifa: type === "fletes" || type === "gestores",
       });
     }
   }, [item, open]);
@@ -348,21 +345,6 @@ export function ParametrizationDialog({
                 )}
               </div>
             )}
-            <div className="space-y-2">
-              {readOnly ? (
-                <div className="flex items-center gap-2">
-                  <Label className="font-medium">¿Tiene Tarifa?</Label>
-                  <span className="text-sm text-muted-foreground">{formData.tieneTarifa ? 'Sí' : 'No'}</span>
-                </div>
-              ) : (
-                <InputCheck
-                  id="tieneTarifa"
-                  checked={formData.tieneTarifa}
-                  onChange={(e) => setFormData({ ...formData, tieneTarifa: e.target.checked })}
-                  label="¿Tiene Tarifa?"
-                />
-              )}
-            </div>
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción</Label>
               {readOnly ? (

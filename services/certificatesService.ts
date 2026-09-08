@@ -18,6 +18,11 @@ export class CertificatesService {
         return response.data;
     }
 
+    async getCertificadoExternaPDF(salidaExternaId: string, numero: string, fecha: string, notas: string): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/externa?salidaExternaId=${salidaExternaId}&numero=${numero}&fecha=${fecha}&notas=${encodeURIComponent(notas || "")}`);
+        return response.data;
+    }
+
     async getCertificadoRecoleccionPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string, notas: string): Promise<string> {
         notas = notas.replaceAll('\n', '**');
         const response = await apiService.get<ApiResponse<string>>(`/certificado/recoleccion?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}&notas=${notas}`);
@@ -58,7 +63,7 @@ export class CertificatesService {
     async getCertificados(tipo: string, inicio: string, fin: string): Promise<Certificados[]> {
         const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/${tipo}/${inicio}/${fin}`);
         response.data.forEach(cert => {
-            cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
+            cert.numMostrar = String(cert.tipo) === "5" ? (cert.numExterno || "") : "CFG" + String(cert.num).padStart(5, '0');
         });
         return response.data;
     }
@@ -66,7 +71,7 @@ export class CertificatesService {
     async getCertificadosCliente(tipo: string, clienteId: string, inicio: string, fin: string): Promise<Certificados[]> {
         const response = await apiService.get<ApiResponse<Certificados[]>>(`/certificado/cliente/${tipo}/${clienteId}/${inicio}/${fin}`);
         response.data.forEach(cert => {
-            cert.numMostrar = "CFG" + String(cert.num).padStart(5, '0');
+            cert.numMostrar = String(cert.tipo) === "5" ? (cert.numExterno || "") : "CFG" + String(cert.num).padStart(5, '0');
         });
         return response.data;
     }
@@ -74,6 +79,22 @@ export class CertificatesService {
     async createCertificado(data: Partial<Certificados>): Promise<Certificados> {
         const response = await apiService.post<ApiResponse<Certificados>>('/certificado', data);
         return response.data;
+    }
+
+    async crearCertificadosExternosMasivo(ids: string[], numero: string, fecha: string, archivo: File): Promise<number> {
+        const formData = new FormData();
+        ids.forEach(id => formData.append('ids', id));
+        formData.append('numero', numero);
+        formData.append('fecha', fecha);
+        formData.append('archivo', archivo);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"}/certificado/externas-masivo`, {
+            method: 'POST',
+            headers: { ...(typeof window !== 'undefined' && localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}) },
+            body: formData,
+        });
+        if (!response.ok) throw new Error((await response.json())?.message || "No se pudieron crear los certificados");
+        const result = await response.json();
+        return result.data;
     }
 
     async updateCertificado(id: string, data: Partial<Certificados>): Promise<Certificados> {

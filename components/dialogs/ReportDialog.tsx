@@ -35,6 +35,8 @@ interface ReportDialogProps<TData, TValue> {
     onAssignInvoice?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void;
     showAssignInvoiceExterna?: boolean;
     onAssignInvoiceExterna?: (selectedRows: TData[], invoiceNumber: string, invoiceDate?: string) => void;
+    showCreateExternalCertificates?: boolean;
+    onCreateExternalCertificates?: (selectedRows: TData[], numero: string, fecha: string, archivo: File) => void;
     rowIdField?: string; // campo que actúa como ID único para cada fila (ej: "id", "codigo")
     checkboxColumnWidth?: string; // ancho de la columna de selección (ej: "40px")
     tipoReporte?: string; // nuevo campo para identificar el tipo de reporte en el historial
@@ -56,6 +58,8 @@ export function ReportDialog<TData, TValue>({
     onAssignInvoice,
     showAssignInvoiceExterna = false,
     onAssignInvoiceExterna,
+    showCreateExternalCertificates = false,
+    onCreateExternalCertificates,
     rowIdField = "id",
     checkboxColumnWidth,
     tipoReporte,
@@ -95,6 +99,10 @@ export function ReportDialog<TData, TValue>({
     // Estado para sumar columnas
     const [summaryKeys, setSummaryKeys] = React.useState<string[]>([]);
     const [filteredRows, setFilteredRows] = React.useState<any[]>(data);
+    const [externalCertDialogOpen, setExternalCertDialogOpen] = React.useState(false);
+    const [externalCertNumber, setExternalCertNumber] = React.useState("");
+    const [externalCertDate, setExternalCertDate] = React.useState("");
+    const [externalCertFile, setExternalCertFile] = React.useState<File | null>(null);
 
     const [historialOpen, setHistorialOpen] = React.useState(false);
     const [historialId, setHistorialId] = React.useState<string>("");
@@ -349,6 +357,8 @@ export function ReportDialog<TData, TValue>({
         setInvoiceExtDialogOpen(true);
     };
 
+    const getSelectedRows = (): TData[] => data.filter((row: any) => selectedRows.has(String(row[rowIdField])));
+
     const handleConfirmAssignInvoiceExt = () => {
         if (!invoiceExtNumber.trim()) {
             message("Error", "Por favor ingresa un número de factura externa.", "error");
@@ -540,6 +550,17 @@ export function ReportDialog<TData, TValue>({
                                 </Button>
                             )}
 
+                            {showCreateExternalCertificates && (
+                                <Button
+                                    type="button"
+                                    onClick={() => setExternalCertDialogOpen(true)}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2 shadow"
+                                    disabled={selectedRows.size === 0}
+                                >
+                                    Crear Certificados Externas ({selectedRows.size})
+                                </Button>
+                            )}
+
                             <Button
                                 type="button"
                                 onClick={handleExportExcel}
@@ -614,6 +635,21 @@ export function ReportDialog<TData, TValue>({
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Cerrar
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={externalCertDialogOpen} onOpenChange={setExternalCertDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>Crear Certificados Externas</DialogTitle></DialogHeader>
+                    <div className="space-y-4">
+                        <div><Label htmlFor="external-cert-number">Número de certificado</Label><Input id="external-cert-number" value={externalCertNumber} onChange={e => setExternalCertNumber(e.target.value)} /></div>
+                        <div><Label htmlFor="external-cert-date">Fecha</Label><Input id="external-cert-date" type="date" value={externalCertDate} onChange={e => setExternalCertDate(e.target.value)} /></div>
+                        <div><Label htmlFor="external-cert-file">Documento PDF</Label><Input id="external-cert-file" type="file" accept="application/pdf" onChange={e => setExternalCertFile(e.target.files?.[0] || null)} /></div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setExternalCertDialogOpen(false)}>Cancelar</Button>
+                        <Button type="button" disabled={!externalCertNumber || !externalCertDate || !externalCertFile} onClick={() => { if (externalCertFile) onCreateExternalCertificates?.(getSelectedRows(), externalCertNumber, externalCertDate, externalCertFile); setExternalCertDialogOpen(false); setExternalCertNumber(""); setExternalCertDate(""); setExternalCertFile(null); }}>Crear certificados</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

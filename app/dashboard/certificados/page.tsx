@@ -11,6 +11,7 @@ import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
 import { NotasDialog } from "@/components/dialogs/NotasDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { certificatesService } from "@/services/certificatesService";
+import { adjuntosService } from "@/services/adjuntosService";
 import { clientService } from "@/services/clientService";
 import { parametrizationService } from "@/services/parametrizationService";
 import type { Certificados, Cliente, Parametrizacion, Sede } from "@/types";
@@ -35,6 +36,7 @@ export default function CertificadosPage() {
     const [certificadosOtros, setCertificadosOtros] = useState<Certificados[]>([]);
     const [certificadosProforma, setCertificadosProforma] = useState<Certificados[]>([]);
     const [certificadosSalidas, setCertificadosSalidas] = useState<Certificados[]>([]);
+    const [certificadosExternas, setCertificadosExternas] = useState<Certificados[]>([]);
     const [sedes, setSedes] = useState<Sede[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
@@ -126,11 +128,12 @@ export default function CertificadosPage() {
         try {
             setLoading(true);
             if (user?.perfil?.nombre === "CLIENTE") {
-                const [llantasData, otrosData, proformaData, salidasData, sedesData, clientesData, plantasData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, externasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificadosCliente("1", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("2", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("3", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("4", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("5", user.id || "", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
                     parametrizationService.getListaActivos("oficina"),
@@ -139,15 +142,17 @@ export default function CertificadosPage() {
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
                 setCertificadosSalidas(salidasData);
+                setCertificadosExternas(externasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
                 setPlantas(plantasData);
             } else {
-                const [llantasData, otrosData, proformaData, salidasData, sedesData, clientesData, plantasData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, externasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificados("1", dateString, fechaFinString),
                     certificatesService.getCertificados("2", dateString, fechaFinString),
                     certificatesService.getCertificados("3", dateString, fechaFinString),
                     certificatesService.getCertificados("4", dateString, fechaFinString),
+                    certificatesService.getCertificados("5", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
                     parametrizationService.getListaActivos("oficina"),
@@ -156,6 +161,7 @@ export default function CertificadosPage() {
                 setCertificadosOtros(otrosData);
                 setCertificadosProforma(proformaData);
                 setCertificadosSalidas(salidasData);
+                setCertificadosExternas(externasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
                 setPlantas(plantasData);
@@ -230,6 +236,11 @@ export default function CertificadosPage() {
             case "4":
                 base64 = await certificatesService.getCertificadoProformaSalidaPDF(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
+            case "5": {
+                const archivos = await adjuntosService.getAdjuntosFtp("certificado-externa", obj.id || "");
+                base64 = archivos.length > 0 ? archivos[0].base64 : null;
+                break;
+            }
             default:
                 base64 = null;
                 break;
@@ -726,6 +737,7 @@ export default function CertificadosPage() {
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="salidas">Proforma Salidas</TabsTrigger>)}
+                            {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="externas">Externas</TabsTrigger>)}
                         </TabsList>
 
                         <TabsContent value="llantas">
@@ -749,6 +761,15 @@ export default function CertificadosPage() {
                             <DataTable
                                 columns={columns}
                                 data={certificadosLlantas}
+                                searchKey={["numMostrar", "sedeNombre", "clienteNombre"]}
+                                searchPlaceholder="Buscar ..."
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="externas">
+                            <DataTable
+                                columns={columns}
+                                data={certificadosExternas}
                                 searchKey={["numMostrar", "sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar ..."
                             />

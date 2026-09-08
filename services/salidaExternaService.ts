@@ -28,9 +28,12 @@ export class SalidaExternaService {
     return response.data
   }
 
-  async toggleSalidaExternaStatus(id: string): Promise<SalidaExterna> {
-    const response = await apiService.patch<ApiResponse<SalidaExterna>>(`/salidas-externas/${id}/toggle-status`)
-    return response.data
+  async deleteSalidaExterna(id: string): Promise<void> {
+    await apiService.delete(`/salidas-externas/${id}`)
+  }
+
+  async updateFirma(id: string, firma: string): Promise<void> {
+    await apiService.patch(`/salidas-externas/${id}/firma`, { firma })
   }
 
   async createCantidad(obj: Partial<SalidaExternaCantidad>): Promise<SalidaExternaCantidad> {

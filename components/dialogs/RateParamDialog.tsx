@@ -45,6 +45,7 @@ export function RateParamDialog({
 }: RateParamDialogProps) {
   const tipoParametrizacion = parametrizacion?.tipo?.toLowerCase();
   const esFlete = tipoParametrizacion === "flete" || tipoParametrizacion === "flete_focus";
+  const requiereSede = esFlete || tipoParametrizacion === "gestor";
   const [loading, setLoading] = useState(false);
   const [viewDensidad, setViewDensidad] = useState(false);
   const [formData, setFormData] = useState({
@@ -160,7 +161,7 @@ export function RateParamDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              {esFlete && (
+              {requiereSede && (
                 <div className="space-y-2">
                   <Label htmlFor="sedeId" required>Sede</Label>
                   <SelectSingle
