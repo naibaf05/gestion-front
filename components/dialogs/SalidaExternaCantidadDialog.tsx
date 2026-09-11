@@ -20,6 +20,8 @@ import { Input } from "../ui/input";
 import { salidaExternaService } from "@/services/salidaExternaService";
 import { InputPositiveInteger } from "../ui/input-positive-integer";
 import { useAuth } from "@/contexts/AuthContext";
+import { rateParamService } from "@/services/rateParamService";
+import type { RateParam } from "@/types";
 
 interface SalidaExternaCantidadDialogProps {
   open: boolean;
@@ -28,6 +30,8 @@ interface SalidaExternaCantidadDialogProps {
   salidaExterna: SalidaExterna;
   contenedores: Parametrizacion[];
   tiposResiduos: TipoResiduo[];
+  gestores?: Parametrizacion[];
+  tiposTratamiento?: Parametrizacion[];
   onSuccess: () => void;
   readOnly?: boolean;
 }
@@ -39,6 +43,8 @@ export function SalidaExternaCantidadDialog({
   salidaExterna,
   contenedores,
   tiposResiduos,
+  gestores = [],
+  tiposTratamiento = [],
   onSuccess,
   readOnly = false,
 }: SalidaExternaCantidadDialogProps) {
@@ -57,8 +63,50 @@ export function SalidaExternaCantidadDialog({
     salidaExternaId: "",
     tarifaId: "",
     tarifaNombre: "",
+    gestorId: "",
+    tarifaGestorId: "",
+    tarifaGestorNombre: "",
+    tipoTratamientoId: "",
   });
   const { toast } = useToast();
+
+  const isDateInRateRange = (fecha: string, rate: RateParam): boolean => {
+    if (!fecha || !rate?.fechaInicio) return false;
+    if (fecha < rate.fechaInicio) return false;
+    if (rate.fechaFin && fecha > rate.fechaFin) return false;
+    return true;
+  };
+
+  const findVigenteGestorRate = async (gestorId: string, fecha: string, sedeIds: string[]): Promise<RateParam | null> => {
+    if (!gestorId || !fecha || sedeIds.length === 0) return null;
+    const rates = (await rateParamService.getTableBySedes(sedeIds)).filter((rate) => String(rate.parametrizacionId) === String(gestorId));
+    const vigentes = rates
+      .filter((r) => r.activo && isDateInRateRange(fecha, r))
+      .sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")));
+    return vigentes[0] || null;
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const sedeIds = [salidaExterna.sedeSalidaId, salidaExterna.sedeId].filter(Boolean) as string[];
+    if (!formData.gestorId || !salidaExterna.fecha || sedeIds.length === 0) return;
+
+    findVigenteGestorRate(formData.gestorId, salidaExterna.fecha, sedeIds)
+      .then((rate) => {
+        setFormData((prev) => ({
+          ...prev,
+          tarifaGestorId: rate?.id || "",
+          tarifaGestorNombre: rate?.tarifaNombre || (prev.gestorId ? "Sin tarifa vigente" : ""),
+        }));
+      })
+      .catch(() => {
+        setFormData((prev) => ({
+          ...prev,
+          tarifaGestorId: "",
+          tarifaGestorNombre: prev.gestorId ? "No se pudo consultar tarifa" : "",
+        }));
+      });
+  }, [open, formData.gestorId, salidaExterna.sedeSalidaId, salidaExterna.sedeId, salidaExterna.fecha]);
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -94,6 +142,10 @@ export function SalidaExternaCantidadDialog({
         salidaExternaId: cantidad.salidaExternaId,
         tarifaId: cantidad.tarifaId || "",
         tarifaNombre: cantidad.tarifaNombre || "",
+        gestorId: cantidad.gestorId || "",
+        tarifaGestorId: cantidad.tarifaGestorId || "",
+        tarifaGestorNombre: cantidad.tarifaGestorNombre || "",
+        tipoTratamientoId: cantidad.tipoTratamientoId || "",
       });
     } else {
       setFormData({
@@ -106,6 +158,10 @@ export function SalidaExternaCantidadDialog({
         salidaExternaId: salidaExterna.id,
         tarifaId: "",
         tarifaNombre: "",
+        gestorId: "",
+        tarifaGestorId: "",
+        tarifaGestorNombre: "",
+        tipoTratamientoId: "",
       });
     }
   }, [cantidad, open, salidaExterna.id, tiposResiduos]);
@@ -119,16 +175,16 @@ export function SalidaExternaCantidadDialog({
         formData.id = "";
         await salidaExternaService.updateCantidad(cantidad.id, formData);
         toast({
-          title: "Producto actualizado",
-          description: "El producto ha sido actualizado exitosamente",
+          title: "Cantidad actualizada",
+          description: "La cantidad ha sido actualizada exitosamente",
           variant: "success",
         });
       } else {
         formData.id = "";
         await salidaExternaService.createCantidad(formData);
         toast({
-          title: "Producto agregado",
-          description: "El producto ha sido agregado exitosamente",
+          title: "Cantidad agregada",
+          description: "La cantidad ha sido agregada exitosamente",
           variant: "success",
         });
       }
@@ -137,7 +193,7 @@ export function SalidaExternaCantidadDialog({
     } catch (error: any) {
       toast({
         title: cantidad ? "Error al actualizar" : "Error al crear",
-        description: (error && error.message) ? error.message : "No se pudo guardar el producto",
+        description: (error && error.message) ? error.message : "No se pudo guardar la cantidad",
         variant: "error",
       });
     } finally {
@@ -190,7 +246,7 @@ export function SalidaExternaCantidadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{readOnly ? "Ver Producto" : (cantidad ? "Editar Producto" : "Nuevo Producto")}</DialogTitle>
+          <DialogTitle>{readOnly ? "Ver Cantidad" : (cantidad ? "Editar Cantidad" : "Nueva Cantidad")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -221,6 +277,31 @@ export function SalidaExternaCantidadDialog({
                 </div>
               )}
               <div className="space-y-2">
+                <Label htmlFor="gestorId">Gestor</Label>
+                <SelectSingle
+                  id="gestorId"
+                  placeholder="Selecciona un gestor (opcional)"
+                  options={gestores}
+                  value={formData.gestorId}
+                  onChange={(value) => setFormData({ ...formData, gestorId: value, tarifaGestorId: "", tarifaGestorNombre: "" })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
+                  disabled={readOnly}
+                />
+              </div>
+              {hasPermission("rates.view") && (
+                <div className="space-y-2">
+                  <Label htmlFor="tarifaGestorNombre">Tarifa Gestor</Label>
+                  <Input
+                    id="tarifaGestorNombre"
+                    value={formData.tarifaGestorNombre}
+                    placeholder="Tarifa de gestor"
+                    disabled={true}
+                    readOnly={true}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
                 <Label htmlFor="contenedorId">Unidad de Entrega</Label>
                 <SelectSingle
                   id="contenedorId"
@@ -230,6 +311,19 @@ export function SalidaExternaCantidadDialog({
                   onChange={(value) => setFormData({ ...formData, contenedorId: value })}
                   valueKey="id"
                   labelKey="nombre"
+                  disabled={readOnly}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tipoTratamientoId">Tipo de Tratamiento</Label>
+                <SelectSingle
+                  id="tipoTratamientoId"
+                  placeholder="Selecciona un tipo de tratamiento (opcional)"
+                  options={tiposTratamiento}
+                  value={formData.tipoTratamientoId}
+                  onChange={(value) => setFormData({ ...formData, tipoTratamientoId: value })}
+                  valueKey="id"
+                  labelKey="nombreMostrar"
                   disabled={readOnly}
                 />
               </div>

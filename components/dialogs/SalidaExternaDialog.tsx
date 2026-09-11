@@ -34,7 +34,6 @@ interface SalidaExternaDialogProps {
   conductores: User[]
   receptores: User[]
   comerciales: Parametrizacion[]
-  gestores: Parametrizacion[]
   fletes: Parametrizacion[]
   fletesGestion: Parametrizacion[]
   fletesFocus: Parametrizacion[]
@@ -59,7 +58,6 @@ export function SalidaExternaDialog({
   conductores,
   receptores,
   comerciales,
-  gestores,
   fletes,
   fletesGestion,
   fletesFocus,
@@ -85,7 +83,6 @@ export function SalidaExternaDialog({
     conductorId: "",
     receptorId: "",
     comercialId: "",
-    gestorId: "",
     fleteId: "",
     fleteGestionId: "",
     fleteFocusId: "",
@@ -95,8 +92,6 @@ export function SalidaExternaDialog({
     tarifaFleteGestionNombre: "",
     tarifaFleteFocusId: "",
     tarifaFleteFocusNombre: "",
-    tarifaGestorId: "",
-    tarifaGestorNombre: "",
     notas: "",
     lat: "",
     lon: "",
@@ -182,7 +177,6 @@ export function SalidaExternaDialog({
         conductorId: salidaExterna.conductorId || "",
         receptorId: salidaExterna.receptorId || "",
         comercialId: salidaExterna.comercialId || "",
-        gestorId: salidaExterna.gestorId || "",
         fleteId: salidaExterna.fleteId || "",
         fleteGestionId: salidaExterna.fleteGestionId || salidaExterna.fleteId || "",
         fleteFocusId: salidaExterna.fleteFocusId || "",
@@ -192,8 +186,6 @@ export function SalidaExternaDialog({
         tarifaFleteGestionNombre: salidaExterna.tarifaFleteGestionNombre || salidaExterna.tarifaFleteNombre || "",
         tarifaFleteFocusId: salidaExterna.tarifaFleteFocusId || "",
         tarifaFleteFocusNombre: salidaExterna.tarifaFleteFocusNombre || "",
-        tarifaGestorId: salidaExterna.tarifaGestorId || "",
-        tarifaGestorNombre: salidaExterna.tarifaGestorNombre || "",
         notas: salidaExterna.notas || "",
         lat: salidaExterna.lat || "",
         lon: salidaExterna.lon || "",
@@ -218,7 +210,6 @@ export function SalidaExternaDialog({
       conductorId: "",
       receptorId: "",
       comercialId: "",
-      gestorId: "",
       fleteId: "",
       fleteGestionId: "",
       fleteFocusId: "",
@@ -228,8 +219,6 @@ export function SalidaExternaDialog({
       tarifaFleteGestionNombre: "",
       tarifaFleteFocusId: "",
       tarifaFleteFocusNombre: "",
-      tarifaGestorId: "",
-      tarifaGestorNombre: "",
       notas: "",
       esSede: false,
       esPlanta: false,
@@ -241,10 +230,9 @@ export function SalidaExternaDialog({
 
     const resolveTarifas = async () => {
       try {
-        const [rateFleteGestion, rateFleteFocus, rateGestor] = await Promise.all([
+        const [rateFleteGestion, rateFleteFocus] = await Promise.all([
           formData.fleteGestionId ? findVigenteRate(formData.fleteGestionId, formData.fecha, [formData.sedeSalidaId, formData.sedeId].filter(Boolean)) : Promise.resolve(null),
           formData.fleteFocusId ? findVigenteRate(formData.fleteFocusId, formData.fecha, [formData.sedeSalidaId, formData.sedeId].filter(Boolean)) : Promise.resolve(null),
-          formData.gestorId ? findVigenteRate(formData.gestorId, formData.fecha) : Promise.resolve(null),
         ])
 
         setFormData((prev) => ({
@@ -253,8 +241,6 @@ export function SalidaExternaDialog({
           tarifaFleteGestionNombre: rateFleteGestion?.tarifaNombre || (prev.fleteGestionId ? "Sin tarifa vigente" : ""),
           tarifaFleteFocusId: rateFleteFocus?.id || "",
           tarifaFleteFocusNombre: rateFleteFocus?.tarifaNombre || (prev.fleteFocusId ? "Sin tarifa vigente" : ""),
-          tarifaGestorId: rateGestor?.id || "",
-          tarifaGestorNombre: rateGestor?.tarifaNombre || (prev.gestorId ? "Sin tarifa vigente" : ""),
         }))
       } catch {
         setFormData((prev) => ({
@@ -263,14 +249,12 @@ export function SalidaExternaDialog({
           tarifaFleteGestionNombre: prev.fleteGestionId ? "No se pudo consultar tarifa" : "",
           tarifaFleteFocusId: "",
           tarifaFleteFocusNombre: prev.fleteFocusId ? "No se pudo consultar tarifa" : "",
-          tarifaGestorId: "",
-          tarifaGestorNombre: prev.gestorId ? "No se pudo consultar tarifa" : "",
         }))
       }
     }
 
     resolveTarifas()
-  }, [open, formData.fecha, formData.fleteGestionId, formData.fleteFocusId, formData.gestorId])
+  }, [open, formData.fecha, formData.fleteGestionId, formData.fleteFocusId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -529,19 +513,6 @@ export function SalidaExternaDialog({
 
             <TabsContent value="complemento" className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gestor">Gestor</Label>
-                  <SelectSingle
-                    id="gestor"
-                    placeholder="Selecciona un gestor"
-                    options={gestores}
-                    value={formData.gestorId}
-                    onChange={(value) => setFormData({ ...formData, gestorId: value, tarifaGestorId: "", tarifaGestorNombre: "" })}
-                    valueKey="id"
-                    labelKey="nombreMostrar"
-                    disabled={readOnly}
-                  />
-                </div>
                 <>
                 <div className="space-y-2">
                   <Label htmlFor="fleteGestion">Flete Gestión</Label>
@@ -572,16 +543,6 @@ export function SalidaExternaDialog({
                 </>
                 {hasPermission("rates.view") && (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="tarifaGestorNombre">Tarifa Gestor</Label>
-                      <Input
-                        id="tarifaGestorNombre"
-                        value={formData.tarifaGestorNombre}
-                        placeholder="Tarifa de gestor"
-                        disabled={true}
-                        readOnly={true}
-                      />
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="tarifaFleteGestionNombre">Tarifa Flete Gestión</Label>
                       <Input

@@ -147,6 +147,15 @@ const parametrizationConfigs: ParametrizationConfig[] = [
     color: "text-cyan-700",
     bgColor: "bg-cyan-50",
   },
+  {
+    key: "tipos_tratamiento",
+    title: "Tipos de Tratamiento",
+    singular_title: "Tipo de Tratamiento",
+    description: "Administra los tipos de tratamiento disponibles para las cantidades de gestión externa",
+    icon: Biohazard,
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+  },
 ]
 
 export default function ParametrizationsPage() {
@@ -169,6 +178,7 @@ export default function ParametrizationsPage() {
   const [fletesGestion, setFletesGestion] = useState<Parametrizacion[]>([])
   const [fletesFocus, setFletesFocus] = useState<Parametrizacion[]>([])
   const [gestores, setGestores] = useState<Parametrizacion[]>([])
+  const [tiposTratamiento, setTiposTratamiento] = useState<Parametrizacion[]>([])
 
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -204,7 +214,7 @@ export default function ParametrizationsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData, fletesGestionData, fletesFocusData, gestoresData] =
+      const [clientesData, pobladosData, oficinasData, generadoresData, periodosData, comercialesData, tResiduoData, tClientesData, undMedidasData, contenedoresData, tVehiculosData, fletesGestionData, fletesFocusData, gestoresData, tiposTratamientoData] =
         await Promise.all([
           clientService.getClientesActivos(),
           parametrizationService.getLista("poblado"),
@@ -220,6 +230,7 @@ export default function ParametrizationsPage() {
           parametrizationService.getLista("flete"),
           parametrizationService.getLista("flete_focus"),
           parametrizationService.getLista("gestor"),
+          parametrizationService.getLista("tipo_tratamiento"),
         ])
       setClientes(clientesData)
       setPoblados(pobladosData)
@@ -235,6 +246,7 @@ export default function ParametrizationsPage() {
       setFletesGestion(fletesGestionData)
       setFletesFocus(fletesFocusData)
       setGestores(gestoresData)
+      setTiposTratamiento(tiposTratamientoData)
     } catch (error) {
       toast({
         title: "Error",
@@ -274,6 +286,8 @@ export default function ParametrizationsPage() {
         return fletesFocus
       case "gestores":
         return gestores
+      case "tipos_tratamiento":
+        return tiposTratamiento
       default:
         return []
     }
@@ -307,6 +321,8 @@ export default function ParametrizationsPage() {
         return fletesFocus.length
       case "gestores":
         return gestores.length
+      case "tipos_tratamiento":
+        return tiposTratamiento.length
       default:
         return 0
     }

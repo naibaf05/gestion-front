@@ -21,12 +21,16 @@ interface SalidaExternaCantidadesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   salidaExterna: SalidaExterna
+  gestores: Parametrizacion[]
+  tiposTratamiento: Parametrizacion[]
 }
 
 export function SalidaExternaCantidadesDialog({
   open,
   onOpenChange,
   salidaExterna,
+  gestores,
+  tiposTratamiento,
 }: SalidaExternaCantidadesDialogProps) {
   const { user } = useAuth()
   const [amounts, setAmounts] = useState<SalidaExternaCantidad[]>([])
@@ -103,7 +107,7 @@ export function SalidaExternaCantidadesDialog({
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los productos",
+        description: "No se pudieron cargar las cantidades",
         variant: "destructive",
       })
     } finally {
@@ -143,15 +147,15 @@ export function SalidaExternaCantidadesDialog({
     try {
       await salidaExternaService.deleteCantidad(amountToDelete)
       toast({
-        title: "Producto eliminado",
-        description: "El producto ha sido eliminado exitosamente",
+        title: "Cantidad eliminada",
+        description: "La cantidad ha sido eliminada exitosamente",
         variant: "success",
       })
       loadData()
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo eliminar el producto",
+        description: error.message || "No se pudo eliminar la cantidad",
         variant: "destructive",
       })
     } finally {
@@ -177,6 +181,11 @@ export function SalidaExternaCantidadesDialog({
       width: "350px",
     },
     {
+      accessorKey: "tipoTratamientoNombre",
+      header: "Tipo de Tratamiento",
+      width: "200px",
+    },
+    {
       accessorKey: "numContenedor",
       header: "Unidades",
       width: "100px",
@@ -190,6 +199,18 @@ export function SalidaExternaCantidadesDialog({
       ? [{
           accessorKey: "tarifaNombre" as keyof SalidaExternaCantidad,
           header: "Tarifa",
+          width: "150px",
+        }]
+      : []),
+    {
+      accessorKey: "gestorNombre",
+      header: "Gestor",
+      width: "200px",
+    },
+    ...(hasPermission("rates.view")
+      ? [{
+          accessorKey: "tarifaGestorNombre" as keyof SalidaExternaCantidad,
+          header: "Tarifa Gestor",
           width: "150px",
         }]
       : []),
@@ -233,7 +254,7 @@ export function SalidaExternaCantidadesDialog({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando productos...</p>
+          <p className="mt-2 text-sm text-gray-600">Cargando cantidades...</p>
         </div>
       </div>
     )
@@ -244,15 +265,15 @@ export function SalidaExternaCantidadesDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[1050px] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Productos de salida externa</DialogTitle>
+            <DialogTitle>Cantidades de salida externa {salidaExterna.num ? `SEXT${String(salidaExterna.num).padStart(5, "0")}` : ""}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">Salida: {salidaExterna.num ? `SEXT${String(salidaExterna.num).padStart(5, "0")}` : salidaExterna.id}</div>
+              <div className="text-sm text-muted-foreground"></div>
               {hasPermission("salidaexterna.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                  <Plus className="mr-2 h-4 w-4" />Agregar Producto
+                  <Plus className="mr-2 h-4 w-4" />Agregar Cantidad
                 </Button>
               )}
             </div>
@@ -260,8 +281,8 @@ export function SalidaExternaCantidadesDialog({
             <DataTable
               columns={columns}
               data={amounts}
-              searchKey={["tResiduoNombre", "cantidadUnidad", "tarifaNombre", "contenedorNombre"]}
-              searchPlaceholder="Buscar producto..."
+              searchKey={["tResiduoNombre", "cantidadUnidad", "tarifaNombre", "contenedorNombre", "gestorNombre"]}
+              searchPlaceholder="Buscar cantidad..."
             />
           </div>
 
@@ -278,6 +299,8 @@ export function SalidaExternaCantidadesDialog({
         salidaExterna={salidaExterna}
         contenedores={contenedores}
         tiposResiduos={tiposResiduos}
+        gestores={gestores}
+        tiposTratamiento={tiposTratamiento}
         onSuccess={loadData}
         readOnly={dialogReadOnly}
       />
@@ -285,8 +308,8 @@ export function SalidaExternaCantidadesDialog({
       <ConfirmationDialog
         open={confirmDialogOpen}
         onOpenChange={setConfirmDialogOpen}
-        title="Eliminar producto"
-        description="¿Está seguro de eliminar este producto? Esta acción no se puede deshacer."
+        title="Eliminar cantidad"
+        description="¿Está seguro de eliminar esta cantidad? Esta acción no se puede deshacer."
         confirmText="Eliminar"
         cancelText="Cancelar"
         onConfirm={confirmDelete}

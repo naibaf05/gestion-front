@@ -69,6 +69,7 @@ export default function SalidasExternasPage() {
     const [fletesGestion, setFletesGestion] = useState<Parametrizacion[]>([])
     const [fletesFocus, setFletesFocus] = useState<Parametrizacion[]>([])
     const [gestores, setGestores] = useState<Parametrizacion[]>([])
+    const [tiposTratamiento, setTiposTratamiento] = useState<Parametrizacion[]>([])
 
     const [loading, setLoading] = useState(true)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -167,6 +168,7 @@ export default function SalidasExternasPage() {
                 fletesGestionData,
                 fletesFocusData,
                 gestoresData,
+                tiposTratamientoData,
             ] = await Promise.all([
                 salidaExternaService.getSalidasExternas(dateString, fechaFinString),
                 clientService.getSedesActivas(),
@@ -178,6 +180,7 @@ export default function SalidasExternasPage() {
                 parametrizationService.getListaActivos("flete"),
                 parametrizationService.getListaActivos("flete_focus"),
                 parametrizationService.getListaActivos("gestor"),
+                parametrizationService.getListaActivos("tipo_tratamiento"),
             ])
 
             const withFormatted = salidasData.map((s) => ({
@@ -208,6 +211,7 @@ export default function SalidasExternasPage() {
             setFletesGestion(fletesGestionData.filter((flete) => fleteIds.has(String(flete.id))))
             setFletesFocus(fletesFocusData.filter((flete) => fleteIds.has(String(flete.id))))
             setGestores(gestoresData)
+            setTiposTratamiento(tiposTratamientoData)
         } catch (error) {
             toast({
                 title: "Error",
@@ -241,7 +245,7 @@ export default function SalidasExternasPage() {
 
     const handleDelete = async (id: string) => {
         if (!hasPermission("salidaexterna.edit")) return
-        if (confirm("¿Estas seguro de que deseas eliminar esta salida externa? Solo se puede eliminar si no tiene productos asociados.")) {
+        if (confirm("¿Estas seguro de que deseas eliminar esta salida externa? Solo se puede eliminar si no tiene cantidades asociadas.")) {
             try {
                 await salidaExternaService.deleteSalidaExterna(id)
                 toast({ title: "Salida externa eliminada", description: "La salida externa fue eliminada correctamente", variant: "success" })
@@ -281,7 +285,6 @@ export default function SalidasExternasPage() {
         { accessorKey: "salida", header: "Salida" },
         { accessorKey: "destino", header: "Destino" },
         { accessorKey: "conductorNombre", header: "Conductor" },
-        { accessorKey: "gestorNombre", header: "Gestor" },
         {
             accessorKey: "activo",
             header: "Estado",
@@ -308,7 +311,7 @@ export default function SalidasExternasPage() {
                                     <Eye className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleCantidades(obj)} tooltipContent="Productos">
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handleCantidades(obj)} tooltipContent="Cantidades">
                                 <TableProperties className="h-4 w-4" />
                             </ButtonTooltip>
 
@@ -401,7 +404,7 @@ export default function SalidasExternasPage() {
                     <DataTable
                         columns={columns}
                         data={salidasExternas}
-                        searchKey={["numFormateado", "fecha", "tipo", "salida", "destino", "conductorNombre", "gestorNombre", "fleteNombre"]}
+                        searchKey={["numFormateado", "fecha", "tipo", "salida", "destino", "conductorNombre", "fleteNombre"]}
                         searchPlaceholder="Buscar ..."
                     />
                 </CardContent>
@@ -416,7 +419,6 @@ export default function SalidasExternasPage() {
                 conductores={conductores}
                 receptores={receptores}
                 comerciales={comerciales}
-                gestores={gestores}
                 fletes={fletes}
                 fletesGestion={fletesGestion}
                 fletesFocus={fletesFocus}
@@ -431,6 +433,8 @@ export default function SalidasExternasPage() {
                     open={cantidadesDialogOpen}
                     onOpenChange={setCantidadesDialogOpen}
                     salidaExterna={selectedSalidaExterna}
+                    gestores={gestores}
+                    tiposTratamiento={tiposTratamiento}
                 />
             )}
             <AdjuntosDialog open={adjuntosOpen} onOpenChange={setAdjuntosOpen} tipo="salidas-externas" entityId={actionId} title="Adjuntos de Gestión Externa" />

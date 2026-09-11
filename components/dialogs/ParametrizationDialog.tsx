@@ -152,6 +152,8 @@ export function ParametrizationDialog({
         return "flete_focus"
       case "gestores":
         return "gestor"
+      case "tipos_tratamiento":
+        return "tipo_tratamiento"
       default:
         return "";
     }
@@ -172,6 +174,7 @@ export function ParametrizationDialog({
       fletes_gestion: "Flete Gestión",
       fletes_focus: "Flete Focus",
       gestores: "Gestor",
+      tipos_tratamiento: "Tipo de Tratamiento",
     };
     if (readOnly) return `Ver ${titles[type]}`;
     return item ? `Editar ${titles[type]}` : `Nuevo ${titles[type]}`;
@@ -242,6 +245,11 @@ export function ParametrizationDialog({
       gestores: {
         nombre: "Nombre del gestor",
         codigo: "Código del gestor",
+        descripcion: "Descripción",
+      },
+      tipos_tratamiento: {
+        nombre: "Nombre del tipo de tratamiento",
+        codigo: "Código del tipo de tratamiento",
         descripcion: "Descripción",
       },
     };

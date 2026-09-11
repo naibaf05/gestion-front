@@ -115,6 +115,7 @@ export default function ReportesPage() {
                     { key: "cantidadKg", label: "Cantidad KG", category: "visita", enabled: true, width: "120px" },
                     { key: "cantidadM3", label: "Cantidad M3", category: "visita", enabled: true, width: "120px" },
                     { key: "recolNombre", label: "Nombre Recolector", category: "visita", enabled: true, width: "200px" },
+                    { key: "placa", label: "Placa", category: "visita", enabled: true, width: "120px" },
                     { key: "numFactura", label: "Número Factura", category: "visita", enabled: true, width: "150px" },
                     { key: "fecFactura", label: "Fecha Factura", category: "visita", enabled: true, width: "120px" },
                     ...(canViewTarifa ? [{ key: "valor", label: "Valor", category: "visita", enabled: true, width: "150px" }] : []),
@@ -129,6 +130,7 @@ export default function ReportesPage() {
                     { key: "cantidadVisita", label: "Cantidad Visita", category: "visita", enabled: isReporteResiduos, width: "130px" },
                     ...(canViewTarifa ? [{ key: "tarifaFlete", label: "Tarifa Flete", category: "visita", enabled: isReporteResiduos, width: "130px" }] : []),
                     ...(canViewTarifa ? [{ key: "tarifaGestor", label: "Tarifa Gestor", category: "visita", enabled: isReporteResiduos, width: "130px" }] : []),
+                    ...(canViewTarifa ? [{ key: "valorGestor", label: "Valor Gestor", category: "visita", enabled: isReporteResiduos, width: "130px" }] : []),
                     { key: "numFacturaExt", label: "N\u00famero Factura Externa", category: "visita", enabled: false, width: "180px" },
                     { key: "fecFacturaExt", label: "Fecha Factura Externa", category: "visita", enabled: false, width: "150px" },
                 ];
@@ -273,7 +275,7 @@ export default function ReportesPage() {
     };
 
     // Columnas que deben mostrarse con formato monetario (sin alterar el valor original numérico)
-    const CURRENCY_COLUMNS = new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor"]);
+    const CURRENCY_COLUMNS = new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor", "valorGestor"]);
     const currencyFormatter = new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",
@@ -308,7 +310,7 @@ export default function ReportesPage() {
         { value: "reporte1", label: "Reporte Recolecciones y/o entregas en plantas (Residuos)" },
         { value: "reporte2", label: "Reporte Recolecciones y/o entregas en plantas (Llantas)" },
         { value: "reporte7", label: "Reporte Gestión Externa" },
-        { value: "reporte6", label: "Reporte Recolecciones y/o entregas en plantas (Residuos + Llantas)" },        
+        { value: "reporte6", label: "Reporte Recolecciones y/o entregas en plantas (Residuos + Llantas + Gestiones Externas)" },        
         { value: "reporte3", label: "Reporte Recolecciones y/o entregas en plantas (Llantas Consolidado)" },
         { value: "reporte4", label: "Reporte Salidas" },
         { value: "reporte5", label: "Reporte Información Clientes" },

@@ -28,6 +28,7 @@ interface RateParamDialogProps {
   undMedidas: Parametrizacion[];
   tiposResiduos?: Parametrizacion[];
   sedes?: Sede[];
+  preselectedSedeId?: string;
   onSuccess: () => void;
   readOnly?: boolean;
 }
@@ -40,6 +41,7 @@ export function RateParamDialog({
   undMedidas,
   tiposResiduos = [],
   sedes = [],
+  preselectedSedeId,
   onSuccess,
   readOnly = false,
 }: RateParamDialogProps) {
@@ -86,7 +88,7 @@ export function RateParamDialog({
     } else {
       setFormData({
         parametrizacionId: parametrizacion ? parametrizacion.id : "",
-        sedeId: "",
+        sedeId: preselectedSedeId || "",
         undMedidaId: "",
         tipoResiduoId: "",
         tarifa: "",
@@ -96,7 +98,7 @@ export function RateParamDialog({
         densidad: "",
       });
     }
-  }, [rate, open]);
+  }, [rate, open, preselectedSedeId]);
 
   const handleUnidadMedidaChange = (v: string) => {
     const newFormData = { ...formData };
@@ -164,16 +166,25 @@ export function RateParamDialog({
               {requiereSede && (
                 <div className="space-y-2">
                   <Label htmlFor="sedeId" required>Sede</Label>
-                  <SelectSingle
-                    id="sedeId"
-                    placeholder="Selecciona una sede"
-                    options={sedes}
-                    value={formData.sedeId}
-                    onChange={(value) => setFormData({ ...formData, sedeId: value })}
-                    valueKey="id"
-                    labelKey="nombre"
-                    disabled={readOnly}
-                  />
+                  {preselectedSedeId ? (
+                    <Input
+                      id="sedeId"
+                      value={sedes.find((s) => String(s.id) === String(formData.sedeId))?.nombre || ""}
+                      disabled
+                      readOnly
+                    />
+                  ) : (
+                    <SelectSingle
+                      id="sedeId"
+                      placeholder="Selecciona una sede"
+                      options={sedes}
+                      value={formData.sedeId}
+                      onChange={(value) => setFormData({ ...formData, sedeId: value })}
+                      valueKey="id"
+                      labelKey="nombre"
+                      disabled={readOnly}
+                    />
+                  )}
                 </div>
               )}
               {!esFlete && <div className="space-y-2">

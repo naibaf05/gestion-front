@@ -20,6 +20,8 @@ import { rateParamService } from "@/services/rateParamService"
 import { parametrizationService } from "@/services/parametrizationService"
 import { clientService } from "@/services/clientService"
 import { RateParamDialog } from "./RateParamDialog"
+import { SelectSingle } from "../ui/select-single"
+import { Label } from "@/components/ui/label"
 
 interface RatesParamDialogProps {
   open: boolean
@@ -46,11 +48,18 @@ export function RatesParamDialog({
   const [rateDialogReadOnly, setRateDialogReadOnly] = useState(false)
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [rateToToggle, setRateToToggle] = useState<string | null>(null)
+  const [selectedSedeId, setSelectedSedeId] = useState("")
   const { toast } = useToast()
+
+  const esGestor = (parametrizacion?.tipo?.toLowerCase() || "") === "gestor"
 
   useEffect(() => {
     if (open) loadData()
   }, [parametrizacion, open])
+
+  useEffect(() => {
+    if (!open) setSelectedSedeId("")
+  }, [open])
 
   const loadData = async () => {
     try {
@@ -133,6 +142,10 @@ export function RatesParamDialog({
   }
 
   const esFlete = ["flete", "flete_focus"].includes(parametrizacion?.tipo?.toLowerCase() || "")
+
+  const filteredRates = esGestor && selectedSedeId
+    ? rates.filter((r) => String(r.sedeId) === String(selectedSedeId))
+    : rates
 
   const columns: ColumnDef<RateParam>[] = [
     {
@@ -236,10 +249,23 @@ export function RatesParamDialog({
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center">
-                <div />
+              <div className="flex justify-between items-center gap-4">
+                {esGestor ? (
+                  <div className="w-72 space-y-1">
+                    <Label htmlFor="sedeFiltro">Sede</Label>
+                    <SelectSingle
+                      id="sedeFiltro"
+                      placeholder="Selecciona una sede"
+                      options={sedes}
+                      value={selectedSedeId}
+                      onChange={setSelectedSedeId}
+                      valueKey="id"
+                      labelKey="nombre"
+                    />
+                  </div>
+                ) : <div />}
                 {!readOnly && canEdit && (
-                  <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                  <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover" disabled={esGestor && !selectedSedeId}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Tarifa
                   </Button>
@@ -248,7 +274,7 @@ export function RatesParamDialog({
 
               <DataTable
                 columns={columns}
-                data={rates}
+                data={filteredRates}
                 searchKey={["sedeNombre", "undMedidaNombre", "tipoResiduoCodigo", "tipoResiduoNombre", "tarifaNombre"]}
                 searchPlaceholder="Buscar por sede..."
               />
@@ -271,6 +297,7 @@ export function RatesParamDialog({
         undMedidas={undMedidas}
         tiposResiduos={tiposResiduos}
         sedes={sedes}
+        preselectedSedeId={esGestor ? selectedSedeId : undefined}
         onSuccess={loadData}
         readOnly={rateDialogReadOnly}
       />

@@ -1,6 +1,6 @@
 import { init } from "next/dist/compiled/webpack/webpack"
 
-export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos" | "fletes_gestion" | "fletes_focus" | "gestores"
+export type ParametrizationType = "poblados" | "oficinas" | "generadores" | "periodos" | "comerciales" | "t_residuos" | "t_clientes" | "und_medidas" | "contenedores" | "t_vehiculos" | "fletes_gestion" | "fletes_focus" | "gestores" | "tipos_tratamiento"
 
 export interface LoginCredentials {
   username: string
@@ -361,6 +361,13 @@ export interface SalidaExternaCantidad {
   tarifaNombre?: string;
   unidadMedida?: string;
   cantidadUnidad?: string;
+  gestorId?: string;
+  gestorNombre?: string;
+  tarifaGestorId?: string;
+  tarifaGestorNombre?: string;
+  tarifaGestor?: number;
+  tipoTratamientoId?: string;
+  tipoTratamientoNombre?: string;
 }
 
 export interface InfoAdicional {
@@ -466,8 +473,6 @@ export interface SalidaExterna {
   receptorNombre?: string
   comercialId?: string
   comercialNombre?: string
-  gestorId?: string
-  gestorNombre?: string
   fleteId?: string
   fleteNombre?: string
   fleteGestionId?: string
@@ -483,9 +488,6 @@ export interface SalidaExterna {
   tarifaFleteFocusId?: string
   tarifaFleteFocus?: number
   tarifaFleteFocusNombre?: string
-  tarifaGestorId?: string
-  tarifaGestor?: number
-  tarifaGestorNombre?: string
   activo: boolean
   num?: number
   salida?: string
