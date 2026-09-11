@@ -263,21 +263,21 @@ export function SalidaExternaCantidadesDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[1050px] max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[1050px] max-h-[95vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Cantidades de salida externa {salidaExterna.num ? `SEXT${String(salidaExterna.num).padStart(5, "0")}` : ""}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground"></div>
-              {hasPermission("salidaexterna.edit") && (
-                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                  <Plus className="mr-2 h-4 w-4" />Agregar Cantidad
-                </Button>
-              )}
-            </div>
+          <div className="flex justify-between items-center shrink-0">
+            <div className="text-sm text-muted-foreground"></div>
+            {hasPermission("salidaexterna.edit") && (
+              <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                <Plus className="mr-2 h-4 w-4" />Agregar Cantidad
+              </Button>
+            )}
+          </div>
 
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <DataTable
               columns={columns}
               data={amounts}
@@ -286,7 +286,7 @@ export function SalidaExternaCantidadesDialog({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button type="button" variant="outline" onClick={handleCancel}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
