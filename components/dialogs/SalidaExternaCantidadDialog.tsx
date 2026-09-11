@@ -70,10 +70,15 @@ export function SalidaExternaCantidadDialog({
   });
   const { toast } = useToast();
 
+  const soloFecha = (fecha?: string | null): string => (fecha ? fecha.split("T")[0] : "");
+
   const isDateInRateRange = (fecha: string, rate: RateParam): boolean => {
-    if (!fecha || !rate?.fechaInicio) return false;
-    if (fecha < rate.fechaInicio) return false;
-    if (rate.fechaFin && fecha > rate.fechaFin) return false;
+    const f = soloFecha(fecha);
+    const inicio = soloFecha(rate?.fechaInicio);
+    const fin = soloFecha(rate?.fechaFin);
+    if (!f || !inicio) return false;
+    if (f < inicio) return false;
+    if (fin && f > fin) return false;
     return true;
   };
 
@@ -86,7 +91,7 @@ export function SalidaExternaCantidadDialog({
     );
     const vigentes = rates
       .filter((r) => r.activo && isDateInRateRange(fecha, r))
-      .sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")));
+      .sort((a, b) => soloFecha(b.fechaInicio).localeCompare(soloFecha(a.fechaInicio)));
     return vigentes[0] || null;
   };
 

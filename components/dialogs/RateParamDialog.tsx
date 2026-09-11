@@ -121,6 +121,28 @@ export function RateParamDialog({
       onOpenChange(false);
       return;
     }
+
+    if (requiereSede && !formData.sedeId) {
+      toast({ title: "Falta la sede", description: "Debes seleccionar una sede para esta tarifa", variant: "destructive" });
+      return;
+    }
+    if (!esFlete && !formData.undMedidaId) {
+      toast({ title: "Falta la unidad de medida", description: "Debes seleccionar una unidad de medida para esta tarifa", variant: "destructive" });
+      return;
+    }
+    if (!esFlete && !formData.tipoResiduoId) {
+      toast({ title: "Falta el tipo de residuo", description: "Debes seleccionar un tipo de residuo para esta tarifa", variant: "destructive" });
+      return;
+    }
+    if (!formData.fechaInicio) {
+      toast({ title: "Falta la fecha de inicio", description: "Debes ingresar la fecha de inicio de vigencia", variant: "destructive" });
+      return;
+    }
+    if (!formData.tarifa) {
+      toast({ title: "Falta la tarifa", description: "Debes ingresar el valor de la tarifa", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
 
     try {
