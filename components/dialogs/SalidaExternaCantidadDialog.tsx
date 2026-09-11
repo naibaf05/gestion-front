@@ -77,21 +77,34 @@ export function SalidaExternaCantidadDialog({
     return true;
   };
 
-  const findVigenteGestorRate = async (gestorId: string, fecha: string, sedeIds: string[]): Promise<RateParam | null> => {
-    if (!gestorId || !fecha || sedeIds.length === 0) return null;
-    const rates = (await rateParamService.getTableBySedes(sedeIds)).filter((rate) => String(rate.parametrizacionId) === String(gestorId));
+  const findVigenteGestorRate = async (gestorId: string, tResiduoId: string, fecha: string, sedeId: string): Promise<RateParam | null> => {
+    if (!gestorId || !tResiduoId || !fecha || !sedeId) return null;
+    const rates = (await rateParamService.getTableBySedes([sedeId])).filter((rate) =>
+      String(rate.parametrizacionId) === String(gestorId) &&
+      String(rate.tipoResiduoId) === String(tResiduoId) &&
+      String(rate.sedeId) === String(sedeId)
+    );
     const vigentes = rates
       .filter((r) => r.activo && isDateInRateRange(fecha, r))
       .sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")));
     return vigentes[0] || null;
   };
 
+  // La sede que valida la tarifa de gestor es la de salida si existe; si no, la de destino.
+  const sedeGestorId = salidaExterna.sedeSalidaId || salidaExterna.sedeId || "";
+
   useEffect(() => {
     if (!open) return;
-    const sedeIds = [salidaExterna.sedeSalidaId, salidaExterna.sedeId].filter(Boolean) as string[];
-    if (!formData.gestorId || !salidaExterna.fecha || sedeIds.length === 0) return;
+    if (!formData.gestorId || !formData.tResiduoId || !salidaExterna.fecha || !sedeGestorId) {
+      setFormData((prev) => ({
+        ...prev,
+        tarifaGestorId: "",
+        tarifaGestorNombre: prev.gestorId ? "Selecciona un tipo de residuo" : "",
+      }));
+      return;
+    }
 
-    findVigenteGestorRate(formData.gestorId, salidaExterna.fecha, sedeIds)
+    findVigenteGestorRate(formData.gestorId, formData.tResiduoId, salidaExterna.fecha, sedeGestorId)
       .then((rate) => {
         setFormData((prev) => ({
           ...prev,
@@ -106,7 +119,7 @@ export function SalidaExternaCantidadDialog({
           tarifaGestorNombre: prev.gestorId ? "No se pudo consultar tarifa" : "",
         }));
       });
-  }, [open, formData.gestorId, salidaExterna.sedeSalidaId, salidaExterna.sedeId, salidaExterna.fecha]);
+  }, [open, formData.gestorId, formData.tResiduoId, sedeGestorId, salidaExterna.fecha]);
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
