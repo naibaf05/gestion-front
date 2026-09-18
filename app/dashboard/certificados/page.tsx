@@ -37,6 +37,7 @@ export default function CertificadosPage() {
     const [certificadosProforma, setCertificadosProforma] = useState<Certificados[]>([]);
     const [certificadosSalidas, setCertificadosSalidas] = useState<Certificados[]>([]);
     const [certificadosExternas, setCertificadosExternas] = useState<Certificados[]>([]);
+    const [certificadosProformaExternas, setCertificadosProformaExternas] = useState<Certificados[]>([]);
     const [sedes, setSedes] = useState<Sede[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [plantas, setPlantas] = useState<Parametrizacion[]>([]);
@@ -128,12 +129,13 @@ export default function CertificadosPage() {
         try {
             setLoading(true);
             if (user?.perfil?.nombre === "CLIENTE") {
-                const [llantasData, otrosData, proformaData, salidasData, externasData, sedesData, clientesData, plantasData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, externasData, proformaExternasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificadosCliente("1", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("2", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("3", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("4", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("5", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("6", user.id || "", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
                     parametrizationService.getListaActivos("oficina"),
@@ -143,16 +145,18 @@ export default function CertificadosPage() {
                 setCertificadosProforma(proformaData);
                 setCertificadosSalidas(salidasData);
                 setCertificadosExternas(externasData);
+                setCertificadosProformaExternas(proformaExternasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
                 setPlantas(plantasData);
             } else {
-                const [llantasData, otrosData, proformaData, salidasData, externasData, sedesData, clientesData, plantasData] = await Promise.all([
+                const [llantasData, otrosData, proformaData, salidasData, externasData, proformaExternasData, sedesData, clientesData, plantasData] = await Promise.all([
                     certificatesService.getCertificados("1", dateString, fechaFinString),
                     certificatesService.getCertificados("2", dateString, fechaFinString),
                     certificatesService.getCertificados("3", dateString, fechaFinString),
                     certificatesService.getCertificados("4", dateString, fechaFinString),
                     certificatesService.getCertificados("5", dateString, fechaFinString),
+                    certificatesService.getCertificados("6", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
                     parametrizationService.getListaActivos("oficina"),
@@ -162,6 +166,7 @@ export default function CertificadosPage() {
                 setCertificadosProforma(proformaData);
                 setCertificadosSalidas(salidasData);
                 setCertificadosExternas(externasData);
+                setCertificadosProformaExternas(proformaExternasData);
                 setSedes(sedesData);
                 setClientes(clientesData);
                 setPlantas(plantasData);
@@ -241,6 +246,9 @@ export default function CertificadosPage() {
                 base64 = archivos.length > 0 ? archivos[0].base64 : null;
                 break;
             }
+            case "6":
+                base64 = await certificatesService.getCertificadoProformaExternaPDF(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                break;
             default:
                 base64 = null;
                 break;
@@ -336,6 +344,10 @@ export default function CertificadosPage() {
                 break;
             case "4": {
                 base64 = await certificatesService.getCertificadoProformaSalidaExcel(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                break;
+            }
+            case "6": {
+                base64 = await certificatesService.getCertificadoProformaExternaExcel(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             }
             default:
@@ -737,6 +749,7 @@ export default function CertificadosPage() {
                             <TabsTrigger value="otros">Residuos</TabsTrigger>
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="proforma">Proforma</TabsTrigger>)}
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="salidas">Proforma Salidas</TabsTrigger>)}
+                            {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="proforma-externas">Proforma Externas</TabsTrigger>)}
                             {user?.perfil?.nombre !== "CLIENTE" && (<TabsTrigger value="externas">Externas</TabsTrigger>)}
                         </TabsList>
 
@@ -852,6 +865,32 @@ export default function CertificadosPage() {
                                 searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>
+
+                        <TabsContent value="proforma-externas">
+                            <div className="flex justify-between items-center mb-4">
+                                <div></div>
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("6")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado Proforma Externa
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            <DataTable
+                                columns={columnsSalidas}
+                                data={certificadosProformaExternas}
+                                searchKey={["sedeNombre", "clienteNombre", "plantaDestinoNombre"]}
+                                searchPlaceholder="Buscar ..."
+                            />
+                        </TabsContent>
                     </Tabs>
                 </CardContent>
             </Card>
@@ -910,6 +949,7 @@ export default function CertificadosPage() {
                     tab === "llantas" ? "1"
                     : tab === "otros" ? "2"
                     : tab === "proforma" ? "3"
+                    : tab === "proforma-externas" ? "6"
                     : "4"
                 }
                 user={user}

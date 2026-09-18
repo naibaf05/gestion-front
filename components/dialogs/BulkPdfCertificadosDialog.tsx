@@ -16,6 +16,7 @@ const TAB_LABELS: Record<string, string> = {
   "2": "Residuos",
   "3": "Proforma",
   "4": "Proforma_Salidas",
+  "6": "Proforma_Externas",
 }
 
 interface BulkPdfCertificadosDialogProps {
