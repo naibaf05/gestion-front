@@ -167,7 +167,7 @@ export function CertificadoDialog({
           base64 = await certificatesService.getCertificadoProformaSalidaPDF(formData.sedeId, formData.plantaDestinoId, formData.inicio, formData.fin, formData.fecha, formData.notas);
           break;
         case "6":
-          base64 = await certificatesService.getCertificadoProformaExternaPDF(formData.sedeId, formData.plantaDestinoId, formData.inicio, formData.fin, formData.fecha, formData.notas);
+          base64 = await certificatesService.getCertificadoProformaExternaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
           break;
         default:
           base64 = null;
@@ -194,7 +194,7 @@ export function CertificadoDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {["4", "6"].includes(String(tipo)) ? (
+          {["4"].includes(String(tipo)) ? (
             <div className="space-y-2">
               <Label>Destino</Label>
               <span style={{ paddingLeft: "15px" }}>

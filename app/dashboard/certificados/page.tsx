@@ -247,7 +247,7 @@ export default function CertificadosPage() {
                 break;
             }
             case "6":
-                base64 = await certificatesService.getCertificadoProformaExternaPDF(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                base64 = await certificatesService.getCertificadoProformaExternaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             default:
                 base64 = null;
@@ -347,7 +347,7 @@ export default function CertificadosPage() {
                 break;
             }
             case "6": {
-                base64 = await certificatesService.getCertificadoProformaExternaExcel(obj.sedeId || "", obj.plantaDestinoId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
+                base64 = await certificatesService.getCertificadoProformaExternaExcel(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
             }
             default:
@@ -885,9 +885,9 @@ export default function CertificadosPage() {
                                 </div>
                             </div>
                             <DataTable
-                                columns={columnsSalidas}
+                                columns={columnsProforma}
                                 data={certificadosProformaExternas}
-                                searchKey={["sedeNombre", "clienteNombre", "plantaDestinoNombre"]}
+                                searchKey={["sedeNombre", "clienteNombre"]}
                                 searchPlaceholder="Buscar ..."
                             />
                         </TabsContent>

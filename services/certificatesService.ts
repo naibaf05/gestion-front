@@ -59,15 +59,15 @@ export class CertificatesService {
         return response.data;
     }
 
-    async getCertificadoProformaExternaPDF(sedeId: string, plantaDestinoId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+    async getCertificadoProformaExternaPDF(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
         notas = notas.replaceAll('\n', '**');
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-externa?sedeId=${sedeId}&plantaDestinoId=${plantaDestinoId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-externa?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
-    async getCertificadoProformaExternaExcel(sedeId: string, plantaDestinoId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
+    async getCertificadoProformaExternaExcel(clienteId: string, sedeId: string, inicio: string, fin: string, fecha: string, notas: string): Promise<string> {
         notas = notas.replaceAll('\n', '**');
-        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-externa/excel?sedeId=${sedeId}&plantaDestinoId=${plantaDestinoId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/proforma-externa/excel?clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&fecha=${fecha}&notas=${notas}`);
         return response.data;
     }
 
