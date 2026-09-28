@@ -14,7 +14,7 @@ import { rateService } from "@/services/rateService"
 interface UpdateRatesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tipo?: "recoleccion" | "salida"
+  tipo?: "recoleccion" | "salida" | "salida-externa"
 }
 
 export function UpdateRatesDialog({
@@ -77,8 +77,10 @@ export function UpdateRatesDialog({
   const loadSedes = async (inicio: string, fin: string) => {
     try {
       setLoadingSedes(true)
-      const sedesData = tipo === "salida" 
+      const sedesData = tipo === "salida"
         ? await clientService.getSedesUpdateTarifasSalida(inicio, fin)
+        : tipo === "salida-externa"
+        ? await clientService.getSedesUpdateTarifasSalidaExterna(inicio, fin)
         : await clientService.getSedesUpdateTarifas(inicio, fin)
       setSedesOptions(sedesData)
     } catch (error) {
@@ -140,6 +142,8 @@ export function UpdateRatesDialog({
       setSaving(true)
       if (tipo === "salida") {
         await rateService.updateTarifasSalida(startString, endString, selectedIds)
+      } else if (tipo === "salida-externa") {
+        await rateService.updateTarifasSalidaExterna(startString, endString, selectedIds)
       } else {
         await rateService.updateTarifas(startString, endString, selectedIds)
       }

@@ -1,6 +1,6 @@
 import { getTipoColor, getTipoVisita, TipoVisitaKey } from "@/utils/utils"
 import { apiService } from "./api"
-import type { ApiResponse, ProgEvPath, ProgPath, ProgRutas, ProgVisitaRecol } from "@/types"
+import type { ApiResponse, ProgEvPath, ProgPath, ProgRutas, ProgVisitaRecol, RutaEventual, RutaEventualCreate } from "@/types"
 
 export class ProgService {
   async getData(fecha: string, semanal: boolean): Promise<ProgPath[]> {
@@ -58,6 +58,25 @@ export class ProgService {
   async deleteVisita(id: string): Promise<ProgEvPath> {
     const response = await apiService.delete<ApiResponse<ProgEvPath>>(`/progs/visita/${id}`)
     return response.data
+  }
+
+  async getRutasEventuales(fecha: string): Promise<RutaEventual[]> {
+    const response = await apiService.get<ApiResponse<RutaEventual[]>>(`/progs/rutas-eventuales?fecha=${fecha}`)
+    return response.data
+  }
+
+  async createRutaEventual(dto: RutaEventualCreate): Promise<RutaEventual> {
+    const response = await apiService.post<ApiResponse<RutaEventual>>(`/progs/rutas-eventuales`, dto)
+    return response.data
+  }
+
+  async deleteRutaEventual(rutaId: string): Promise<void> {
+    await apiService.delete<ApiResponse<void>>(`/progs/rutas-eventuales/${rutaId}`)
+  }
+
+  async generarVisitasRutaEventual(rutaId: string): Promise<ApiResponse<number>> {
+    const response = await apiService.post<ApiResponse<number>>(`/progs/rutas-eventuales/${rutaId}/generar-visitas`, {})
+    return response
   }
 }
 

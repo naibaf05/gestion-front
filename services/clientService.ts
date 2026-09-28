@@ -93,6 +93,11 @@ export class ClientService {
     return response.data
   }
 
+  async getSedesUpdateTarifasSalidaExterna(fechaInicio: string, fechaFin: string): Promise<Sede[]> {
+    const response = await apiService.get<ApiResponse<Sede[]>>(`/sedes/update-tarifas-salidas-externas?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+    return response.data
+  }
+
   async getSedesUpdateDensidades(fechaInicio: string, fechaFin: string): Promise<Sede[]> {
     const response = await apiService.get<ApiResponse<Sede[]>>(`/sedes/update-densidades?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
     return response.data

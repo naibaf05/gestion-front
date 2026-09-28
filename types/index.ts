@@ -280,6 +280,24 @@ export interface ProgRutas {
   rutaNombre: string
 }
 
+export interface RutaEventual {
+  rutaId: string
+  nombre: string
+  programacionId: string
+  fecha: string
+  vehiculoId: string
+  vehInterno: string
+  cantidadSedes: number
+}
+
+export interface RutaEventualCreate {
+  fecha: string
+  nombre: string
+  vehiculoId: string
+  oficinaId: string
+  sedeIds: string[]
+}
+
 export interface ProgVisitaRecol {
   id: string
   sedeId: string
@@ -443,6 +461,14 @@ export interface Salida {
   conductor?: User
   producto?: Parametrizacion
   salida?: string
+  gestorId?: string
+  gestorNombre?: string
+  tarifaGestorId?: string
+  tarifaGestorNombre?: string
+  fleteId?: string
+  fleteNombre?: string
+  tarifaFleteId?: string
+  tarifaFleteNombre?: string
   destino?: string
   num?: number
 }
@@ -465,8 +491,11 @@ export interface SalidaExterna {
   sedeNombre?: string
   sedeSalidaId?: string
   sedeSalidaNombre?: string
+  clienteId?: string
+  clienteNombre?: string
   vehiculoId?: string
   vehiculoPlaca?: string
+  vehiculoInterno?: string
   conductorId?: string
   conductorNombre?: string
   receptorId?: string

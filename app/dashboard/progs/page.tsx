@@ -4,23 +4,25 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
+import { Edit, FileSpreadsheet, Plus, Trash2, PlayCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ProgDialog } from "@/components/dialogs/ProgDialog";
 import type { ColumnDef } from "@tanstack/react-table";
 import { pathService } from "@/services/pathService";
 import { progService } from "@/services/progService";
-import { InfoAdicional, Path, ProgEvPath, ProgPath, Sede, Vehicle, ProgRutas } from "@/types";
+import { InfoAdicional, Path, Parametrizacion, ProgEvPath, ProgPath, Sede, Vehicle, ProgRutas, RutaEventual } from "@/types";
 import { vehicleService } from "@/services/vehicleService";
 import { ProgEvDialog } from "@/components/dialogs/ProgEvDialog";
+import { RutaEventualDialog } from "@/components/dialogs/RutaEventualDialog";
 import { clientService } from "@/services/clientService";
+import { parametrizationService } from "@/services/parametrizationService";
 import { GenericTableDialog } from "@/components/dialogs/GenericTableDialog";
 import { WeekPicker } from "@/components/ui/week-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { matchesUserPlantas, matchesUserPlantasArray } from "@/utils/utils";
+import { filterPlantasByUser, matchesUserPlantas, matchesUserPlantasArray } from "@/utils/utils";
 import { ButtonTooltip } from "@/components/ui/button-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -42,15 +44,18 @@ export default function ProgsPage() {
   const [tab, setTab] = useState("tabla");
   const [tabla, setTabla] = useState<ProgPath[]>([]);
   const [tablaEventual, setTablaEventual] = useState<ProgEvPath[]>([]);
+  const [tablaRutasEventuales, setTablaRutasEventuales] = useState<RutaEventual[]>([]);
   const [infoAdicional, setInfoAdicional] = useState<InfoAdicional>();
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
   const [rutas, setRutas] = useState<Path[]>([]);
   const [sedes, setSedes] = useState<Sede[]>([]);
+  const [oficinas, setOficinas] = useState<Parametrizacion[]>([]);
   const [progRutas, setProgRutas] = useState<ProgRutas[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogEvOpen, setDialogEvOpen] = useState(false);
+  const [dialogRutaEvOpen, setDialogRutaEvOpen] = useState(false);
   const [dialogTableOpen, setDialogTableOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProgPath | null>(null);
   const { toast } = useToast();
@@ -72,13 +77,15 @@ export default function ProgsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [data1, data2, infoAdicionalData, vehiclesData, pathData, sedesData] = await Promise.all([
+      const [data1, data2, data3, infoAdicionalData, vehiclesData, pathData, sedesData, oficinasData] = await Promise.all([
         progService.getData(selectedDate, isWeekMode),
         progService.getDataEv(selectedDate, isWeekMode),
+        progService.getRutasEventuales(selectedDate),
         pathService.getInfoAdicional(selectedDate),
         vehicleService.getVehiclesActivos(),
         pathService.getRutasDia(selectedDate),
-        clientService.getSedesActivas()
+        clientService.getSedesActivas(),
+        parametrizationService.getListaActivos("oficina")
       ]);
       const filteredRutas = pathData.filter(r => matchesUserPlantas(r.oficinaId, user));
       let filteredTabla = data1;
@@ -88,10 +95,12 @@ export default function ProgsPage() {
       }
       setTabla(filteredTabla);
       setTablaEventual(data2);
+      setTablaRutasEventuales(data3);
       setInfoAdicional(infoAdicionalData);
       setVehiculos(vehiclesData.filter(v => matchesUserPlantas(v.oficinaId, user)));
       setRutas(filteredRutas);
       setSedes(sedesData.filter(s => matchesUserPlantasArray(s.oficinaId, user)));
+      setOficinas(filterPlantasByUser(oficinasData, user));
     } catch (error) {
       toast({
         title: "Error",
@@ -106,6 +115,73 @@ export default function ProgsPage() {
   const handleCreateEv = () => {
     setSelectedItem(null);
     setDialogEvOpen(true);
+  };
+
+  const handleCreateRutaEv = () => {
+    setDialogRutaEvOpen(true);
+  };
+
+  const [rutaEvToDelete, setRutaEvToDelete] = useState<string | null>(null);
+  const [confirmRutaEvDialogOpen, setConfirmRutaEvDialogOpen] = useState(false);
+
+  const handleDeleteRutaEv = (rutaId: string) => {
+    setRutaEvToDelete(rutaId);
+    setConfirmRutaEvDialogOpen(true);
+  };
+
+  const confirmDeleteRutaEv = async () => {
+    if (!rutaEvToDelete) return;
+    try {
+      await progService.deleteRutaEventual(rutaEvToDelete);
+      toast({
+        title: "Eliminar",
+        description: "La ruta eventual ha sido eliminada correctamente",
+        variant: "success"
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar",
+        variant: "error",
+      });
+    } finally {
+      setRutaEvToDelete(null);
+      setConfirmRutaEvDialogOpen(false);
+    }
+  };
+
+  const cancelDeleteRutaEv = () => {
+    setRutaEvToDelete(null);
+    setConfirmRutaEvDialogOpen(false);
+  };
+
+  const [generandoRutaId, setGenerandoRutaId] = useState<string | null>(null);
+
+  const handleGenerarVisitas = async (rutaId: string) => {
+    setGenerandoRutaId(rutaId);
+    try {
+      const response = await progService.generarVisitasRutaEventual(rutaId);
+      toast({
+        title: "Visitas",
+        description: response.message,
+        variant: "success",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron generar las visitas",
+        variant: "error",
+      });
+    } finally {
+      setGenerandoRutaId(null);
+    }
+  };
+
+  const openTableDialogRutaEv = async (item: RutaEventual) => {
+    const dataRutas = await progService.getDataRutas(selectedDate, item.rutaId);
+    setProgRutas(dataRutas);
+    setDialogTableOpen(true);
   };
 
   const handleEdit = (item: ProgPath) => {
@@ -232,6 +308,57 @@ export default function ProgsPage() {
     },
   ];
 
+  const columns_ruta_ev: ColumnDef<RutaEventual>[] = [
+    {
+      accessorKey: "nombre",
+      header: "Nombre",
+      width: "250px",
+    },
+    {
+      accessorKey: "vehInterno",
+      header: "Vehículo",
+      width: "150px",
+    },
+    {
+      accessorKey: "cantidadSedes",
+      header: "Sedes",
+      width: "100px",
+    },
+    {
+      id: "actions",
+      header: "Acciones",
+      width: "190px",
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <TooltipProvider>
+            <div className="flex items-center space-x-2">
+              <ButtonTooltip variant="ghost" size="sm" onClick={() => openTableDialogRutaEv(item)} tooltipContent="Ver Sedes">
+                <FileSpreadsheet className="h-4 w-4" />
+              </ButtonTooltip>
+              {hasPermission("prog.edit") && (
+                <ButtonTooltip
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleGenerarVisitas(item.rutaId)}
+                  disabled={generandoRutaId === item.rutaId}
+                  tooltipContent="Generar visitas ahora (para verlas en Progs Admin y la app sin esperar al proceso automático de las 4 a.m.)"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+              {hasPermission("prog.edit") && (
+                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleDeleteRutaEv(item.rutaId)} className="new-text-red-600" tooltipContent="Eliminar">
+                  <Trash2 className="h-4 w-4" />
+                </ButtonTooltip>
+              )}
+            </div>
+          </TooltipProvider>
+        );
+      },
+    },
+  ];
+
   const columns_table: ColumnDef<ProgRutas>[] = [
     {
       accessorKey: "tipo",
@@ -318,6 +445,7 @@ export default function ProgsPage() {
             <TabsList className="mb-4">
               <TabsTrigger value="tabla">Por Ruta</TabsTrigger>
               <TabsTrigger value="tablaEventual">Eventuales</TabsTrigger>
+              <TabsTrigger value="tablaRutasEventuales">Rutas Eventuales</TabsTrigger>
             </TabsList>
             <TabsContent value="tabla">
               <DataTable columns={columns} data={tabla} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
@@ -333,6 +461,18 @@ export default function ProgsPage() {
                 )}
               </div>
               <DataTable columns={columns_ev} data={tablaEventual} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
+            </TabsContent>
+            <TabsContent value="tablaRutasEventuales">
+              <div className="flex justify-between items-center">
+                <div></div>
+                {hasPermission("prog.edit") && (
+                  <Button onClick={handleCreateRutaEv} className="bg-primary hover:bg-primary-hover">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nueva Ruta Eventual
+                  </Button>
+                )}
+              </div>
+              <DataTable columns={columns_ruta_ev} data={tablaRutasEventuales} searchKey="nombre" searchPlaceholder="Buscar por nombre..." />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -353,6 +493,28 @@ export default function ProgsPage() {
         sedes={sedes}
         selectedDate={selectedDate}
         onSuccess={loadData}
+      />
+
+      <RutaEventualDialog
+        open={dialogRutaEvOpen}
+        onOpenChange={setDialogRutaEvOpen}
+        vehiculos={vehiculos}
+        sedes={sedes}
+        oficinas={oficinas}
+        selectedDate={selectedDate}
+        onSuccess={loadData}
+      />
+
+      <ConfirmationDialog
+        open={confirmRutaEvDialogOpen}
+        onOpenChange={setConfirmRutaEvDialogOpen}
+        title="Eliminar ruta eventual"
+        description="¿Estás seguro de que deseas eliminar esta ruta eventual? Se eliminarán todas las sedes asignadas para el día."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteRutaEv}
+        onCancel={cancelDeleteRutaEv}
+        variant="destructive"
       />
 
       <GenericTableDialog

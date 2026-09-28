@@ -69,6 +69,8 @@ export default function SalidasPage() {
   const [vehiculos, setVehiculos] = useState<Vehicle[]>([]);
   const [productos, setProductos] = useState<Parametrizacion[]>([]);
   const [receptores, setReceptores] = useState<User[]>([]);
+  const [gestores, setGestores] = useState<Parametrizacion[]>([]);
+  const [fletes, setFletes] = useState<Parametrizacion[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -159,7 +161,9 @@ export default function SalidasPage() {
         vehiculosData,
         productosData,
         plantasData,
-        receptoresData
+        receptoresData,
+        gestoresData,
+        fletesData,
       ] = await Promise.all([
         salidaService.getSalidas(dateString, fechaFinString),
         clientService.getSedesActivas(),
@@ -167,6 +171,8 @@ export default function SalidasPage() {
         parametrizationService.getListaActivos("t_residuo"),
         parametrizationService.getListaActivos("oficina"),
         userService.getUsersActivos(),
+        parametrizationService.getListaActivos("gestor"),
+        parametrizationService.getListaActivos("flete"),
       ]);
       const withFormatted = salidasData.map(s => ({
         ...s,
@@ -186,6 +192,8 @@ export default function SalidasPage() {
       setProductos(productosData);
       setPlantas(filterPlantasByUser(plantasData, user));
       setReceptores(receptoresData);
+      setGestores(gestoresData);
+      setFletes(fletesData);
     } catch (error) {
       toast({
         title: "Error",
@@ -437,6 +445,8 @@ export default function SalidasPage() {
         receptores={receptores}
         productos={productos}
         plantas={plantas}
+        gestores={gestores}
+        fletes={fletes}
         onSuccess={loadData}
         readOnly={dialogReadOnly}
         onVehiclesUpdate={loadData}

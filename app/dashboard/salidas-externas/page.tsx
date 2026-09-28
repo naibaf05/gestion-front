@@ -28,6 +28,10 @@ import { certificatesService } from "@/services/certificatesService"
 import { AdjuntosDialog } from "@/components/dialogs/AdjuntosDialog"
 import { FirmaGeneradorDialog } from "@/components/dialogs/FirmaGeneradorDialog"
 import { PdfDialog } from "@/components/dialogs/PdfDialog"
+import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
+import { BulkPdfExternaDialog } from "@/components/dialogs/BulkPdfExternaDialog"
+import { CircleDollarSign, FolderDown } from "lucide-react"
+import { getTipoColor, getTipoVisita, TipoVisitaKey } from "@/utils/utils"
 
 export default function SalidasExternasPage() {
     const { user } = useAuth()
@@ -85,6 +89,8 @@ export default function SalidasExternasPage() {
     const [pdfOpen, setPdfOpen] = useState(false)
     const [pdfBase64, setPdfBase64] = useState<string | null>(null)
     const [actionId, setActionId] = useState("")
+    const [ratesDialogOpen, setRatesDialogOpen] = useState(false)
+    const [bulkPdfDialogOpen, setBulkPdfDialogOpen] = useState(false)
 
     if (user && user.permisos && typeof user.permisos === "string") {
         user.permisos = JSON.parse(user.permisos)
@@ -279,24 +285,46 @@ export default function SalidasExternasPage() {
     }
 
     const columns: ColumnDef<SalidaExterna>[] = [
-        { accessorKey: "numFormateado", header: "Numero" },
-        { accessorKey: "fecha", header: "Fecha" },
-        { accessorKey: "tipo", header: "Tipo" },
-        { accessorKey: "salida", header: "Salida" },
-        { accessorKey: "destino", header: "Destino" },
-        { accessorKey: "conductorNombre", header: "Conductor" },
         {
-            accessorKey: "activo",
-            header: "Estado",
-            cell: ({ row }) => (
-                <Badge variant={row.getValue("activo") ? "default" : "secondary"}>
-                    {row.getValue("activo") ? "Activo" : "Inactivo"}
-                </Badge>
-            ),
+            accessorKey: "tipo",
+            header: "Tipo",
+            width: "80px",
+            cell: ({ row }) => {
+                const tipo = row.original.tipo as TipoVisitaKey
+                const tipoNombre = tipo ? getTipoVisita(tipo) : ""
+                const tipoColor = tipo ? getTipoColor(tipo) : ""
+                const primeraLetra = tipoNombre?.charAt(0)?.toUpperCase() || ""
+                return (
+                    <Badge className={tipoColor}>
+                        {primeraLetra}
+                    </Badge>
+                )
+            },
+            enableColumnFilter: true,
+            filterFn: (row, id, value) => {
+                const tipo = row.original.tipo as TipoVisitaKey
+                const tipoNombre = tipo ? getTipoVisita(tipo) : ""
+                if (!tipoNombre) return false
+                if (Array.isArray(value)) {
+                    return value.some((v: string) => {
+                        if (v.length === 1) {
+                            return tipoNombre.charAt(0).toUpperCase() === v.toUpperCase()
+                        }
+                        return tipoNombre.toLowerCase().includes(v.toLowerCase())
+                    })
+                }
+                return tipoNombre.toLowerCase().includes(String(value).toLowerCase())
+            },
         },
+        { accessorKey: "clienteNombre", header: "Cliente", width: "280px", enableColumnFilter: true },
+        { accessorKey: "salida", header: "Sede", width: "280px", enableColumnFilter: true },
+        { accessorKey: "conductorNombre", header: "Conductor", width: "150px" },
+        { accessorKey: "vehiculoInterno", header: "Vehículo", width: "100px" },
+        { accessorKey: "fecha", header: "Fecha", width: "120px" },
         {
             id: "actions",
             header: "Acciones",
+            width: "160px",
             cell: ({ row }) => {
                 const obj = row.original
                 return (
@@ -395,16 +423,28 @@ export default function SalidasExternasPage() {
                 <CardContent>
                     <div className="flex justify-between items-center">
                         <div></div>
-                        {hasPermission("salidaexterna.edit") && (
-                            <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
-                                <Plus className="mr-2 h-4 w-4" />Nueva Salida Externa
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {hasPermission("rates.edit") && (
+                                <Button onClick={() => setRatesDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                    <CircleDollarSign className="mr-2 h-4 w-4" />Actualizar Tarifas
+                                </Button>
+                            )}
+                            {hasPermission("generar.pdf") && (
+                                <Button onClick={() => setBulkPdfDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                    <FolderDown className="mr-2 h-4 w-4" />Descarga Masiva PDF
+                                </Button>
+                            )}
+                            {hasPermission("salidaexterna.edit") && (
+                                <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
+                                    <Plus className="mr-2 h-4 w-4" />Nueva Salida Externa
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     <DataTable
                         columns={columns}
                         data={salidasExternas}
-                        searchKey={["numFormateado", "fecha", "tipo", "salida", "destino", "conductorNombre", "fleteNombre"]}
+                        searchKey={["tipo", "clienteNombre", "salida", "conductorNombre", "vehiculoInterno"]}
                         searchPlaceholder="Buscar ..."
                     />
                 </CardContent>
@@ -447,6 +487,18 @@ export default function SalidasExternasPage() {
                 tipo="SalidaExterna"
                 id={historialId}
                 label={historialLabel}
+            />
+
+            <UpdateRatesDialog
+                open={ratesDialogOpen}
+                onOpenChange={setRatesDialogOpen}
+                tipo="salida-externa"
+            />
+
+            <BulkPdfExternaDialog
+                open={bulkPdfDialogOpen}
+                onOpenChange={setBulkPdfDialogOpen}
+                user={user}
             />
         </div>
     )
