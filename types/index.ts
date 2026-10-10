@@ -349,6 +349,17 @@ export interface VisitaRecol {
   firma?: string | null;
 }
 
+export interface CargueVisitaError {
+  fila: number;
+  errores: string[];
+}
+
+export interface CargueVisitasResponse {
+  exito: boolean;
+  creadas: number;
+  errores: CargueVisitaError[];
+}
+
 export interface VisitaCantidad {
   id: string;
   cantidad: string;

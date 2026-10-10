@@ -1,7 +1,34 @@
 import { apiService } from "./api";
-import type { ApiResponse, VisitaCantidad, VisitaRecol } from "@/types";
+import type { ApiResponse, CargueVisitasResponse, VisitaCantidad, VisitaRecol } from "@/types";
 
 export class VisitService {
+    async descargarPlantillaEjemplo(sedeId?: string): Promise<string> {
+        const query = sedeId ? `?sedeId=${sedeId}` : "";
+        const response = await apiService.get<ApiResponse<string>>(`/visitas/cargue-masivo/plantilla${query}`);
+        return response.data;
+    }
+
+    async cargueMasivo(archivo: File): Promise<CargueVisitasResponse> {
+        const formData = new FormData();
+        formData.append("file", archivo);
+
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
+        const response = await fetch(`${API_BASE_URL}/visitas/cargue-masivo`, {
+            method: "POST",
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            body: formData,
+        });
+
+        const data: ApiResponse<CargueVisitasResponse> = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "No se pudo procesar el archivo");
+        }
+        return data.data;
+    }
     async create(obj: Partial<VisitaRecol>): Promise<ApiResponse<VisitaRecol>> {
         const response = await apiService.post<ApiResponse<VisitaRecol>>("/visitas", obj);
         return response;

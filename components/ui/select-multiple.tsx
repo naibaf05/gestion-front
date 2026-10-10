@@ -27,6 +27,9 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
         <ReactSelect
             isMulti
             isDisabled={disabled}
+            closeMenuOnSelect={false}
+            hideSelectedOptions={false}
+            blurInputOnSelect={false}
             options={options}
             value={options.filter(opt => (value ? value.includes(opt.value) : false))}
             onChange={(selected: MultiValue<OptionType>) => {
@@ -48,10 +51,30 @@ export const SelectMultiple: React.FC<SelectMultipleProps> = ({
                     opacity: disabled ? 0.6 : 1,
                     pointerEvents: disabled ? 'none' : 'auto'
                 }),
+                valueContainer: (base) => ({
+                    ...base,
+                    maxHeight: '140px',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    flexWrap: 'wrap',
+                    width: '100%',
+                    maxWidth: '100%',
+                }),
+                multiValueLabel: (base) => ({
+                    ...base,
+                    maxWidth: '100%',
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                }),
+                input: (base) => ({
+                    ...base,
+                    maxWidth: '100%',
+                }),
                 multiValue: (base) => ({
                     ...base,
                     backgroundColor: '#eff6ff',
                     color: '#2563eb',
+                    maxWidth: '100%',
                 }),
                 option: (base, state) => ({
                     ...base,

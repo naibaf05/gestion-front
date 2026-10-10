@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
-import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine, FlaskConical, FolderDown } from "lucide-react"
+import { Plus, Edit, Check, TableProperties, FileText, Trash2, Paperclip, Eye, History, CircleDollarSign, PenLine, FlaskConical, FolderDown, Upload } from "lucide-react"
 import { userService } from "@/services/userService"
 import type { Parametrizacion, ProgVisitaRecol, Sede, User, Vehicle, VisitaRecol } from "@/types"
 import { useToast } from "@/hooks/use-toast"
@@ -32,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
 import { UpdateDensDialog } from "@/components/dialogs/UpdateDensDialog"
 import { BulkPdfDialog } from "@/components/dialogs/BulkPdfDialog"
+import { CargueMasivoVisitasDialog } from "@/components/dialogs/CargueMasivoVisitasDialog"
 import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 
@@ -109,6 +110,7 @@ export default function ProgsAdminPage() {
 
   // Estado para diálogo de Descarga Masiva de PDFs
   const [bulkPdfDialogOpen, setBulkPdfDialogOpen] = useState(false)
+  const [cargueMasivoOpen, setCargueMasivoOpen] = useState(false)
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -546,6 +548,12 @@ export default function ProgsAdminPage() {
                 </Button>
               )}
               {hasPermission("admin.edit") && (
+                <Button onClick={() => setCargueMasivoOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Cargue Masivo
+                </Button>
+              )}
+              {hasPermission("admin.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
                   <Plus className="mr-2 h-4 w-4" />
                   Nueva Visita
@@ -643,6 +651,7 @@ export default function ProgsAdminPage() {
       <UpdateRatesDialog open={ratesDialogOpen} onOpenChange={setRatesDialogOpen} />
       <UpdateDensDialog open={densDialogOpen} onOpenChange={setDensDialogOpen} />
       <BulkPdfDialog open={bulkPdfDialogOpen} onOpenChange={setBulkPdfDialogOpen} user={user} />
+      <CargueMasivoVisitasDialog open={cargueMasivoOpen} onOpenChange={setCargueMasivoOpen} sedes={sedes} onSuccess={loadData} />
     </div>
   )
 }

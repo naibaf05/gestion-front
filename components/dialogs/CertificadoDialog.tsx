@@ -20,6 +20,8 @@ import { SelectSingle } from "../ui/select-single";
 import { SelectMultiple, OptionType } from "../ui/select-multiple";
 import { InputCheck } from "../ui/input-check";
 import { PdfDialog } from "./PdfDialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { UserPlus } from "lucide-react";
 
 interface CertificadoDialogProps {
   open: boolean;
@@ -62,6 +64,8 @@ export function CertificadoDialog({
   // Selección múltiple, solo para tipos 1 (Llantas) y 2 (Residuos) al crear.
   const [clienteIds, setClienteIds] = useState<string[]>([]);
   const [sedeIds, setSedeIds] = useState<string[]>([]);
+  const [filtroClienteSedes, setFiltroClienteSedes] = useState("");
+  const [popoverClienteOpen, setPopoverClienteOpen] = useState(false);
   const { toast } = useToast();
 
   const esMultiSelect = !certificado && ["1", "2"].includes(String(tipo));
@@ -73,6 +77,8 @@ export function CertificadoDialog({
     setEsPlanta(false);
     setClienteIds([]);
     setSedeIds([]);
+    setFiltroClienteSedes("");
+    setPopoverClienteOpen(false);
     if (certificado) {
       setFormData({
         id: certificado.id,
@@ -354,7 +360,45 @@ export function CertificadoDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="sedeId">Sede(s)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="sedeId">Sede(s)</Label>
+                  <Popover open={popoverClienteOpen} onOpenChange={setPopoverClienteOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        disabled={clienteIds.length > 0}
+                      >
+                        <UserPlus className="h-3.5 w-3.5 mr-1" />
+                        Agregar por cliente
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-80">
+                      <div className="space-y-2">
+                        <Label htmlFor="filtroClienteSedes">Agregar todas las sedes de un cliente</Label>
+                        <SelectSingle
+                          id="filtroClienteSedes"
+                          placeholder="Selecciona un cliente"
+                          options={clientes}
+                          value={filtroClienteSedes}
+                          onChange={(v) => {
+                            setFiltroClienteSedes(v);
+                            const sedesDelCliente = sedes.filter(s => String(s.clienteId) === String(v)).map(s => s.id);
+                            if (sedesDelCliente.length === 0) return;
+                            setSedeIds(prev => Array.from(new Set([...prev, ...sedesDelCliente])));
+                            setClienteIds([]);
+                            setFiltroClienteSedes("");
+                            setPopoverClienteOpen(false);
+                          }}
+                          valueKey="id"
+                          labelKey="nombre"
+                        />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <SelectMultiple
                   options={sedeOptions}
                   value={sedeIds}
