@@ -358,6 +358,8 @@ export interface CargueVisitasResponse {
   exito: boolean;
   creadas: number;
   errores: CargueVisitaError[];
+  requiereConfirmacionDuplicados?: boolean;
+  duplicados?: string[];
 }
 
 export interface VisitaCantidad {
@@ -480,6 +482,8 @@ export interface Salida {
   fleteNombre?: string
   tarifaFleteId?: string
   tarifaFleteNombre?: string
+  tarifaPlantaId?: string
+  tarifaPlantaNombre?: string
   destino?: string
   num?: number
 }

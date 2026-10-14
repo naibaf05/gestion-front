@@ -131,6 +131,14 @@ export class CertificatesService {
         return response.data;
     }
 
+    async getAdjuntosZip(sedeIds: string[], inicio: string, fin: string): Promise<string> {
+        const response = await apiService.post<ApiResponse<string>>(
+            `/certificado/adjuntos-zip?inicio=${inicio}&fin=${fin}`,
+            sedeIds.map(id => Number(id))
+        );
+        return response.data;
+    }
+
     async getExternasZip(sedeIds: string[], inicio: string, fin: string): Promise<string> {
         const response = await apiService.post<ApiResponse<string>>(
             `/certificado/externas-zip?inicio=${inicio}&fin=${fin}`,

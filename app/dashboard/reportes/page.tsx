@@ -199,6 +199,8 @@ export default function ReportesPage() {
                     ...(canViewTarifa ? [{ key: "valorGestor", label: "Valor Gestor", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "fleteNombre", label: "Flete", category: "visita", enabled: true, width: "180px" },
                     ...(canViewTarifa ? [{ key: "tarifaFlete", label: "Tarifa Flete", category: "visita", enabled: true, width: "150px" }] : []),
+                    ...(canViewTarifa ? [{ key: "tarifaPlanta", label: "Tarifa Planta", category: "visita", enabled: true, width: "150px" }] : []),
+                    ...(canViewTarifa ? [{ key: "valorPlanta", label: "Valor Planta", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "direccionSalida", label: "Dirección Salida", category: "salida", enabled: false, width: "300px" },
                     { key: "ciudadSalida", label: "Ciudad Salida", category: "salida", enabled: false, width: "150px" },
                     { key: "direccionDestino", label: "Direccion Destino", category: "destino", enabled: false, width: "300px" },
@@ -280,7 +282,7 @@ export default function ReportesPage() {
     };
 
     // Columnas que deben mostrarse con formato monetario (sin alterar el valor original numérico)
-    const CURRENCY_COLUMNS = new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor", "valorGestor"]);
+    const CURRENCY_COLUMNS = new Set(["valor", "tarifa", "tarifaFlete", "tarifaGestor", "valorGestor", "tarifaPlanta", "valorPlanta"]);
     const currencyFormatter = new Intl.NumberFormat("es-CO", {
         style: "currency",
         currency: "COP",

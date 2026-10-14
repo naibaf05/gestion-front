@@ -77,6 +77,7 @@ export default function SalidasPage() {
   const [selectedSalida, setSelectedSalida] = useState<Salida | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [ratesDialogOpen, setRatesDialogOpen] = useState(false);
+  const [ratesPlantaDialogOpen, setRatesPlantaDialogOpen] = useState(false);
   const { toast } = useToast();
   const [historialOpen, setHistorialOpen] = useState(false);
   const [historialId, setHistorialId] = useState<string>("");
@@ -420,6 +421,12 @@ export default function SalidasPage() {
                   Actualizar Tarifas
                 </Button>
               )}
+              {hasPermission("rates.edit") && (
+                <Button onClick={() => setRatesPlantaDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                  <CircleDollarSign className="mr-2 h-4 w-4" />
+                  Actualizar Tarifas Planta
+                </Button>
+              )}
               {hasPermission("salida.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
                   <Plus className="mr-2 h-4 w-4" />Nueva Salida
@@ -464,6 +471,12 @@ export default function SalidasPage() {
         open={ratesDialogOpen}
         onOpenChange={setRatesDialogOpen}
         tipo="salida"
+      />
+
+      <UpdateRatesDialog
+        open={ratesPlantaDialogOpen}
+        onOpenChange={setRatesPlantaDialogOpen}
+        tipo="salida-planta"
       />
 
       <HistorialDialog

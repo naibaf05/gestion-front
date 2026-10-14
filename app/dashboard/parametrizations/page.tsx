@@ -498,7 +498,7 @@ export default function ParametrizationsPage() {
                 ) : (
                   <div></div>
                 )}
-                {(type === "fletes_gestion" || type === "fletes_focus" || type === "gestores") && (
+                {(type === "fletes_gestion" || type === "fletes_focus" || type === "gestores" || type === "oficinas") && (
                   <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
                     <CircleDollarSign className="h-4 w-4" />
                   </Button>
@@ -522,7 +522,7 @@ export default function ParametrizationsPage() {
                     <History className="h-4 w-4" />
                   </Button>
                 )}
-                {(type === "fletes_gestion" || type === "fletes_focus" || type === "gestores") && (
+                {(type === "fletes_gestion" || type === "fletes_focus" || type === "gestores" || type === "oficinas") && (
                   <Button variant="ghost" size="sm" onClick={() => openRatesParam(item)} title="Tarifas">
                     <CircleDollarSign className="h-4 w-4" />
                   </Button>

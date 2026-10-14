@@ -52,6 +52,8 @@ export function RatesParamDialog({
   const { toast } = useToast()
 
   const esGestor = (parametrizacion?.tipo?.toLowerCase() || "") === "gestor"
+  const esPlanta = (parametrizacion?.tipo?.toLowerCase() || "") === "oficina"
+  const requiereFiltroSede = esGestor
 
   useEffect(() => {
     if (open) loadData()
@@ -143,16 +145,16 @@ export function RatesParamDialog({
 
   const esFlete = ["flete", "flete_focus"].includes(parametrizacion?.tipo?.toLowerCase() || "")
 
-  const filteredRates = esGestor && selectedSedeId
+  const filteredRates = requiereFiltroSede && selectedSedeId
     ? rates.filter((r) => String(r.sedeId) === String(selectedSedeId))
     : rates
 
   const columns: ColumnDef<RateParam>[] = [
-    {
+    ...(esPlanta ? [] : [{
       width: "250px",
       accessorKey: "sedeNombre",
       header: "Sede",
-    },
+    }]),
     ...(esFlete ? [] : [{
       width: "150px",
       accessorKey: "undMedidaNombre",
@@ -250,7 +252,7 @@ export function RatesParamDialog({
           ) : (
             <>
               <div className="flex justify-between items-center gap-4">
-                {esGestor ? (
+                {requiereFiltroSede ? (
                   <div className="w-72 space-y-1">
                     <Label htmlFor="sedeFiltro">Sede</Label>
                     <SelectSingle
@@ -265,7 +267,7 @@ export function RatesParamDialog({
                   </div>
                 ) : <div />}
                 {!readOnly && canEdit && (
-                  <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover" disabled={esGestor && !selectedSedeId}>
+                  <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover" disabled={requiereFiltroSede && !selectedSedeId}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Tarifa
                   </Button>
@@ -297,7 +299,7 @@ export function RatesParamDialog({
         undMedidas={undMedidas}
         tiposResiduos={tiposResiduos}
         sedes={sedes}
-        preselectedSedeId={esGestor ? selectedSedeId : undefined}
+        preselectedSedeId={requiereFiltroSede ? selectedSedeId : undefined}
         onSuccess={loadData}
         readOnly={rateDialogReadOnly}
       />

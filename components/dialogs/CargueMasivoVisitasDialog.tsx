@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, FileWarning, Download } from "lucide-react"
+import { Upload, FileWarning, Download, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { visitService } from "@/services/visitService"
 import { SelectSingle } from "@/components/ui/select-single"
@@ -44,10 +44,12 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
   const [cargando, setCargando] = useState(false)
   const [sedeEjemploId, setSedeEjemploId] = useState("")
   const [descargandoEjemplo, setDescargandoEjemplo] = useState(false)
+  const [duplicadosPendientes, setDuplicadosPendientes] = useState<string[] | null>(null)
 
   const handleClose = (nextOpen: boolean) => {
     if (!cargando) {
       setArchivo(null)
+      setDuplicadosPendientes(null)
       onOpenChange(nextOpen)
     }
   }
@@ -100,14 +102,19 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
     }
   }
 
-  const handleUpload = async () => {
+  const handleUpload = async (opciones?: { confirmarDuplicados?: boolean; omitirDuplicados?: boolean }) => {
     if (!archivo) {
       toast({ title: "Selecciona un archivo", description: "Debes seleccionar un archivo .xlsx", variant: "warning" })
       return
     }
     setCargando(true)
     try {
-      const resultado = await visitService.cargueMasivo(archivo)
+      const resultado = await visitService.cargueMasivo(archivo, opciones)
+      if (resultado.requiereConfirmacionDuplicados) {
+        setDuplicadosPendientes(resultado.duplicados || [])
+        return
+      }
+      setDuplicadosPendientes(null)
       if (resultado.exito) {
         toast({
           title: "Cargue exitoso",
@@ -229,7 +236,7 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
           <Button variant="outline" onClick={() => handleClose(false)} disabled={cargando}>
             Cancelar
           </Button>
-          <Button onClick={handleUpload} disabled={cargando || !archivo} className="bg-primary hover:bg-primary-hover">
+          <Button onClick={() => handleUpload()} disabled={cargando || !archivo} className="bg-primary hover:bg-primary-hover">
             {cargando ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -244,6 +251,42 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <Dialog open={!!duplicadosPendientes} onOpenChange={(o) => { if (!o && !cargando) setDuplicadosPendientes(null) }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="h-5 w-5" />
+              Posibles registros duplicados
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground shrink-0">
+            Encontramos filas con el mismo Día, Hora, Sede y Cantidad. ¿Quieres crear ambos registros (duplicados)
+            o prefieres omitir los repetidos (se conserva solo la primera fila de cada grupo)?
+            {duplicadosPendientes && duplicadosPendientes.length > 0 && (
+              <span className="font-medium"> ({duplicadosPendientes.length} grupo{duplicadosPendientes.length === 1 ? "" : "s"} encontrado{duplicadosPendientes.length === 1 ? "" : "s"})</span>
+            )}
+          </p>
+          <div className="flex-1 min-h-0 overflow-y-auto border rounded-md">
+            <ul className="text-sm list-disc pl-5 pr-3 py-2 space-y-1.5">
+              {(duplicadosPendientes || []).map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2 shrink-0">
+            <Button variant="outline" onClick={() => setDuplicadosPendientes(null)} disabled={cargando}>
+              Cancelar
+            </Button>
+            <Button variant="outline" onClick={() => handleUpload({ omitirDuplicados: true })} disabled={cargando}>
+              Omitir duplicados
+            </Button>
+            <Button onClick={() => handleUpload({ confirmarDuplicados: true })} disabled={cargando} className="bg-primary hover:bg-primary-hover">
+              Crear ambos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

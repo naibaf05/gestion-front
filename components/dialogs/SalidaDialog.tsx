@@ -77,6 +77,8 @@ export function SalidaDialog({
     fleteId: "",
     tarifaFleteId: "",
     tarifaFleteNombre: "",
+    tarifaPlantaId: "",
+    tarifaPlantaNombre: "",
   })
   const { toast } = useToast()
 
@@ -102,6 +104,8 @@ export function SalidaDialog({
         fleteId: salida.fleteId || "",
         tarifaFleteId: salida.tarifaFleteId || "",
         tarifaFleteNombre: salida.tarifaFleteNombre || "",
+        tarifaPlantaId: salida.tarifaPlantaId || "",
+        tarifaPlantaNombre: salida.tarifaPlantaNombre || "",
       })
     } else {
       // Fecha actual por defecto
@@ -126,12 +130,16 @@ export function SalidaDialog({
         fleteId: "",
         tarifaFleteId: "",
         tarifaFleteNombre: "",
+        tarifaPlantaId: "",
+        tarifaPlantaNombre: "",
       })
     }
   }, [salida, open])
 
-  // La sede que valida las tarifas de gestor/flete es la de salida si existe; si no, la de destino.
-  const sedeTarifaId = formData.sedeSalidaId || formData.sedeId || ""
+  // La sede que valida las tarifas de gestor/flete/planta es la de salida si existe; si no, la de destino.
+  const sedeTarifaId = (formData.esSede ? formData.sedeSalidaId : "") || (!formData.esPlanta ? formData.sedeId : "") || ""
+  // La planta para la tarifa se valida primero con la Salida; si esta es sede, se usa el Destino (solo si también es planta).
+  const plantaTarifaId = (!formData.esSede ? formData.plantaId : "") || (formData.esPlanta ? formData.plantaDestinoId : "") || ""
 
   const isDateInRateRange = (fecha: string, rate: RateParam): boolean => {
     if (!fecha || !rate?.fechaInicio) return false
@@ -189,6 +197,44 @@ export function SalidaDialog({
         }))
       })
   }, [open, formData.fleteId, formData.fecha, sedeTarifaId])
+
+  const findVigentePlantaRate = async (plantaId: string, tResiduoId: string, fecha: string): Promise<RateParam | null> => {
+    if (!plantaId || !tResiduoId || !fecha) return null
+    const rates = (await rateParamService.getTable(plantaId)).filter((rate) =>
+      String(rate.tipoResiduoId) === String(tResiduoId)
+    )
+    const vigentes = rates
+      .filter((r) => r.activo && isDateInRateRange(fecha, r))
+      .sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")))
+    return vigentes[0] || null
+  }
+
+  useEffect(() => {
+    if (!open) return
+    if (!plantaTarifaId || !formData.productoId || !formData.fecha) {
+      setFormData((prev) => ({
+        ...prev,
+        tarifaPlantaId: "",
+        tarifaPlantaNombre: "",
+      }))
+      return
+    }
+    findVigentePlantaRate(plantaTarifaId, formData.productoId, formData.fecha)
+      .then((rate) => {
+        setFormData((prev) => ({
+          ...prev,
+          tarifaPlantaId: rate?.id || "",
+          tarifaPlantaNombre: rate?.tarifaNombre || "Sin tarifa vigente",
+        }))
+      })
+      .catch(() => {
+        setFormData((prev) => ({
+          ...prev,
+          tarifaPlantaId: "",
+          tarifaPlantaNombre: "No se pudo consultar tarifa",
+        }))
+      })
+  }, [open, plantaTarifaId, formData.productoId, formData.fecha])
 
   useEffect(() => {
     if (!open) return
@@ -266,7 +312,7 @@ export function SalidaDialog({
                 <InputCheck
                   id="esSede"
                   checked={formData.esSede}
-                  onChange={(e) => setFormData({ ...formData, esSede: e.target.checked })}
+                  onChange={(e) => setFormData({ ...formData, esSede: e.target.checked, plantaId: "", sedeSalidaId: "" })}
                   label="¿Es Sede?"
                 />
               </span>
@@ -301,7 +347,7 @@ export function SalidaDialog({
                 <InputCheck
                   id="esPlanta"
                   checked={formData.esPlanta}
-                  onChange={(e) => setFormData({ ...formData, esPlanta: e.target.checked })}
+                  onChange={(e) => setFormData({ ...formData, esPlanta: e.target.checked, plantaDestinoId: "", sedeId: "" })}
                   label="¿Es Planta?"
                 />
               </span>
@@ -424,7 +470,7 @@ export function SalidaDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="gestor">Gestor</Label>
                 <SelectSingle
@@ -456,6 +502,12 @@ export function SalidaDialog({
                 {formData.fleteId && (
                   <p className="text-xs text-muted-foreground">Tarifa: {formData.tarifaFleteNombre || "Consultando..."}</p>
                 )}
+              </div>
+              <div className="space-y-2">
+                <Label>Tarifa Planta</Label>
+                <p className="text-sm">
+                  {plantaTarifaId ? (formData.tarifaPlantaNombre || "Consultando...") : "No aplica"}
+                </p>
               </div>
             </div>
 

@@ -33,6 +33,7 @@ import { UpdateRatesDialog } from "@/components/dialogs/UpdateRatesDialog"
 import { UpdateDensDialog } from "@/components/dialogs/UpdateDensDialog"
 import { BulkPdfDialog } from "@/components/dialogs/BulkPdfDialog"
 import { CargueMasivoVisitasDialog } from "@/components/dialogs/CargueMasivoVisitasDialog"
+import { BulkAdjuntosDialog } from "@/components/dialogs/BulkAdjuntosDialog"
 import { filterPlantasByUser, matchesUserPlantas } from "@/utils/utils"
 
 
@@ -111,6 +112,7 @@ export default function ProgsAdminPage() {
   // Estado para diálogo de Descarga Masiva de PDFs
   const [bulkPdfDialogOpen, setBulkPdfDialogOpen] = useState(false)
   const [cargueMasivoOpen, setCargueMasivoOpen] = useState(false)
+  const [bulkAdjuntosDialogOpen, setBulkAdjuntosDialogOpen] = useState(false)
 
   if (user && user.permisos && typeof user.permisos === "string") {
     user.permisos = JSON.parse(user.permisos);
@@ -422,9 +424,14 @@ export default function ProgsAdminPage() {
                 </ButtonTooltip>
               )}
               {user?.perfil?.nombre === "CLIENTE" ?
-                <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
-                  <FileText className="h-4 w-4" />
-                </ButtonTooltip> :
+                <>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(obj)} tooltipContent="PDF">
+                    <FileText className="h-4 w-4" />
+                  </ButtonTooltip>
+                  <ButtonTooltip variant="ghost" size="sm" onClick={() => handleAdjuntos(obj.visitaRecolId)} tooltipContent="Ver Adjuntos">
+                    <Paperclip className="h-4 w-4" />
+                  </ButtonTooltip>
+                </> :
                 <DropdownMenu>
                   <Tooltip>
                     <DropdownMenuTrigger asChild>
@@ -529,29 +536,56 @@ export default function ProgsAdminPage() {
               <div />
             )}
             <div className="flex flex-wrap items-center gap-2">
-              {hasPermission("rates.edit") && (
-                <Button onClick={openRatesDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
-                  <CircleDollarSign className="mr-2 h-4 w-4" />
-                  Actualizar Tarifas
-                </Button>
-              )}
-              {hasPermission("admin.edit") && (
-                <Button onClick={openDensDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
-                  <FlaskConical className="mr-2 h-4 w-4" />
-                  Actualizar Densidades
-                </Button>
-              )}
-              {hasPermission("generar.pdf") && (
-                <Button onClick={openBulkPdfDialog} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
-                  <FolderDown className="mr-2 h-4 w-4" />
-                  Descarga Masiva PDF
-                </Button>
-              )}
-              {hasPermission("admin.edit") && (
-                <Button onClick={() => setCargueMasivoOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Cargue Masivo
-                </Button>
+              {(hasPermission("rates.edit") || hasPermission("admin.edit") || hasPermission("generar.pdf")) && (
+                <TooltipProvider>
+                  <DropdownMenu>
+                    <Tooltip>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="shadow">
+                          <span className="sr-only">Más opciones</span>
+                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                            <circle cx="5" cy="12" r="2" fill="currentColor" />
+                            <circle cx="12" cy="12" r="2" fill="currentColor" />
+                            <circle cx="19" cy="12" r="2" fill="currentColor" />
+                          </svg>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <TooltipContent>Más opciones</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                      {hasPermission("rates.edit") && (
+                        <DropdownMenuItem onClick={openRatesDialog}>
+                          <CircleDollarSign className="h-4 w-4" />
+                          Actualizar Tarifas
+                        </DropdownMenuItem>
+                      )}
+                      {hasPermission("admin.edit") && (
+                        <DropdownMenuItem onClick={openDensDialog}>
+                          <FlaskConical className="h-4 w-4" />
+                          Actualizar Densidades
+                        </DropdownMenuItem>
+                      )}
+                      {hasPermission("generar.pdf") && (
+                        <DropdownMenuItem onClick={openBulkPdfDialog}>
+                          <FolderDown className="h-4 w-4" />
+                          Descarga Masiva PDF
+                        </DropdownMenuItem>
+                      )}
+                      {hasPermission("generar.pdf") && (
+                        <DropdownMenuItem onClick={() => setBulkAdjuntosDialogOpen(true)}>
+                          <Paperclip className="h-4 w-4" />
+                          Descarga Masiva de Adjuntos
+                        </DropdownMenuItem>
+                      )}
+                      {hasPermission("admin.edit") && (
+                        <DropdownMenuItem onClick={() => setCargueMasivoOpen(true)}>
+                          <Upload className="h-4 w-4" />
+                          Cargue Masivo
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TooltipProvider>
               )}
               {hasPermission("admin.edit") && (
                 <Button onClick={handleCreate} className="bg-primary hover:bg-primary-hover">
@@ -632,6 +666,7 @@ export default function ProgsAdminPage() {
         tipo="progs"
         entityId={entidadId || ""}
         title="Adjuntos"
+        readOnly={user?.perfil?.nombre === "CLIENTE"}
       />
 
       <FirmaGeneradorDialog
@@ -652,6 +687,7 @@ export default function ProgsAdminPage() {
       <UpdateDensDialog open={densDialogOpen} onOpenChange={setDensDialogOpen} />
       <BulkPdfDialog open={bulkPdfDialogOpen} onOpenChange={setBulkPdfDialogOpen} user={user} />
       <CargueMasivoVisitasDialog open={cargueMasivoOpen} onOpenChange={setCargueMasivoOpen} sedes={sedes} onSuccess={loadData} />
+      <BulkAdjuntosDialog open={bulkAdjuntosDialogOpen} onOpenChange={setBulkAdjuntosDialogOpen} user={user} />
     </div>
   )
 }

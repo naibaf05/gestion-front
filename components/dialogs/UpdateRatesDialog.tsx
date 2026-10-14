@@ -14,7 +14,7 @@ import { rateService } from "@/services/rateService"
 interface UpdateRatesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tipo?: "recoleccion" | "salida" | "salida-externa"
+  tipo?: "recoleccion" | "salida" | "salida-externa" | "salida-planta"
 }
 
 export function UpdateRatesDialog({
@@ -81,6 +81,8 @@ export function UpdateRatesDialog({
         ? await clientService.getSedesUpdateTarifasSalida(inicio, fin)
         : tipo === "salida-externa"
         ? await clientService.getSedesUpdateTarifasSalidaExterna(inicio, fin)
+        : tipo === "salida-planta"
+        ? await clientService.getSedesUpdateTarifasPlanta(inicio, fin)
         : await clientService.getSedesUpdateTarifas(inicio, fin)
       setSedesOptions(sedesData)
     } catch (error) {
@@ -128,12 +130,14 @@ export function UpdateRatesDialog({
 
   const handleSedesChange = (ids: string[]) => setSelectedIds(ids)
 
+  const entidadLabel = tipo === "salida-planta" ? "plantas" : "sedes"
+
   const handleSave = async () => {
     if (!startString || !endString) return
     if (selectedIds.length === 0) {
       toast({
-        title: "Selecciona sedes",
-        description: "Debes seleccionar al menos una sede",
+        title: `Selecciona ${entidadLabel}`,
+        description: `Debes seleccionar al menos una ${tipo === "salida-planta" ? "planta" : "sede"}`,
         variant: "destructive",
       })
       return
@@ -144,6 +148,8 @@ export function UpdateRatesDialog({
         await rateService.updateTarifasSalida(startString, endString, selectedIds)
       } else if (tipo === "salida-externa") {
         await rateService.updateTarifasSalidaExterna(startString, endString, selectedIds)
+      } else if (tipo === "salida-planta") {
+        await rateService.updateTarifasPlanta(startString, endString, selectedIds)
       } else {
         await rateService.updateTarifas(startString, endString, selectedIds)
       }
@@ -188,7 +194,7 @@ export function UpdateRatesDialog({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Sedes</span>
+              <span className="text-sm font-medium capitalize">{entidadLabel}</span>
               <span className="text-xs text-muted-foreground">{selectedIds.length} seleccionadas</span>
             </div>
             {loadingSedes ? (
@@ -201,10 +207,10 @@ export function UpdateRatesDialog({
                   options={sedeOptions}
                   value={selectedIds}
                   onChange={handleSedesChange}
-                  placeholder="Selecciona sedes"
+                  placeholder={`Selecciona ${entidadLabel}`}
                 />
                 {sedesOptions.length === 0 && (
-                  <div className="text-sm text-muted-foreground mt-2">No hay sedes para el rango seleccionado.</div>
+                  <div className="text-sm text-muted-foreground mt-2">No hay {entidadLabel} para el rango seleccionado.</div>
                 )}
               </div>
             )}

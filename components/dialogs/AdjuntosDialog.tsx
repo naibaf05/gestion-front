@@ -28,6 +28,7 @@ interface AdjuntosDialogProps {
     tipo: string
     entityId: string
     title?: string
+    readOnly?: boolean
 }
 
 export function AdjuntosDialog({
@@ -35,7 +36,8 @@ export function AdjuntosDialog({
     onOpenChange,
     tipo,
     entityId,
-    title = "Adjuntos"
+    title = "Adjuntos",
+    readOnly = false
 }: AdjuntosDialogProps) {
     const [adjuntos, setAdjuntos] = useState<Adjunto[]>([])
     const [loading, setLoading] = useState(false)
@@ -274,15 +276,17 @@ export function AdjuntosDialog({
                             >
                                 <Download className="h-4 w-4" />
                             </ButtonTooltip>
-                            <ButtonTooltip
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(adjunto)}
-                                className="text-red-600"
-                                tooltipContent="Eliminar"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </ButtonTooltip>
+                            {!readOnly && (
+                                <ButtonTooltip
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(adjunto)}
+                                    className="text-red-600"
+                                    tooltipContent="Eliminar"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </ButtonTooltip>
+                            )}
                         </div>
                     </TooltipProvider>
                 )
@@ -303,23 +307,25 @@ export function AdjuntosDialog({
                             <div className="text-sm text-gray-600">
                                 Total: {adjuntos.length} adjunto(s)
                             </div>
-                            <Button
-                                onClick={handleUpload}
-                                disabled={uploading}
-                                className="bg-primary hover:bg-primary-hover"
-                            >
-                                {uploading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Subiendo...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Subir Archivos
-                                    </>
-                                )}
-                            </Button>
+                            {!readOnly && (
+                                <Button
+                                    onClick={handleUpload}
+                                    disabled={uploading}
+                                    className="bg-primary hover:bg-primary-hover"
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Subiendo...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Subir Archivos
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
 
                         <div className="flex-1 overflow-hidden">

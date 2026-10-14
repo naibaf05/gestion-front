@@ -8,14 +8,19 @@ export class VisitService {
         return response.data;
     }
 
-    async cargueMasivo(archivo: File): Promise<CargueVisitasResponse> {
+    async cargueMasivo(archivo: File, opciones?: { confirmarDuplicados?: boolean; omitirDuplicados?: boolean }): Promise<CargueVisitasResponse> {
         const formData = new FormData();
         formData.append("file", archivo);
 
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-        const response = await fetch(`${API_BASE_URL}/visitas/cargue-masivo`, {
+        const params = new URLSearchParams();
+        if (opciones?.confirmarDuplicados) params.set("confirmarDuplicados", "true");
+        if (opciones?.omitirDuplicados) params.set("omitirDuplicados", "true");
+        const query = params.toString() ? `?${params.toString()}` : "";
+
+        const response = await fetch(`${API_BASE_URL}/visitas/cargue-masivo${query}`, {
             method: "POST",
             headers: {
                 ...(token && { Authorization: `Bearer ${token}` }),
@@ -29,6 +34,7 @@ export class VisitService {
         }
         return data.data;
     }
+    
     async create(obj: Partial<VisitaRecol>): Promise<ApiResponse<VisitaRecol>> {
         const response = await apiService.post<ApiResponse<VisitaRecol>>("/visitas", obj);
         return response;
