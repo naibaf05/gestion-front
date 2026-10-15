@@ -123,6 +123,11 @@ export class CertificatesService {
         return response.data;
     }
 
+    async actualizarInformacion(id: string): Promise<number> {
+        const response = await apiService.patch<ApiResponse<number>>(`/certificado/${id}/actualizar-informacion`);
+        return response.data;
+    }
+
     async getVisitasZip(sedeIds: string[], inicio: string, fin: string): Promise<string> {
         const response = await apiService.post<ApiResponse<string>>(
             `/certificado/visitas-zip?inicio=${inicio}&fin=${fin}`,

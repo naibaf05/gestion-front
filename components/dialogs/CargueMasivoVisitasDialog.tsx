@@ -261,8 +261,10 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground shrink-0">
-            Encontramos filas con el mismo Día, Hora, Sede y Cantidad. ¿Quieres crear ambos registros (duplicados)
-            o prefieres omitir los repetidos (se conserva solo la primera fila de cada grupo)?
+            Encontramos filas con el mismo Día, Hora, Sede y Cantidad, ya sea repetidas dentro del
+            archivo o porque ya existen guardadas en la base de datos. ¿Quieres crearlas de todas
+            formas o prefieres omitir los repetidos (se conserva solo la primera fila de cada
+            grupo; los que ya existen en la base de datos se omiten por completo)?
             {duplicadosPendientes && duplicadosPendientes.length > 0 && (
               <span className="font-medium"> ({duplicadosPendientes.length} grupo{duplicadosPendientes.length === 1 ? "" : "s"} encontrado{duplicadosPendientes.length === 1 ? "" : "s"})</span>
             )}
@@ -282,7 +284,7 @@ export function CargueMasivoVisitasDialog({ open, onOpenChange, sedes, onSuccess
               Omitir duplicados
             </Button>
             <Button onClick={() => handleUpload({ confirmarDuplicados: true })} disabled={cargando} className="bg-primary hover:bg-primary-hover">
-              Crear ambos
+              Crear de todas formas
             </Button>
           </DialogFooter>
         </DialogContent>

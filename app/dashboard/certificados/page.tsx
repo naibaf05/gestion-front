@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, FileText, FolderDown, Plus, PowerSquare, Table, Trash2, History } from "lucide-react";
+import { Edit, FileText, FolderDown, Plus, PowerSquare, Table, Trash2, History, RefreshCw } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CertificadoDialog } from "@/components/dialogs/CertificadoDialog";
@@ -416,6 +416,18 @@ export default function CertificadosPage() {
                 if (selectedCertificado && user?.perfil?.nombre !== "CLIENTE") {
                     handleExcelNoValidate(selectedCertificado);
                 }
+            } else if (tipoConfirm === "actualizar-certificado") {
+                if (selectedCertificado) {
+                    const agregados = await certificatesService.actualizarInformacion(selectedCertificado.id);
+                    toast({
+                        title: "Actualización completa",
+                        description: agregados > 0
+                            ? `Se agregaron ${agregados} registro(s) nuevo(s) al certificado`
+                            : "No se encontró información nueva para agregar al certificado",
+                        variant: "success",
+                    });
+                    loadData();
+                }
             }
         } catch (error: any) {
             toast({
@@ -450,6 +462,17 @@ export default function CertificadosPage() {
     const handleEditNotas = (item: Certificados) => {
         setSelectedCertificadoNotas(item);
         setNotasDialogOpen(true);
+    };
+
+    const handleActualizarCertificado = (item: Certificados) => {
+        setSelectedCertificado(item);
+        setTipoConfirm("actualizar-certificado");
+        setTitleConfirm("Actualizar certificado");
+        setDescripcionConfirm("Recuerde que si actualiza, el certificado cambiará la información que se generó inicialmente, ¿desea continuar?");
+        setConfirmText("Actualizar");
+        setCancelText("Cancelar");
+        setHideCancelConfirm(false);
+        setConfirmDialogOpen(true);
     };
 
     const columns: ColumnDef<Certificados>[] = [
@@ -499,22 +522,10 @@ export default function CertificadosPage() {
             width: "160px",
             cell: ({ row }) => {
                 const item = row.original;
+                const puedeActualizar = String(item.tipo) === "1" || String(item.tipo) === "2";
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
-                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
-                                <FileText className="h-4 w-4" />
-                            </ButtonTooltip>
-                            {hasPermission("users.historial") && (
-                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleHistorial(item)} tooltipContent="Historial">
-                                    <History className="h-4 w-4" />
-                                </ButtonTooltip>
-                            )}
-                            {hasPermission("certificados.edit") && (
-                                <ButtonTooltip variant="ghost" size="sm" onClick={() => handleEditNotas(item)} tooltipContent="Editar Notas">
-                                    <Edit className="h-4 w-4" />
-                                </ButtonTooltip>
-                            )}
                             {hasPermission("certificados.edit") && (
                                 <ButtonTooltip
                                     variant="ghost"
@@ -526,6 +537,45 @@ export default function CertificadosPage() {
                                     <PowerSquare className="h-4 w-4" />
                                 </ButtonTooltip>
                             )}
+                            <DropdownMenu>
+                                <Tooltip>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <span className="sr-only">Más acciones</span>
+                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                                <circle cx="5" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                                <circle cx="19" cy="12" r="2" fill="currentColor" />
+                                            </svg>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <TooltipContent>Más acciones</TooltipContent>
+                                </Tooltip>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handlePdf(item)}>
+                                        <FileText className="h-4 w-4" />
+                                        PDF
+                                    </DropdownMenuItem>
+                                    {hasPermission("users.historial") && (
+                                        <DropdownMenuItem onClick={() => handleHistorial(item)}>
+                                            <History className="h-4 w-4" />
+                                            Historial
+                                        </DropdownMenuItem>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <DropdownMenuItem onClick={() => handleEditNotas(item)}>
+                                            <Edit className="h-4 w-4" />
+                                            Editar Notas
+                                        </DropdownMenuItem>
+                                    )}
+                                    {hasPermission("certificados.edit") && puedeActualizar && (
+                                        <DropdownMenuItem onClick={() => handleActualizarCertificado(item)}>
+                                            <RefreshCw className="h-4 w-4" />
+                                            Actualizar
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </TooltipProvider>
                 );
