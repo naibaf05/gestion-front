@@ -526,6 +526,9 @@ export default function CertificadosPage() {
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
+                            <ButtonTooltip variant="ghost" size="sm" onClick={() => handlePdf(item)} tooltipContent="PDF">
+                                <FileText className="h-4 w-4" />
+                            </ButtonTooltip>
                             {hasPermission("certificados.edit") && (
                                 <ButtonTooltip
                                     variant="ghost"
@@ -552,10 +555,6 @@ export default function CertificadosPage() {
                                     <TooltipContent>Más acciones</TooltipContent>
                                 </Tooltip>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handlePdf(item)}>
-                                        <FileText className="h-4 w-4" />
-                                        PDF
-                                    </DropdownMenuItem>
                                     {hasPermission("users.historial") && (
                                         <DropdownMenuItem onClick={() => handleHistorial(item)}>
                                             <History className="h-4 w-4" />
