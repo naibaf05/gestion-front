@@ -994,6 +994,7 @@ export default function CertificadosPage() {
             <BulkPdfCertificadosDialog
                 open={bulkPdfOpen}
                 onOpenChange={setBulkPdfOpen}
+                clientes={clientes}
                 tipo={
                     tab === "llantas" ? "1"
                     : tab === "otros" ? "2"

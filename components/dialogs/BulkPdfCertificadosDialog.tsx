@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SelectMultiple, OptionType } from "@/components/ui/select-multiple"
-import { Download } from "lucide-react"
+import { SelectSingle } from "@/components/ui/select-single"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Label } from "@/components/ui/label"
+import { Download, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { Sede, User } from "@/types"
+import type { Cliente, Sede, User } from "@/types"
 import { clientService } from "@/services/clientService"
 import { certificatesService } from "@/services/certificatesService"
 
@@ -24,6 +27,7 @@ interface BulkPdfCertificadosDialogProps {
   onOpenChange: (open: boolean) => void
   tipo: string
   user?: User | null
+  clientes?: Cliente[]
 }
 
 export function BulkPdfCertificadosDialog({
@@ -31,6 +35,7 @@ export function BulkPdfCertificadosDialog({
   onOpenChange,
   tipo,
   user,
+  clientes = [],
 }: BulkPdfCertificadosDialogProps) {
   const { toast } = useToast()
 
@@ -67,6 +72,8 @@ export function BulkPdfCertificadosDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingSedes, setLoadingSedes] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [popoverClienteOpen, setPopoverClienteOpen] = useState(false)
+  const [filtroClienteSedes, setFiltroClienteSedes] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -77,6 +84,8 @@ export function BulkPdfCertificadosDialog({
       setStartString(bogotaFormatter.format(s))
       setEndString(bogotaFormatter.format(e))
       setSelectedIds([])
+      setFiltroClienteSedes("")
+      setPopoverClienteOpen(false)
       void loadSedes()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +206,38 @@ export function BulkPdfCertificadosDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Sedes</span>
-              <span className="text-xs text-muted-foreground">{selectedIds.length} seleccionadas</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{selectedIds.length} seleccionadas</span>
+                <Popover open={popoverClienteOpen} onOpenChange={setPopoverClienteOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                      <UserPlus className="h-3.5 w-3.5 mr-1" />
+                      Agregar por cliente
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80">
+                    <div className="space-y-2">
+                      <Label htmlFor="filtroClienteSedes">Agregar todas las sedes de un cliente</Label>
+                      <SelectSingle
+                        id="filtroClienteSedes"
+                        placeholder="Selecciona un cliente"
+                        options={clientes}
+                        value={filtroClienteSedes}
+                        onChange={(v) => {
+                          setFiltroClienteSedes(v)
+                          const sedesDelCliente = sedesOptions.filter((s) => String(s.clienteId) === String(v)).map((s) => s.id)
+                          if (sedesDelCliente.length === 0) return
+                          setSelectedIds((prev) => Array.from(new Set([...prev, ...sedesDelCliente])))
+                          setFiltroClienteSedes("")
+                          setPopoverClienteOpen(false)
+                        }}
+                        valueKey="id"
+                        labelKey="nombre"
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             {loadingSedes ? (
               <div className="flex items-center justify-center py-6">
