@@ -15,7 +15,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Loader2, Download, Settings } from "lucide-react";
+import { FileText, Loader2, Download, Settings, Eye } from "lucide-react";
+import { PdfDialog } from "@/components/dialogs/PdfDialog";
 import { reportesService, type TipoReporte } from "@/services/reportesService";
 import { ColumnDef } from "@tanstack/react-table";
 import { ReportDialog } from "@/components/dialogs/ReportDialog";
@@ -122,7 +123,9 @@ export default function ReportesPage() {
                     ...(canViewTarifa ? [{ key: "tarifa", label: "Tarifa", category: "visita", enabled: true, width: "150px" }] : []),
                     { key: "cantidad", label: "Cantidad", category: "visita", enabled: false, width: "120px" },
                     { key: "unidad", label: "Unidad", category: "visita", enabled: false, width: "100px" },
-                    { key: "numCert", label: "Certificado", category: "visita", enabled: false, width: "150px" },
+                    { key: "numCert", label: "Certificado", category: "visita", enabled: tipoReporte === "reporte7", width: "150px" },
+                    { key: "fecCert", label: "Fecha Certificado", category: "visita", enabled: tipoReporte === "reporte7", width: "150px" },
+                    { key: "certDocumento", label: "Documento Certificado", category: "visita", enabled: tipoReporte === "reporte7", width: "150px" },
                     { key: "unidades", label: "Unidades", category: "visita", enabled: false, width: "100px" },
                     { key: "unidadEntrega", label: "Unidades de Entrega", category: "visita", enabled: false, width: "150px" },
                     { key: "fleteNombre", label: "Flete", category: "visita", enabled: isReporteResiduos, width: "180px" },
@@ -223,6 +226,7 @@ export default function ReportesPage() {
                     { key: "comercialCliente", label: "Comercial Cliente", category: "cliente", enabled: false, width: "200px" },
                     { key: "tiposCliente", label: "Tipos Cliente", category: "cliente", enabled: false, width: "200px" },
                     { key: "barrioCliente", label: "Barrio Cliente", category: "cliente", enabled: false, width: "150px" },
+                    { key: "contactoCliente", label: "Contacto Cliente", category: "cliente", enabled: false, width: "200px" },
                     { key: "telefonoCliente", label: "Teléfono Cliente", category: "cliente", enabled: false, width: "150px" },
                     { key: "fechaCierreFacturacionCliente", label: "Fecha Cierre Facturación Cliente", category: "cliente", enabled: false, width: "180px" },
                     { key: "fechaRenovacionCliente", label: "Fecha Renovación Cliente", category: "cliente", enabled: false, width: "150px" },
@@ -240,6 +244,7 @@ export default function ReportesPage() {
                     { key: "telefonoSede", label: "Teléfono Sede", category: "sede", enabled: false, width: "150px" },
                     { key: "frecuenciaRecoleccionSede", label: "Frecuencia Recolección Sede", category: "sede", enabled: false, width: "180px" },
                     { key: "periodoSede", label: "Periodo Sede", category: "sede", enabled: false, width: "120px" },
+                    { key: "generadorSede", label: "Generador Sede", category: "sede", enabled: false, width: "200px" },
 
                     // ======= SECCIÓN TARIFA/RESIDUO =======
                     { key: "residuo", label: "Residuo", category: "tarifa", enabled: true, width: "180px" },
@@ -290,6 +295,29 @@ export default function ReportesPage() {
     });
 
     // Generar columnas; para columnas monetarias se usa un cell renderer que formatea sólo la visualización
+    const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+    const [pdfOpen, setPdfOpen] = useState(false);
+
+    const abrirCertificado = async (certId: string | number, numero: string | undefined, descargar: boolean) => {
+        try {
+            const base64 = await certificatesService.getDocumentoCertificado(certId);
+            if (!base64) throw new Error("El certificado no tiene documento");
+            if (!descargar) {
+                setPdfBase64(base64);
+                setPdfOpen(true);
+                return;
+            }
+            const link = document.createElement("a");
+            link.href = `data:application/pdf;base64,${base64}`;
+            link.download = `Certificado_${(numero || certId).toString().replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error: any) {
+            toast({ title: "Error", description: error?.message || "No se pudo obtener el documento", variant: "error" });
+        }
+    };
+
     const generateTableColumns = (effectiveColumns: any[]): ColumnDef<any>[] => {
         return effectiveColumns.map(col => {
             const width = normalizeWidth(col.width);
@@ -300,6 +328,23 @@ export default function ReportesPage() {
                 header: col.label,
                 width,
             };
+            if (key === "certDocumento") {
+                base.enableSorting = false;
+                base.cell = ({ row }) => {
+                    const certId = row.original.certificadoId;
+                    if (!certId) return null;
+                    return (
+                        <div className="flex items-center gap-1">
+                            <Button type="button" variant="ghost" size="sm" title="Ver documento" onClick={() => abrirCertificado(certId, row.original.numCert, false)}>
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" title="Descargar documento" onClick={() => abrirCertificado(certId, row.original.numCert, true)}>
+                                <Download className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    );
+                };
+            }
             if (CURRENCY_COLUMNS.has(key)) {
                 base.cell = ({ row }) => {
                     const raw = row.original[key];
@@ -431,8 +476,9 @@ export default function ReportesPage() {
 
             // Obtener la configuración de columnas efectiva (usuario o por defecto)
             const effectiveColumns = getEffectiveColumnConfig(tipoReporte);
-            const exportCols = effectiveColumns.map(col => col.key);
-            const exportHeads = effectiveColumns.map(col => col.label);
+            const exportable = effectiveColumns.filter(col => col.key !== "certDocumento");
+            const exportCols = exportable.map(col => col.key);
+            const exportHeads = exportable.map(col => col.label);
             const searchKey = exportCols;
 
             // Generar columnas de tabla dinámicamente
@@ -556,8 +602,9 @@ export default function ReportesPage() {
         setColumns_table(newTableColumns);
 
         // Actualizar configuración de exportación
-        const newExportCols = enabledColumns.map(col => col.key);
-        const newExportHeaders = enabledColumns.map(col => col.label);
+        const exportableCols = enabledColumns.filter(col => col.key !== "certDocumento");
+        const newExportCols = exportableCols.map(col => col.key);
+        const newExportHeaders = exportableCols.map(col => col.label);
         setExportColumns(newExportCols);
         setExportHeaders(newExportHeaders);
         setSearchKey(newExportCols);
@@ -593,6 +640,7 @@ export default function ReportesPage() {
             if (!ids.length) throw new Error("Selecciona filas de gestión externa");
             const creados = await certificatesService.crearCertificadosExternosMasivo(ids, numero, fecha, archivo);
             toast({ title: "Certificados creados", description: `Se crearon ${creados} certificados externos`, variant: "success" });
+            await handleGenerar();
         } catch (error: any) {
             toast({ title: "Error", description: error?.message || "No se pudieron crear los certificados", variant: "destructive" });
         }
@@ -717,6 +765,15 @@ export default function ReportesPage() {
                 onCreateExternalCertificates={crearCertificadosExternos}
                 tipoReporte={tipoReporte}
             />
+
+            {pdfBase64 && (
+                <PdfDialog
+                    open={pdfOpen}
+                    onOpenChange={setPdfOpen}
+                    base64={pdfBase64}
+                    title="Certificado"
+                />
+            )}
 
             <ColumnConfigDialog
                 open={columnConfigOpen}

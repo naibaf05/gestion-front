@@ -29,6 +29,17 @@ export class CertificatesService {
         return response.data;
     }
 
+    async getCertificadoExternaRangoPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string, notas: string): Promise<string> {
+        notas = notas.replaceAll('\n', '**');
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/externas?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}&notas=${notas}`);
+        return response.data;
+    }
+
+    async getDocumentoCertificado(id: string | number): Promise<string> {
+        const response = await apiService.get<ApiResponse<string>>(`/certificado/${id}/documento`);
+        return response.data;
+    }
+
     async getCertificadoRecoleccionLlantasPDF(certId: string, clienteId: string, sedeId: string, inicio: string, fin: string, num: string, fecha: string, notas: string): Promise<string> {
         notas = notas.replaceAll('\n', '**');
         const response = await apiService.get<ApiResponse<string>>(`/certificado/llantas?certId=${certId}&clienteId=${clienteId}&sedeId=${sedeId}&inicio=${inicio}&fin=${fin}&num=${num}&fecha=${fecha}&notas=${notas}`);

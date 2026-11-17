@@ -134,7 +134,7 @@ export default function CertificadosPage() {
                     certificatesService.getCertificadosCliente("2", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("3", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("4", user.id || "", dateString, fechaFinString),
-                    certificatesService.getCertificadosCliente("5", user.id || "", dateString, fechaFinString),
+                    certificatesService.getCertificadosCliente("7", user.id || "", dateString, fechaFinString),
                     certificatesService.getCertificadosCliente("6", user.id || "", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
@@ -155,7 +155,7 @@ export default function CertificadosPage() {
                     certificatesService.getCertificados("2", dateString, fechaFinString),
                     certificatesService.getCertificados("3", dateString, fechaFinString),
                     certificatesService.getCertificados("4", dateString, fechaFinString),
-                    certificatesService.getCertificados("5", dateString, fechaFinString),
+                    certificatesService.getCertificados("7", dateString, fechaFinString),
                     certificatesService.getCertificados("6", dateString, fechaFinString),
                     clientService.getSedesActivas(),
                     clientService.getClientesActivos(),
@@ -246,6 +246,9 @@ export default function CertificadosPage() {
                 base64 = archivos.length > 0 ? archivos[0].base64 : null;
                 break;
             }
+            case "7":
+                base64 = await certificatesService.getCertificadoExternaRangoPDF(obj.id || "", obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.num, obj.fecha, obj.notas || "");
+                break;
             case "6":
                 base64 = await certificatesService.getCertificadoProformaExternaPDF(obj.clienteId || "", obj.sedeId || "", obj.inicio, obj.fin, obj.fecha, obj.notas || "");
                 break;
@@ -522,7 +525,7 @@ export default function CertificadosPage() {
             width: "160px",
             cell: ({ row }) => {
                 const item = row.original;
-                const puedeActualizar = String(item.tipo) === "1" || String(item.tipo) === "2";
+                const puedeActualizar = ["1", "2", "7"].includes(String(item.tipo));
                 return (
                     <TooltipProvider>
                         <div className="flex items-center space-x-2">
@@ -829,6 +832,23 @@ export default function CertificadosPage() {
                         </TabsContent>
 
                         <TabsContent value="externas">
+                            <div className="flex justify-between items-center mb-4">
+                                <div></div>
+                                <div className="flex items-center gap-2">
+                                    {hasPermission("generar.pdf") && (
+                                        <Button onClick={() => setBulkPdfOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow">
+                                            <FolderDown className="mr-2 h-4 w-4" />
+                                            Descarga Masiva PDF
+                                        </Button>
+                                    )}
+                                    {hasPermission("certificados.edit") && (
+                                        <Button onClick={() => handleCreate("7")} className="bg-primary hover:bg-primary-hover">
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nuevo Certificado
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
                             <DataTable
                                 columns={columns}
                                 data={certificadosExternas}
@@ -1000,6 +1020,7 @@ export default function CertificadosPage() {
                     : tab === "otros" ? "2"
                     : tab === "proforma" ? "3"
                     : tab === "proforma-externas" ? "6"
+                    : tab === "externas" ? "7"
                     : "4"
                 }
                 user={user}

@@ -61,14 +61,14 @@ export function CertificadoDialog({
     notas: "",
     activo: true,
   });
-  // Selección múltiple, solo para tipos 1 (Llantas) y 2 (Residuos) al crear.
+  // Selección múltiple, solo para tipos 1 (Llantas), 2 (Residuos) y 7 (Externas) al crear.
   const [clienteIds, setClienteIds] = useState<string[]>([]);
   const [sedeIds, setSedeIds] = useState<string[]>([]);
   const [filtroClienteSedes, setFiltroClienteSedes] = useState("");
   const [popoverClienteOpen, setPopoverClienteOpen] = useState(false);
   const { toast } = useToast();
 
-  const esMultiSelect = !certificado && ["1", "2"].includes(String(tipo));
+  const esMultiSelect = !certificado && ["1", "2", "7"].includes(String(tipo));
 
   const clienteOptions: OptionType[] = clientes.map(c => ({ value: c.id, label: c.nombre }));
   const sedeOptions: OptionType[] = sedes.map(s => ({ value: s.id, label: s.nombre }));
@@ -165,6 +165,9 @@ export function CertificadoDialog({
     }
     if (tipoString === "2") {
       return certificatesService.getCertificadoRecoleccionPDF(formData.id, clienteId, sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
+    }
+    if (tipoString === "7") {
+      return certificatesService.getCertificadoExternaRangoPDF(formData.id, clienteId, sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
     }
     return null;
   };
@@ -276,6 +279,9 @@ export function CertificadoDialog({
           break;
         case "2":
           base64 = await certificatesService.getCertificadoRecoleccionPDF(formData.id, clienteId, sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
+          break;
+        case "7":
+          base64 = await certificatesService.getCertificadoExternaRangoPDF(formData.id, clienteId, sedeId, formData.inicio, formData.fin, "", formData.fecha, formData.notas || "");
           break;
         case "3":
           base64 = await certificatesService.getCertificadoProformaPDF(formData.clienteId, formData.sedeId, formData.inicio, formData.fin, formData.fecha, formData.notas);
